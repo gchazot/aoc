@@ -1,4 +1,5 @@
 from unittest import TestCase
+from aoc_utils import data_file
 
 
 def check_triangle(sides):
@@ -36,6 +37,8 @@ def check_all_triangles(filename, make_triangles):
 
 
 class TestTriangles(TestCase):
+    my_file = data_file(2016, "day_03_mine.txt")
+
     def test_1_example(self):
         self.assertFalse(check_triangle([5, 10, 25]))
         self.assertFalse(check_triangle([10, 5, 25]))
@@ -48,11 +51,12 @@ class TestTriangles(TestCase):
         self.assertTrue(check_triangle(map(int, "  171  757  815".split())))
 
     def test_1_mine(self):
-        self.assertEqual(993, check_all_triangles("data/day_03_mine.txt", make_triangles_rows))
+        self.assertEqual(993, check_all_triangles(self.my_file, make_triangles_rows))
 
     def test_2_example(self):
-        self.assertEqual(4, check_all_triangles("data/day_03_2_example.txt", make_triangles_columns))
+        example_file = data_file(2016, "day_03_2_example.txt")
+        self.assertEqual(4, check_all_triangles(example_file, make_triangles_columns))
 
     def test_2_mine(self):
-        self.assertEqual(1849, check_all_triangles("data/day_03_mine.txt", make_triangles_columns))
+        self.assertEqual(1849, check_all_triangles(self.my_file, make_triangles_columns))
 

@@ -1,4 +1,5 @@
 from unittest import TestCase
+from aoc_utils import data_file
 
 
 def no_same_words(phrase):
@@ -27,6 +28,8 @@ def count_valid(filename, policy):
 
 
 class TestPasswordValidator(TestCase):
+    my_data_file = data_file(2017, "day_04_1_mine.txt")
+
     def test_no_same_word_1(self):
         self.assertTrue(no_same_words("aa bb cc dd ee"))
 
@@ -37,7 +40,7 @@ class TestPasswordValidator(TestCase):
         self.assertTrue(no_same_words("aa bb cc dd aaa"))
 
     def test_no_same_word_mine(self):
-        self.assertEqual(477, count_valid("data/day_04_1_mine.txt", no_same_words))
+        self.assertEqual(477, count_valid(self.my_data_file, no_same_words))
 
     def test_no_anagram_1(self):
         self.assertTrue(no_anagram("abcde fghij"))
@@ -55,4 +58,4 @@ class TestPasswordValidator(TestCase):
         self.assertFalse(no_anagram("oiii ioii iioi iiio"))
 
     def test_no_anagram_mine(self):
-        self.assertEqual(167, count_valid("data/day_04_1_mine.txt", no_anagram))
+        self.assertEqual(167, count_valid(self.my_data_file, no_anagram))

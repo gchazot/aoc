@@ -1,4 +1,5 @@
 from unittest import TestCase
+from aoc_utils import data_file
 
 
 def alteration_one(maze, index):
@@ -32,14 +33,17 @@ def solve_maze_file(filename, alteration):
 
 
 class TestSolveMaze(TestCase):
+    example_data_file = data_file(2017, "day_05_1_example.txt")
+    my_data_file = data_file(2017, "day_05_1_mine.txt")
+
     def test_1_example(self):
-        self.assertEqual(5, solve_maze_file("data/day_05_1_example.txt", alteration_one))
+        self.assertEqual(5, solve_maze_file(self.example_data_file, alteration_one))
 
     def test_1_mine(self):
-        self.assertEqual(374269, solve_maze_file("data/day_05_1_mine.txt", alteration_one))
+        self.assertEqual(374269, solve_maze_file(self.my_data_file, alteration_one))
 
     def test_2_example(self):
-        self.assertEqual(10, solve_maze_file("data/day_05_1_example.txt", alteration_two))
+        self.assertEqual(10, solve_maze_file(self.example_data_file, alteration_two))
 
     def test_2_mine(self):
-        self.assertEqual(27720699, solve_maze_file("data/day_05_1_mine.txt", alteration_two))
+        self.assertEqual(27720699, solve_maze_file(self.my_data_file, alteration_two))
