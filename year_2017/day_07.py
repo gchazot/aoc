@@ -34,7 +34,6 @@ class ProgramTower:
             return result.correct_weight
         return None
 
-
     def calculate_total_weights(self, root_id):
         program = self.programs[root_id]
         for child_id in program["children"]:
