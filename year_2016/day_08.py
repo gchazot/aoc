@@ -37,6 +37,12 @@ class Screen:
                 self.pixels[-1 - j][column] = self.pixels[-2 - j][column]
             self.pixels[0][column] = first
 
+    def display(self):
+        def show_pixel(on_off):
+            return [" ", "#"][on_off]
+        for row in self.pixels:
+            print("".join(map(show_pixel, row)))
+
 
 class TestScreen(TestCase):
     def setUp(self):
@@ -230,3 +236,4 @@ class TestCommandRunner(TestCase):
         runner = CommandRunner(Screen(6, 50))
         runner.execute_file("day_08_mine.txt")
         self.assertEqual(116, sum(runner.screen))
+        runner.screen.display()  # Shows UPOJFLBCEZ
