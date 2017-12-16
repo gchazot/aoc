@@ -1,5 +1,7 @@
 from unittest import TestCase, skip
+import time
 from aoc_utils import data_file
+from multiprocessing.pool import Pool
 
 
 def read_firewall(filename):
@@ -30,6 +32,35 @@ class FirewallBreaker:
             delay += 1
         return delay
 
+    def min_safe_delay_parallel(self):
+        num_processes = 4
+        queue_size = num_processes * 16
+        batch_size = 128
+        processors = Pool(processes=num_processes)
+
+        results = []
+        delay_min = 0
+        while True:
+            if any(r.ready() and r.get() is not None for r in results):
+                break
+            results = [r for r in results if not r.ready() or r.get() is not None]
+
+            for _ in range(queue_size - len(results)):
+                batch = delay_min, delay_min + batch_size
+                result = processors.apply_async(self.which_will_collide, batch)
+                results.append(result)
+                delay_min += batch_size
+            time.sleep(0.01)
+
+        for result in results:
+            result.wait()
+
+        return min(result.get() for result in results if result.get() is not None)
+
+    def which_will_collide(self, delay_min, delay_max):
+        return min((i for i in range(delay_min, delay_max) if not self.will_collide(i)),
+                   default=None)
+
     def will_collide(self, delay):
         collisions = self.gen_collisions(delay)
         return any(map(not_none, collisions))
@@ -44,13 +75,13 @@ class FirewallBreaker:
             if self.has_scanner(depth) and self.collide(delay + depth, depth):
                 yield depth
 
-    def collide(self, time, depth):
-        return self.scanner_position(time, depth) == 0
+    def collide(self, tick, depth):
+        return self.scanner_position(tick, depth) == 0
 
-    def scanner_position(self, time, depth):
+    def scanner_position(self, tick, depth):
         scan_max = self.firewall[depth] - 1
         scan_length = self.scan_lengths[depth]
-        virtual_position = time % scan_length
+        virtual_position = tick % scan_length
         if virtual_position <= scan_max:
             return virtual_position
         else:
@@ -119,15 +150,9 @@ class TestFirewallBreaker(TestCase):
     def test_find_safe_delay_example(self):
         fwb = FirewallBreaker("day_13_example.txt")
         self.assertEqual(10, fwb.min_safe_delay())
+        self.assertEqual(10, fwb.min_safe_delay_parallel())
 
-    @skip("Taking too long")
-    def test_severity_mine(self):
+    @skip("Still taking too long")
+    def test_find_safe_delay_mine(self):
         fwb = FirewallBreaker("day_13_mine.txt")
-        self.assertEqual(3937334, fwb.min_safe_delay())
-
-
-if __name__ == "__main__":
-    import cProfile
-
-    fwb = FirewallBreaker("day_13_mine.txt")
-    cProfile.runctx("fwb.min_safe_delay()", globals={}, locals={"fwb": fwb})
+        self.assertEqual(3937334, fwb.min_safe_delay_parallel())
