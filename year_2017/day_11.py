@@ -21,7 +21,7 @@ class Coordinates(object):
         return Coordinates(new_coordinates)
 
     def __iadd__(self, other):
-        self.coordinates = map(operator.add, self.coordinates, other.coordinates)
+        self.coordinates = list(map(operator.add, self.coordinates, other.coordinates))
         return self
 
     def __eq__(self, other):
@@ -50,7 +50,7 @@ class GridWalker:
             self.furthest = max(self.furthest, self.distance())
 
     def distance(self):
-        return max(map(abs, self.position.coordinates))
+        return max(list(map(abs, self.position.coordinates)) + [0])
 
 
 def final_coordinates(route):

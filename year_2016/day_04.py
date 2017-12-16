@@ -1,3 +1,4 @@
+from functools import cmp_to_key
 from unittest import TestCase
 from collections import defaultdict
 from aoc_utils import data_file
@@ -17,13 +18,16 @@ class Decryptor:
         for letter in "".join(self.crypted_name):
             letter_counts[letter] += 1
 
+        def cmp(a, b):
+            return (a > b) - (a < b)
+
         def compare_counts(a, b):
             count_cmp = cmp(letter_counts[a], letter_counts[b])
             if count_cmp != 0:
                 return count_cmp
             return -cmp(a, b)
 
-        letters_ranked = sorted(letter_counts.keys(), cmp=compare_counts, reverse=True)
+        letters_ranked = sorted(letter_counts.keys(), key=cmp_to_key(compare_counts), reverse=True)
         self.valid = ("".join(letters_ranked)[:5] == self.checksum)
 
     def decrypt_name(self):
@@ -55,11 +59,12 @@ def sum_valid_rooms_sectors(filename):
 
 def find_objects_location(filename):
     with open(filename) as f:
-        descriptions = (Decryptor(line) for line in f.readlines())
-        decryptors = filter(lambda d: d.valid, descriptions)
-        map(lambda d: d.decrypt_name(), decryptors)
-        north_pole = filter(lambda d: d.name == "northpole object storage", decryptors)
-        return int(north_pole[0].sector)
+        descriptions = [Decryptor(line) for line in f.readlines()]
+        decryptors = [d for d in descriptions if d.valid]
+        for d in decryptors:
+            d.decrypt_name()
+        north_pole = [int(d.sector) for d in decryptors if d.name == "northpole object storage"]
+        return north_pole[0]
 
 
 class TestDecoyRoomDetector(TestCase):

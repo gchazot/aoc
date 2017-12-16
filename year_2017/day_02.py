@@ -2,7 +2,8 @@ from unittest import TestCase
 from functools import reduce
 
 
-def min_max((mini, maxi), value):
+def min_max(mini_maxi, value):
+    mini, maxi = mini_maxi
     if mini is None or value < mini:
         mini = value
     if maxi is None or value > maxi:
@@ -19,12 +20,12 @@ def spreadsheet_checksum_min_max(spreadsheet):
     lines = spreadsheet.split('\n')
     sequences = map(lambda l: l.split(), lines)
     minis_maxis = map(sequence_min_max, sequences)
-    deltas = map(lambda (mini, maxi): maxi - mini, minis_maxis)
+    deltas = map(lambda mini_maxi: mini_maxi[1]- mini_maxi[0], minis_maxis)
     return sum(deltas)
 
 
 def sequence_divisible(sequence):
-    sequence_int = map(int, sequence)
+    sequence_int = list(map(int, sequence))
     for i in sequence_int:
         for j in sequence_int:
             if i == j:
@@ -40,7 +41,7 @@ def spreadsheet_checksum_divisible(spreadsheet):
     lines = spreadsheet.split('\n')
     sequences = map(lambda l: l.split(), lines)
     minis_maxis = map(sequence_divisible, sequences)
-    quotients = map(lambda (mini, maxi): maxi / mini, minis_maxis)
+    quotients = map(lambda mini_maxi: mini_maxi[1] / mini_maxi[0], minis_maxis)
     return sum(quotients)
 
 

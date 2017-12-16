@@ -19,8 +19,8 @@ def progress(direction, blocks):
     return map(lambda x: x * blocks, direction)
 
 
-def advance(totals, step):
-    return map(lambda x, y: x + y, totals, step)
+def advance(initial_position, step):
+    return list(map(lambda x, y: x + y, initial_position, step))
 
 
 def shortest_distance(instructions):

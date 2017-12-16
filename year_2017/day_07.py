@@ -1,12 +1,7 @@
 from unittest import TestCase
-
 from collections import defaultdict
-
 from aoc_utils import data_file
 import re
-
-
-program_details_parse = re.compile("(?P<id>\w+) \((?P<weight>\d+)\)( -> (?P<children>.*))?$")
 
 
 class FoundImbalance(Exception):
@@ -23,7 +18,9 @@ class ProgramTower:
 
     def find_tower_base(self):
         program_ids = set(self.programs.keys())
-        map(lambda p: program_ids.discard(p), gen_child_ids(self.programs))
+        child_ids = list(gen_child_ids(self.programs))
+        for child_id in child_ids:
+            program_ids.discard(child_id)
         return list(program_ids)
 
     def find_correct_weight(self):
@@ -53,11 +50,20 @@ class ProgramTower:
             raise FoundImbalance(self.find_weight_correction(weights))
 
     def find_weight_correction(self, children_weights):
-        correct_total_weight, _ = max(children_weights.items(), key=lambda (weight, programs): len(programs))
-        wrong_total_weight, wrong_program_id = min(children_weights.items(), key=lambda (weight, programs): len(programs))
+        correct_total_weight, _ = max(
+            children_weights.items(),
+            key=(lambda weight_programs: len(weight_programs[1]))
+        )
+        wrong_total_weight, wrong_program_id = min(
+            children_weights.items(),
+            key=(lambda weight_programs: len(weight_programs[1]))
+        )
         wrong_program = self.programs[wrong_program_id[0]]
         correct_program_weight = wrong_program["weight"] + correct_total_weight - wrong_total_weight
         return correct_program_weight
+
+
+program_details_parse = re.compile("(?P<id>\w+) \((?P<weight>\d+)\)( -> (?P<children>.*))?$")
 
 
 def parse_program_shout(shout):
@@ -74,7 +80,7 @@ def parse_program_shout(shout):
 
 
 def gen_child_ids(programs):
-    for _, details in programs.iteritems():
+    for _, details in programs.items():
         for child in details["children"]:
             yield child
 

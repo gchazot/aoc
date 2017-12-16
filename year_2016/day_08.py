@@ -1,6 +1,9 @@
 from unittest import TestCase
 import itertools
-from unittest.mock import MagicMock
+try:
+    from mock import MagicMock
+except ModuleNotFoundError:
+    from unittest.mock import MagicMock
 
 from aoc_utils import data_file
 

@@ -17,7 +17,7 @@ class ProgramRunner:
     def exec_program(self):
         for line in self.program.readlines():
             instruction = rewrite_instruction(line)
-            exec instruction in {}, self.registers
+            exec(instruction, {}, self.registers)
             self.max_register_ever = max(self.max_register_ever, self.max_register())
 
     def max_register(self):

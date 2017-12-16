@@ -10,7 +10,7 @@ def read_network(filename):
             program_id = int(program_id_str)
             contact_list_str = contacts_str.split(", ")
             contacts = map(int, contact_list_str)
-            network[program_id] = contacts
+            network[program_id] = list(contacts)
     return network
 
 
@@ -62,13 +62,13 @@ class TestTuyauCom(TestCase):
         network = TuyauNet("day_12_example.txt")
         visited = network.visit(0)
         self.assertEqual(7, len(visited))
-        self.assertEqual(6, len(filter(lambda node: node is not None, visited)))
+        self.assertEqual(6, len([None for node in visited if node is not None]))
 
     def test_visit_my_nodes(self):
         network = TuyauNet("day_12_mine.txt")
         visited = network.visit(0)
         self.assertEqual(2000, len(visited))
-        self.assertEqual(288, len(filter(lambda node: node is not None, visited)))
+        self.assertEqual(288, len([None for node in visited if node is not None]))
 
     def test_count_groups_example(self):
         network = TuyauNet("day_12_example.txt")
