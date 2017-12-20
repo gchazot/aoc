@@ -159,18 +159,6 @@ class TestDanceMaster(unittest.TestCase):
         master.dance_once(dancers)
         self.assertEqual("dcmlhejnifpokgba", dancers.order())
 
-    def test_example_24x(self):
-        master = DanceMaster("day_16_mine.txt")
-        dancers = Dancers(16)
-        master.dance(dancers, 24)
-        self.assertEqual("abcdefghijklmnop", dancers.order())
-
-    def test_example_25x(self):
-        master = DanceMaster("day_16_mine.txt")
-        dancers = Dancers(16)
-        master.dance(dancers, 25)
-        self.assertEqual("dcmlhejnifpokgba", dancers.order())
-
     def test_mine_skipping(self):
         master = SkippingDanceMaster("day_16_mine.txt")
         dancers = Dancers(16)
