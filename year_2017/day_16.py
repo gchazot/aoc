@@ -77,7 +77,7 @@ class TestDancers(unittest.TestCase):
         self.assertEqual('baedc', dancers5.order())
 
 
-class DanceMaster:
+class DanceMaster(object):
     def __init__(self, filename):
         self.dance_plan = data_file(2017, filename)
         self.moves = self.gen_moves()
@@ -93,11 +93,12 @@ class DanceMaster:
         self.num_iterations = iterations
         self.iteration = 0
         while self.iteration < self.num_iterations:
-            self.i = 0
-            while self.i < self.moves_per_iteration:
-                self.dance_one_move(dancers)
-                self.i += 1
+            self.dance_one_iteration(dancers)
             self.iteration += 1
+
+    def dance_one_iteration(self, dancers):
+        for self.i in range(self.moves_per_iteration):
+            self.dance_one_move(dancers)
 
     def dance_one_move(self, dancers):
         move_text = self.moves[self.i]
@@ -125,16 +126,18 @@ class SkippingDanceMaster(DanceMaster):
         super(self.__class__, self).__init__(filename)
         self.seen = defaultdict(lambda: (self.iteration, self.i))
 
-    def dance_one_move(self, dancers):
-        super(self.__class__, self).dance_one_move(dancers)
+    def dance_one_iteration(self, dancers):
+        super(self.__class__, self).dance_one_iteration(dancers)
 
-        order = dancers.order()
-        seen = self.seen[order]
+        seen = self.seen[dancers.order()]
         if seen[1] == self.i and seen[0] != self.iteration:
             skip_iterations = self.iteration - seen[0]
-            remaining_iterations = self.num_iterations - self.iteration
-            total_skip = int(remaining_iterations / skip_iterations) * skip_iterations
-            self.iteration += total_skip
+            self.skip_with_iteration_cycle(skip_iterations)
+
+    def skip_with_iteration_cycle(self, skip_iterations):
+        remaining_iterations = self.num_iterations - self.iteration
+        total_skip = int(remaining_iterations / skip_iterations) * skip_iterations
+        self.iteration += total_skip
 
 
 class TestDanceMaster(unittest.TestCase):
@@ -156,7 +159,6 @@ class TestDanceMaster(unittest.TestCase):
         master.dance_once(dancers)
         self.assertEqual("dcmlhejnifpokgba", dancers.order())
 
-    @unittest.skip("Slightly too long")
     def test_mine_skipping(self):
         master = SkippingDanceMaster("day_16_mine.txt")
         dancers = Dancers(16)
