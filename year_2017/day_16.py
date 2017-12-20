@@ -1,8 +1,5 @@
 import unittest
 from collections import defaultdict
-
-import sys
-
 from aoc_utils import data_file
 
 
@@ -159,6 +156,7 @@ class TestDanceMaster(unittest.TestCase):
         master.dance_once(dancers)
         self.assertEqual("dcmlhejnifpokgba", dancers.order())
 
+    @unittest.skip("Slightly too long")
     def test_mine_skipping(self):
         master = SkippingDanceMaster("day_16_mine.txt")
         dancers = Dancers(16)
