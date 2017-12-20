@@ -24,7 +24,7 @@ class Keypad:
 
     def _apply_command(self, command):
         movement = self.commands[command]
-        new_location = map(sum, zip(self.location, movement))
+        new_location = list(map(sum, zip(self.location, movement)))
         if self._key_at(new_location) is not None:
             self.location = new_location
 

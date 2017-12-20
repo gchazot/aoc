@@ -1,4 +1,4 @@
-from unittest import TestCase
+import unittest
 from aoc_utils import data_file
 
 
@@ -28,11 +28,11 @@ def solve_maze(maze, alteration):
 
 def solve_maze_file(filename, alteration):
     with open(filename) as f:
-        maze_data = map(int, f.readlines())
+        maze_data = list(map(int, f.readlines()))
         return solve_maze(maze_data, alteration)
 
 
-class TestSolveMaze(TestCase):
+class TestSolveMaze(unittest.TestCase):
     example_data_file = data_file(2017, "day_05_1_example.txt")
     my_data_file = data_file(2017, "day_05_1_mine.txt")
 
@@ -45,5 +45,6 @@ class TestSolveMaze(TestCase):
     def test_2_example(self):
         self.assertEqual(10, solve_maze_file(self.example_data_file, alteration_two))
 
+    @unittest.skip("Takes too long")
     def test_2_mine(self):
         self.assertEqual(27720699, solve_maze_file(self.my_data_file, alteration_two))

@@ -1,13 +1,13 @@
+import functools
 from operator import xor
 from unittest import TestCase
-
 from aoc_utils import data_file
 
 
 class KnotHash:
     def __init__(self, rope_length):
         self.length = rope_length
-        self.rope = range(self.length)
+        self.rope = list(range(self.length))
         self.position = 0
         self.skip_size = 0
 
@@ -25,7 +25,7 @@ class KnotHash:
     def get_hash_v2(self):
         dense_hash = []
         for i in range(16):
-            dense_hash.append(reduce(xor, self.rope[i * 16:(i+1) * 16]))
+            dense_hash.append(functools.reduce(xor, self.rope[i * 16:(i+1) * 16]))
 
         def format_hex(integer):
             return "{:02x}".format(integer)
@@ -58,7 +58,7 @@ class KnotHash:
 
         first_part = self.rope[self.position:direct_range_end]
         second_part = self.rope[0:overflow_range_length]
-        new_range = list(reversed(first_part + second_part))
+        new_range = list(reversed(list(first_part) + list(second_part)))
 
         self.rope[0:overflow_range_length] = new_range[direct_range_length:]
         self.rope[self.position:direct_range_end] = new_range[:direct_range_length]

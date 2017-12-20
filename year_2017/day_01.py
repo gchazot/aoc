@@ -2,6 +2,8 @@ from __future__ import print_function
 from unittest import TestCase
 import timeit
 
+import math
+
 
 def sum_consecutive(sequence):
     total = 0
@@ -36,7 +38,7 @@ class SequenceTest(TestCase):
 
 def sum_halfway(sequence):
     total = 0
-    half_length = len(sequence) / 2
+    half_length = int(math.floor(len(sequence) / 2))
     for i in range(half_length):
         if sequence[i] == sequence[i + half_length]:
             total += int(sequence[i])

@@ -48,5 +48,5 @@ class TestReallocation(TestCase):
         self.assertEqual((5, 4), re_balance_banks([0, 2, 7, 0]))
 
     def test_1_mine(self):
-        my_banks = map(int, "0	5	10	0	11	14	13	4	11	8	8	7	1	4	12	11".split())
+        my_banks = list(map(int, "0 5 10 0 11 14 13 4 11 8 8 7 1 4 12 11".split()))
         self.assertEqual((7864, 1695), re_balance_banks(my_banks))
