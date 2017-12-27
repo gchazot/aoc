@@ -151,7 +151,7 @@ class TestFirewallBreaker(TestCase):
         fwb = FirewallBreaker("day_13_example.txt")
         self.assertEqual(10, fwb.min_safe_delay())
 
-    @skip("Issues in Python 2.7")
+    @skip("Issues to parallelize in Python 2.7")
     def test_find_safe_delay_parallel_example(self):
         fwb = FirewallBreaker("day_13_example.txt")
         self.assertEqual(10, fwb.min_safe_delay_parallel())
