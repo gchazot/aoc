@@ -1,4 +1,13 @@
+import contextlib
+import threading
+import time
 import unittest
+
+try:
+    import Queue as queue
+except ModuleNotFoundError:
+    import queue
+
 try:
     from mock import MagicMock
 except ModuleNotFoundError:
@@ -12,6 +21,10 @@ SPECIAL_SOUND_REGISTER = u"__SPECIAL_SOUND__"
 class RecoveredFrequency(Exception):
     def __init__(self, frequency):
         self.frequency = frequency
+
+
+class WaitingForInput(Exception):
+    pass
 
 
 class InstructionBase(object):
@@ -239,38 +252,285 @@ class TestJumpInstruction(InstructionTestBase):
         self.assertEqual(34, instruction.execute("reg_b", "34"))
 
 
+class SendInstruction(InstructionBase):
+    def __init__(self, registers, destination_queue):
+        super(SendInstruction, self).__init__(registers)
+        self.destination_queue = destination_queue
+
+    def execute(self, register_or_value):
+        value = self.get_register_or_value(register_or_value)
+        self.destination_queue.put(value)
+
+
+class TestSendInstruction(InstructionTestBase):
+    def test_enqueues_item_in_destination(self):
+        destination_queue = MagicMock()
+        instruction = SendInstruction(self.registers, destination_queue)
+
+        instruction.execute("123")
+        destination_queue.put.assert_called_once_with(123)
+
+        destination_queue.put.reset_mock()
+
+        instruction.execute("456")
+        destination_queue.put.assert_called_once_with(456)
+
+
+class ReceiveInstruction(InstructionBase):
+    def __init__(self, registers, source_queue):
+        super(ReceiveInstruction, self).__init__(registers)
+        self.source_queue = source_queue
+
+    def execute(self, register):
+        try:
+            value = self.source_queue.get_nowait()
+            self.set_register(register, value)
+            self.source_queue.task_done()
+            return 1
+        except queue.Empty:
+            raise WaitingForInput()
+
+
+class TestReceiveInstruction(InstructionTestBase):
+    def test_read_item_from_source(self):
+        source_queue = MagicMock()
+        source_queue.empty.return_value = False
+        source_queue.get_nowait.side_effect = [123, 456, 789]
+
+        instruction = ReceiveInstruction(self.registers, source_queue)
+
+        self.assertEqual(1, instruction.execute("reg_a"))
+        self.check_register("reg_a", 123)
+        source_queue.get_nowait.assert_called_once()
+
+        source_queue.get_nowait.reset_mock()
+
+        self.assertEqual(1, instruction.execute("reg_b"))
+        self.check_register("reg_b", 456)
+        source_queue.get_nowait.assert_called_once()
+
+    def test_holds_on_empty_source(self):
+        source_queue = MagicMock()
+        source_queue.empty.return_value = True
+        source_queue.get_nowait.side_effect = queue.Empty
+
+        instruction = ReceiveInstruction(self.registers, source_queue)
+
+        self.assertRaises(WaitingForInput, instruction.execute, ("reg_a",))
+
+
 class InstructionProcessor:
-    def __init__(self, instructions):
-        self._registers = {}
+    def __init__(self, processor_id, instructions, code_lines):
+        self._registers = {"p": processor_id}
         self._instructions = {
             code: Instruction(self._registers) for code, Instruction in instructions.items()
         }
 
-    def exec_program(self, code_lines):
-        program = list(code_lines)
-        index = 0
-        end = len(program)
+        self._code_lines = code_lines
+        self._end_index = len(self._code_lines)
+        self._next_line = 0
 
-        while 0 <= index < end:
-            line = program[index]
-            offset = self.exec_one_line(line)
-            if offset is None:
-                offset = 1
-            index += offset
+        self._waiting_cycles = 0
 
-    def exec_one_line(self, code_line):
-        items = code_line.split()
-        command = items[0]
-        args = items[1:]
+    def run(self):
+        while self.next_line_is_valid():
+            self.exec_next_line()
+
+    def is_waiting(self):
+        return self._waiting_cycles > 0
+
+    def next_line_is_valid(self):
+        return 0 <= self._next_line < self._end_index
+
+    def exec_next_line(self):
+        line = self._code_lines[self._next_line]
+        offset = self._exec_one_line(line)
+        if offset is None:
+            offset = 1
+        self._next_line += offset
+
+    def _exec_one_line(self, code_line):
+        command, args = self._parse_code_line(code_line)
 
         try:
             instruction = self._instructions[command]
-            return instruction.execute(*args)
+            result = instruction.execute(*args)
+            self._waiting_cycles = 0
+            return result
+        except WaitingForInput:
+            self._waiting_cycles += 1
+            return 0
         except KeyError:
             raise RuntimeError(u"Invalid instruction: {}".format(code_line))
 
+    @staticmethod
+    def _parse_code_line(code_line):
+        items = code_line.split()
+        return items[0], items[1:]
 
-default_instructions = {
+
+class TestInstructionProcessor(unittest.TestCase):
+    def setUp(self):
+        mock_instructions = {
+            "cmd1": MagicMock(),
+            "cmd2": MagicMock(),
+            "cmd3": MagicMock(),
+        }
+        code = (
+            u"cmd1",
+            u"cmd2",
+            u"cmd3",
+        )
+        self.test_processor = InstructionProcessor(0, mock_instructions, code)
+        self.test_instructions = self.test_processor._instructions
+        for instruction in self.test_instructions.values():
+            instruction.execute.return_value = None
+
+    def test_initialises_instructions(self):
+        processor = InstructionProcessor(0, sound_instructions, [])
+        for instruction in processor._instructions.values():
+            self.assertEqual(processor._registers, instruction._registers)
+
+    def test_exec_one_line_calls_correct_instruction(self):
+        self.test_processor._exec_one_line(u"cmd2 a b")
+        for command, instruction in self.test_instructions.items():
+            if command == "cmd2":
+                instruction.execute.assert_called_once_with("a", "b")
+            else:
+                instruction.execute.assert_not_called()
+            instruction.execute.reset_mock()
+
+        self.test_processor._exec_one_line(u"cmd3 x y")
+        for command, instruction in self.test_instructions.items():
+            if command == "cmd3":
+                instruction.execute.assert_called_once_with("x", "y")
+            else:
+                instruction.execute.assert_not_called()
+            instruction.execute.reset_mock()
+
+    def test_exec_one_line_fails_for_invalid_instruction(self):
+        self.assertRaises(RuntimeError, self.test_processor._exec_one_line, "inval i d")
+
+    def test_exec_program_runs_all_instructions(self):
+        self.test_processor.run()
+
+        for _command, instruction in self.test_instructions.items():
+            instruction.execute.assert_called_once()
+
+    def test_exec_program_jumps_instructions(self):
+        self.test_instructions["cmd1"].execute.return_value = 2
+
+        self.test_processor.run()
+
+        self.test_instructions["cmd1"].execute.assert_called_once()
+        self.test_instructions["cmd2"].execute.assert_not_called()
+        self.test_instructions["cmd3"].execute.assert_called_once()
+
+    def test_exec_program_jumps_backwards(self):
+        self.test_instructions["cmd1"].execute.return_value = 2
+        self.test_instructions["cmd2"].execute.return_value = 2
+        self.test_instructions["cmd3"].execute.return_value = -1
+
+        self.test_processor.run()
+
+        self.test_instructions["cmd1"].execute.assert_called_once()
+        self.test_instructions["cmd3"].execute.assert_called_once()
+        self.test_instructions["cmd2"].execute.assert_called_once()
+
+
+class InstructionProcessorThread(threading.Thread):
+    def __init__(self, processor_id, instructions, code_lines):
+        super(InstructionProcessorThread, self).__init__()
+        self.processor = InstructionProcessor(processor_id, instructions, code_lines)
+
+        self._terminate = False
+        self._execution_lock = threading.Lock()
+
+    def run(self):
+        while self.processor.next_line_is_valid():
+            time.sleep(0)
+            with self._execution_lock:
+                if self._terminate:
+                    return
+                self.processor.exec_next_line()
+
+    def pause(self):
+        self._execution_lock.acquire()
+
+    def resume(self):
+        self._execution_lock.release()
+
+    @contextlib.contextmanager
+    def pause_context(self):
+        self.pause()
+        yield
+        self.resume()
+
+    def is_waiting(self):
+        return self.processor.is_waiting()
+
+    def terminate(self):
+        self._terminate = True
+
+
+def start_processor_thread(processor_id, instructions, code_lines):
+    processor_thread = InstructionProcessorThread(processor_id, instructions, code_lines)
+    processor_thread.start()
+
+    return processor_thread
+
+
+class TestInstructionProcessorThread(unittest.TestCase):
+    def test_can_enter_wait_state(self):
+        mock_waiting_instruction = MagicMock()
+
+        instructions = {
+            "wam": mock_waiting_instruction,
+        }
+        code = ("wam",)
+
+        processor_thread = InstructionProcessorThread(0, instructions, code)
+        processor_thread.processor._instructions["wam"].execute.side_effect = WaitingForInput
+
+        processor_thread.start()
+        time.sleep(0.01)  # Give processor a head start
+
+        was_waiting = processor_thread.is_waiting()
+
+        processor_thread.terminate()
+        processor_thread.join()
+
+        self.assertTrue(was_waiting) # Might fail because of race condition
+
+    def test_can_be_paused_and_resumed(self):
+        mock_waiting_instruction = MagicMock()
+
+        instructions = {
+            "wms": mock_waiting_instruction,
+        }
+        code = ["wms"]
+
+        def sleep_a_bit():
+            time.sleep(0.01)
+            raise WaitingForInput()
+
+        processor_thread = InstructionProcessorThread(0, instructions, code)
+        wait_instruction = processor_thread.processor._instructions["wms"]
+        wait_instruction.execute.side_effect = sleep_a_bit
+
+        processor_thread.start()
+        time.sleep(0.01)  # Give processor a head start
+
+        with processor_thread.pause_context():
+            was_waiting = processor_thread.is_waiting()
+            wait_instruction.execute.side_effect = lambda: None
+
+        processor_thread.join()
+
+        self.assertTrue(was_waiting)
+
+
+sound_instructions = {
     "snd": SoundInstruction,
     "set": SetInstruction,
     "add": AddInstruction,
@@ -281,105 +541,172 @@ default_instructions = {
 }
 
 
-class TestInstructionProcessor(unittest.TestCase):
-    def setUp(self):
-        mock_instructions = {
-            "cmd1": MagicMock(),
-            "cmd2": MagicMock(),
-            "cmd3": MagicMock(),
-        }
-        self.test_processor = InstructionProcessor(mock_instructions)
-        self.test_instructions = self.test_processor._instructions
-        for instruction in self.test_instructions.values():
-            instruction.execute.return_value = None
-
-    def test_initialises_instructions(self):
-        processor = InstructionProcessor(default_instructions)
-        for instruction in processor._instructions.values():
-            self.assertEqual(processor._registers, instruction._registers)
-
-    def test_exec_one_line_calls_correct_instruction(self):
-        self.test_processor.exec_one_line(u"cmd2 a b")
-        for command, instruction in self.test_instructions.items():
-            if command == "cmd2":
-                instruction.execute.assert_called_once_with("a", "b")
-            else:
-                instruction.execute.assert_not_called()
-            instruction.execute.reset_mock()
-
-        self.test_processor.exec_one_line(u"cmd3 x y")
-        for command, instruction in self.test_instructions.items():
-            if command == "cmd3":
-                instruction.execute.assert_called_once_with("x", "y")
-            else:
-                instruction.execute.assert_not_called()
-            instruction.execute.reset_mock()
-
-    def test_exec_one_line_fails_for_invalid_instruction(self):
-        self.assertRaises(RuntimeError, self.test_processor.exec_one_line, "inval i d")
-
-    def test_exec_program_runs_all_instructions(self):
-        code = (
-            u"cmd1",
-            u"cmd2",
-            u"cmd3",
-        )
-        self.test_processor.exec_program(code)
-
-        for _command, instruction in self.test_instructions.items():
-            instruction.execute.assert_called_once()
-
-    def test_exec_program_jumps_instructions(self):
-        code = (
-            u"cmd1",
-            u"cmd2",
-            u"cmd3",
-        )
-        self.test_instructions["cmd1"].execute.return_value = 2
-
-        self.test_processor.exec_program(code)
-
-        self.test_instructions["cmd1"].execute.assert_called_once()
-        self.test_instructions["cmd2"].execute.assert_not_called()
-        self.test_instructions["cmd3"].execute.assert_called_once()
-
-    def test_exec_program_jumps_backwards(self):
-        code = (
-            u"cmd1",
-            u"cmd2",
-            u"cmd3",
-        )
-        self.test_instructions["cmd1"].execute.return_value = 2
-        self.test_instructions["cmd2"].execute.return_value = 2
-        self.test_instructions["cmd3"].execute.return_value = -1
-
-        self.test_processor.exec_program(code)
-
-        self.test_instructions["cmd1"].execute.assert_called_once()
-        self.test_instructions["cmd3"].execute.assert_called_once()
-        self.test_instructions["cmd2"].execute.assert_called_once()
+def read_code_file(filename):
+    with open(data_file(2017, filename)) as code:
+        return code.readlines()
 
 
-class TestRealProcessor(unittest.TestCase):
-    @staticmethod
-    def read_code(filename):
-        with open(data_file(2017, filename)) as code:
-            return code.readlines()
+class TestSoundProcessor(unittest.TestCase):
     
     def test_example_1(self):
-        code = self.read_code("day_18_example.txt")
-        processor = InstructionProcessor(default_instructions)
+        code = read_code_file("day_18_example.txt")
+        processor = InstructionProcessor(0, sound_instructions, code)
 
         with self.assertRaises(RecoveredFrequency) as assertion:
-            processor.exec_program(code)
+            processor.run()
         frequency = assertion.exception.frequency
         self.assertEqual(4, frequency)
 
     def test_mine_1(self):
-        code = self.read_code("day_18_mine.txt")
-        processor = InstructionProcessor(default_instructions)
+        code = read_code_file("day_18_mine.txt")
+        processor = InstructionProcessor(0, sound_instructions, code)
 
         with self.assertRaises(RecoveredFrequency) as assertion:
-            processor.exec_program(code)
+            processor.run()
         frequency = assertion.exception.frequency
         self.assertEqual(7071, frequency)
+
+
+def make_communicating_instruction(instruction_class, communication_queue):
+    class CommunicatingInstruction(instruction_class):
+        def __init__(self, registers):
+            super(CommunicatingInstruction, self).__init__(registers, communication_queue)
+
+    return CommunicatingInstruction
+
+
+class CountingQueue(queue.Queue):
+    def __init__(self, *args, **kwargs):
+        super(CountingQueue, self).__init__(*args, **kwargs)
+        self.count = 0
+
+    def put(self, *args, **kwargs):
+        super(CountingQueue, self).put(*args, **kwargs)
+        self.count += 1
+
+
+class TestCommunicatingProcessors(unittest.TestCase):
+    @staticmethod
+    def start_communication_processor_thread(processor_id, code, input_queue, output_queue):
+        processor_instructions = {
+            "set": SetInstruction,
+            "add": AddInstruction,
+            "mul": MultiplyInstruction,
+            "mod": ModuloInstruction,
+            "jgz": JumpInstruction,
+            "snd": make_communicating_instruction(SendInstruction, output_queue),
+            "rcv": make_communicating_instruction(ReceiveInstruction, input_queue),
+        }
+        return start_processor_thread(processor_id, processor_instructions, code)
+
+    def test_simple_communication(self):
+        code = ("snd 123", "rcv reg_a", "snd reg_a")
+
+        to_a = queue.Queue()
+        to_b = queue.Queue()
+
+        to_a.put(456)
+
+        thread_1 = self.start_communication_processor_thread(0, code, to_a, to_b)
+        thread_1.join()
+
+        self.assertEqual(123, to_b.get())
+        self.assertEqual(456, to_b.get())
+
+    def test_two_process_communication(self):
+        code = ("snd 12", "rcv register")
+
+        to_a = queue.Queue()
+        to_b = queue.Queue()
+
+        thread_1 = self.start_communication_processor_thread(0, code, to_a, to_b)
+        thread_2 = self.start_communication_processor_thread(1, code, to_b, to_a)
+
+        thread_1.join()
+        thread_2.join()
+
+        self.assertRaises(queue.Empty, to_a.get_nowait)
+        self.assertRaises(queue.Empty, to_b.get_nowait)
+
+    def test_two_process_deadlock(self):
+        code = ("rcv register",)
+
+        to_a = queue.Queue()
+        to_b = queue.Queue()
+
+        thread_1 = self.start_communication_processor_thread(0, code, to_a, to_b)
+        thread_2 = self.start_communication_processor_thread(1, code, to_b, to_a)
+
+        deadlock_found = False
+
+        while True:
+            time.sleep(0.01)
+            if thread_1.is_waiting() and thread_2.is_waiting():
+                with thread_1.pause_context(), thread_2.pause_context():
+                    if thread_1.is_waiting() and thread_2.is_waiting():
+                        thread_1.terminate()
+                        thread_2.terminate()
+                        deadlock_found = True
+                        break
+
+        thread_1.join()
+        thread_2.join()
+
+        self.assertTrue(deadlock_found)
+        self.assertRaises(queue.Empty, to_a.get_nowait)
+        self.assertRaises(queue.Empty, to_b.get_nowait)
+
+    def test_example(self):
+        code = read_code_file("day_18_example_2.txt")
+
+        to_a = CountingQueue()
+        to_b = CountingQueue()
+
+        thread_1 = self.start_communication_processor_thread(0, code, to_a, to_b)
+        thread_2 = self.start_communication_processor_thread(1, code, to_b, to_a)
+
+        while True:
+            time.sleep(0.01)
+            if thread_1.is_waiting() and thread_2.is_waiting():
+                with thread_1.pause_context(), thread_2.pause_context():
+                    if thread_1.is_waiting() and thread_2.is_waiting():
+                        thread_1.terminate()
+                        thread_2.terminate()
+                        break
+
+        thread_1.join()
+        thread_2.join()
+
+        self.assertRaises(queue.Empty, to_a.get_nowait)
+        self.assertRaises(queue.Empty, to_b.get_nowait)
+
+        self.assertEqual(3, to_a.count)
+        self.assertEqual(3, to_b.count)
+
+    def test_mine(self):
+        code = read_code_file("day_18_mine.txt")
+
+        to_a = CountingQueue()
+        to_b = CountingQueue()
+
+        thread_1 = self.start_communication_processor_thread(0, code, to_a, to_b)
+        thread_2 = self.start_communication_processor_thread(1, code, to_b, to_a)
+
+        while True:
+            time.sleep(0.01)
+            if thread_1.is_waiting() and thread_2.is_waiting():
+                with thread_1.pause_context(), thread_2.pause_context():
+                    if thread_1.is_waiting() and thread_2.is_waiting() and to_a.empty() and to_b.empty():
+                        thread_1.terminate()
+                        thread_2.terminate()
+                        break
+
+        thread_1.join()
+        thread_2.join()
+
+        self.assertRaises(queue.Empty, to_a.get_nowait)
+        self.assertRaises(queue.Empty, to_b.get_nowait)
+
+        self.assertEqual(8001, to_a.count)
+        self.assertEqual(8128, to_b.count)
+
