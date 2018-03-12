@@ -577,11 +577,11 @@ def make_communicating_instruction(instruction_class, communication_queue):
 
 class CountingQueue(queue.Queue):
     def __init__(self, *args, **kwargs):
-        super(CountingQueue, self).__init__(*args, **kwargs)
+        queue.Queue.__init__(self, *args, **kwargs)
         self.count = 0
 
     def put(self, *args, **kwargs):
-        super(CountingQueue, self).put(*args, **kwargs)
+        queue.Queue.put(self, *args, **kwargs)
         self.count += 1
 
 
