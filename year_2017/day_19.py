@@ -174,7 +174,7 @@ class Walker:
         try:
             return self._labyrinth[position]
         except Labyrinth.OutOfBounds:
-            return None
+            return ' '
 
 
 class TestWalker(unittest.TestCase):
