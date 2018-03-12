@@ -101,3 +101,119 @@ class TestLabyrinth(unittest.TestCase):
         ])
         self.assertEqual(None, labyrinth.find_entrance())
 
+
+class Walker:
+    def __init__(self, labyrinth):
+        self._labyrinth = labyrinth
+        self._position = self._labyrinth.find_entrance()
+        self._direction = Walker.DOWN
+
+    DOWN = 1, 0
+    UP = -1, 0
+    LEFT = 0, -1
+    RIGHT = 0, 1
+
+    def step(self):
+        self._step_towards(self._direction)
+        if self._labyrinth[self._position] == "+":
+            if self._direction == Walker.DOWN or self._direction == Walker.UP:
+                if self._value_towards(Walker.LEFT) == "-":
+                    self._direction = Walker.LEFT
+                elif self._value_towards(Walker.RIGHT) == "-":
+                    self._direction = Walker.RIGHT
+                else:
+                    raise RuntimeError
+            elif self._direction == Walker.LEFT or self._direction == Walker.RIGHT:
+                if self._value_towards(Walker.UP) == "|":
+                    self._direction = Walker.UP
+                elif self._value_towards(Walker.DOWN) == "|":
+                    self._direction = Walker.DOWN
+                else:
+                    raise RuntimeError
+            else:
+                raise RuntimeError
+
+    def _step_towards(self, direction):
+        self._position = self._position_towards(direction)
+
+    def _value_towards(self, direction):
+        position = self._position_towards(direction)
+        try:
+            return self._labyrinth[position]
+        except Labyrinth.OutOfBounds:
+            return None
+
+    def _position_towards(self, direction):
+        return tuple(self._position[i] + direction[i] for i in (0, 1))
+
+
+class TestWalker(unittest.TestCase):
+    def setUp(self):
+        self.labyrinth = Labyrinth([
+            " |",
+            "-+"
+        ])
+        self.walker = Walker(self.labyrinth)
+
+    def test_initialises_to_entrance(self):
+        self.assertEqual((0, 1), self.walker._position)
+
+        other_labyrinth = Labyrinth([
+            "|",
+            "+-"
+        ])
+        other_walker = Walker(other_labyrinth)
+        self.assertEqual((0, 0), other_walker._position)
+
+    def test_initialises_to_going_down(self):
+        self.assertEqual(Walker.DOWN, self.walker._direction)
+
+    def test_step_towards_updates_position(self):
+        self.assertEqual(self.walker._position, (0, 1))
+
+        self.walker._step_towards(Walker.LEFT)
+        self.assertEqual((0, 0), self.walker._position)
+
+        self.walker._step_towards(Walker.DOWN)
+        self.assertEqual((1, 0), self.walker._position)
+
+        self.walker._step_towards(Walker.RIGHT)
+        self.assertEqual((1, 1), self.walker._position)
+
+        self.walker._step_towards(Walker.UP)
+        self.assertEqual((0, 1), self.walker._position)
+
+    def test_step_progresses_in_current_direction(self):
+        self.walker.step()
+        self.assertEqual(self.walker._position, (1, 1))
+
+    def test_step_updates_direction_at_corner(self):
+        def check_direction_sequence(labyrinth, directions):
+            walker = Walker(labyrinth)
+            for expected_direction in directions:
+                self.assertEqual(expected_direction, walker._direction)
+                walker.step()
+
+        check_direction_sequence(Labyrinth([
+            "|",
+            "+-+",
+            "  |",
+        ]), [Walker.DOWN, Walker.RIGHT, Walker.RIGHT, Walker.DOWN])
+
+        check_direction_sequence(Labyrinth([
+            "  |",
+            "+-+",
+            "|",
+        ]), [Walker.DOWN, Walker.LEFT, Walker.LEFT, Walker.DOWN])
+
+        check_direction_sequence(Labyrinth([
+            "| +-",
+            "| |",
+            "+-+",
+        ]), [Walker.DOWN, Walker.DOWN, Walker.RIGHT, Walker.RIGHT, Walker.UP, Walker.UP, Walker.RIGHT])
+
+        check_direction_sequence(Labyrinth([
+            "-+ |",
+            " | |",
+            " +-+",
+        ]), [Walker.DOWN, Walker.DOWN, Walker.LEFT, Walker.LEFT, Walker.UP, Walker.UP, Walker.LEFT])
