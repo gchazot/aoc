@@ -17,7 +17,9 @@ class Labyrinth:
             raise Labyrinth.OutOfBounds
         line = self._lines[x]
         if y >= len(line):
-            return " "
+            raise Labyrinth.OutOfBounds
+        if line[y] == " ":
+            raise Labyrinth.OutOfBounds
         return line[y]
 
     def find_entrance(self):
@@ -50,9 +52,21 @@ class TestLabyrinth(unittest.TestCase):
         self.assertEqual("|", labyrinth[0, 0])
         self.assertEqual("A", labyrinth[1, 0])
         self.assertEqual("-", labyrinth[1, 1])
-        self.assertEqual(" ", labyrinth[0, 1])
 
-    def test_read_coordinates_excepts_out_of_bounds(self):
+    def test_read_empty_position_raises_exception(self):
+        labyrinth = Labyrinth([
+            " |",
+            "++",
+            "+",
+        ])
+
+        def get_location(lab, x, y):
+            return lab[x, y]
+
+        self.assertRaises(Labyrinth.OutOfBounds, get_location, labyrinth, 0, 0)
+        self.assertRaises(Labyrinth.OutOfBounds, get_location, labyrinth, 2, 1)
+
+    def test_read_coordinates_out_of_bounds_raises_exception(self):
         labyrinth = Labyrinth([
             "|",
         ])
@@ -73,14 +87,6 @@ class TestLabyrinth(unittest.TestCase):
         self.assertRaises(Labyrinth.OutOfBounds, get_location, labyrinth2, 0, 1)
         self.assertRaises(Labyrinth.OutOfBounds, get_location, labyrinth2, 1, 1)
         self.assertRaises(Labyrinth.OutOfBounds, get_location, labyrinth2, 2, 0)
-
-    def test_lines_with_different_lengths_are_filled(self):
-        labyrinth = Labyrinth([
-            "|",
-            "A-",
-        ])
-
-        self.assertEqual(" ", labyrinth[0, 1])
 
     def test_find_entrance(self):
         labyrinth = Labyrinth([
