@@ -1,4 +1,5 @@
 import unittest
+from aoc_utils import data_file
 
 
 class Labyrinth:
@@ -113,34 +114,60 @@ class Walker:
         self._labyrinth = labyrinth
         self._position = self._labyrinth.find_entrance()
         self._direction = Walker.DOWN
+        self._found_letters = []
+        self._steps = 1
 
     DOWN = 1, 0
     UP = -1, 0
     LEFT = 0, -1
     RIGHT = 0, 1
 
+    def walk(self):
+        try:
+            while True:
+                self.step()
+        except Labyrinth.OutOfBounds:
+            pass
+
     def step(self):
         self._step_towards(self._direction)
-        if self._labyrinth[self._position] == "+":
-            if self._direction == Walker.DOWN or self._direction == Walker.UP:
-                if self._value_towards(Walker.LEFT) == "-":
-                    self._direction = Walker.LEFT
-                elif self._value_towards(Walker.RIGHT) == "-":
-                    self._direction = Walker.RIGHT
-                else:
-                    raise RuntimeError
-            elif self._direction == Walker.LEFT or self._direction == Walker.RIGHT:
-                if self._value_towards(Walker.UP) == "|":
-                    self._direction = Walker.UP
-                elif self._value_towards(Walker.DOWN) == "|":
-                    self._direction = Walker.DOWN
-                else:
-                    raise RuntimeError
-            else:
-                raise RuntimeError
+
+        current_value = self._labyrinth[self._position]
+        if current_value == "+":
+            self._choose_next_direction()
+        elif 'A' <= current_value <= 'Z':
+            self._found_letters.append(current_value)
+
+        self._steps += 1
+
+    def word(self):
+        return "".join(self._found_letters)
+
+    def steps(self):
+        return self._steps
 
     def _step_towards(self, direction):
         self._position = self._position_towards(direction)
+
+    def _position_towards(self, direction):
+        return tuple(self._position[i] + direction[i] for i in (0, 1))
+
+    def _choose_next_direction(self):
+        def check_for_and_turn_to(for_directions, to_directions, next_marker):
+            for for_direction in for_directions:
+                if self._direction == for_direction:
+                    for to_direction in to_directions:
+                        to_value = self._value_towards(to_direction)
+                        if to_value == next_marker or 'A' <= to_value <= 'Z':
+                            self._direction = to_direction
+                            return True
+            return False
+
+        up_down = (Walker.DOWN, Walker.UP)
+        right_left = (Walker.LEFT, Walker.RIGHT)
+        if (not check_for_and_turn_to(up_down, right_left, "-")
+                and not check_for_and_turn_to(right_left, up_down, "|")):
+            raise RuntimeError
 
     def _value_towards(self, direction):
         position = self._position_towards(direction)
@@ -148,9 +175,6 @@ class Walker:
             return self._labyrinth[position]
         except Labyrinth.OutOfBounds:
             return None
-
-    def _position_towards(self, direction):
-        return tuple(self._position[i] + direction[i] for i in (0, 1))
 
 
 class TestWalker(unittest.TestCase):
@@ -173,6 +197,9 @@ class TestWalker(unittest.TestCase):
 
     def test_initialises_to_going_down(self):
         self.assertEqual(Walker.DOWN, self.walker._direction)
+
+    def test_initialises_to_1_step(self):
+        self.assertEqual(1, self.walker.steps())
 
     def test_step_towards_updates_position(self):
         self.assertEqual(self.walker._position, (0, 1))
@@ -223,3 +250,62 @@ class TestWalker(unittest.TestCase):
             " | |",
             " +-+",
         ]), [Walker.DOWN, Walker.DOWN, Walker.LEFT, Walker.LEFT, Walker.UP, Walker.UP, Walker.LEFT])
+
+    def test_step_registers_found_letters(self):
+        def check_generated_word(expected_word, labyrinth_lines, num_steps):
+            labyrinth = Labyrinth(labyrinth_lines)
+            walker = Walker(labyrinth)
+            for _ in range(num_steps):
+                walker.step()
+
+            self.assertEqual(expected_word, walker.word())
+
+        check_generated_word("A", [
+            " |",
+            " A",
+        ], num_steps=1)
+
+        check_generated_word("AAA", [
+            " |",
+            " A",
+            " A",
+            " A",
+        ], num_steps=3)
+
+        check_generated_word("ABCD", [
+            "|",
+            "A",
+            "+-B-+",
+            "    |",
+            "D-C-+",
+        ], num_steps=12)
+
+        check_generated_word("ABCDEFG", [
+            "| G +-D+",
+            "A | |  |",
+            "| +F|E-+",
+            "B   |",
+            "+-C-+",
+        ], num_steps=24)
+
+    def test_example(self):
+        with open(data_file(2017, "day_19_example.txt")) as f:
+            labyrinth_lines = f.readlines()
+
+        labyrinth = Labyrinth(labyrinth_lines)
+        walker = Walker(labyrinth)
+        walker.walk()
+
+        self.assertEqual("ABCDEF", walker.word())
+        self.assertEqual(38, walker.steps())
+
+    def test_mine(self):
+        with open(data_file(2017, "day_19_mine.txt")) as f:
+            labyrinth_lines = f.readlines()
+
+        labyrinth = Labyrinth(labyrinth_lines)
+        walker = Walker(labyrinth)
+        walker.walk()
+
+        self.assertEqual("PBAZYFMHT", walker.word())
+        self.assertEqual(16072, walker.steps())
