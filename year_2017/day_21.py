@@ -100,30 +100,31 @@ class RuleBook:
     def __init__(self, lines):
         self.rules = [Rule(line) for line in lines]
 
-    def translate(self, pattern):
+    def find_rule_for(self, pattern):
         for rule in self.rules:
             if rule.matches(pattern):
-                return rule.enhanced
+                return rule
         return None
 
 
 class TestRuleBook(unittest.TestCase):
     def setUp(self):
-        self.lines = [
+        self.rule_lines = [
             "../.# => ##./#../...",
             ".#./..#/### => #..#/..../..../#..#",
         ]
-        self.book = RuleBook(self.lines)
+        self.rule_book = RuleBook(self.rule_lines)
 
     def test_creates_with_lines(self):
-        self.assertEqual(len(self.lines), len(self.book.rules))
+        self.assertEqual(len(self.rule_lines), len(self.rule_book.rules))
 
-    def test_translates_pattern(self):
-        self.assertListEqual(["##.", "#..", "..."],
-                             self.book.translate(["..", ".#"]))
-        self.assertListEqual(["#..#", "....", "....", "#..#"],
-                             self.book.translate([".#.", "..#", "###"]))
-        self.assertListEqual(["##.", "#..", "..."],
-                             self.book.translate(["..", "#."]))
-        self.assertListEqual(["#..#", "....", "....", "#..#"],
-                             self.book.translate([".#.", "#..", "###"]))
+    def test_find_rule_for(self):
+        def enhance(pattern):
+            rule = self.rule_book.find_rule_for(pattern)
+            if rule is not None:
+                return rule.enhanced
+
+        self.assertListEqual(["##.", "#..", "..."], enhance(["..", ".#"]))
+        self.assertListEqual(["#..#", "....", "....", "#..#"], enhance([".#.", "..#", "###"]))
+        self.assertListEqual(["##.", "#..", "..."], enhance(["..", "#."]))
+        self.assertListEqual(["#..#", "....", "....", "#..#"], enhance([".#.", "#..", "###"]))
