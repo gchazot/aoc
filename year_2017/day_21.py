@@ -25,7 +25,7 @@ def reverse(p):
 
 class Rule:
     def __init__(self, line):
-        pattern, enhanced = line.split(" => ")
+        pattern, enhanced = line.strip().split(" => ")
         self.pattern = pattern.split("/")
         self.enhanced = enhanced.split("/")
 
@@ -50,6 +50,10 @@ class TestRule(unittest.TestCase):
     def test_init(self):
         self.assertEqual(["..#", ".#.", "#.#"], self.pattern2x2.enhanced)
         self.assertEqual(["###.", ".###", "#.##", ".#.."], self.pattern3x3.enhanced)
+
+    def test_ignores_end_of_line_in_input(self):
+        with_end_of_line = Rule("#./.. => ..#/.#./#.#\n")
+        self.assertEqual(["..#", ".#.", "#.#"], with_end_of_line.enhanced)
 
     def test_matches_same(self):
         self.assertTrue(self.pattern2x2.matches(["#.", ".."]))
