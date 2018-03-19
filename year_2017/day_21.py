@@ -128,3 +128,25 @@ class TestRuleBook(unittest.TestCase):
         self.assertListEqual(["#..#", "....", "....", "#..#"], enhance([".#.", "..#", "###"]))
         self.assertListEqual(["##.", "#..", "..."], enhance(["..", "#."]))
         self.assertListEqual(["#..#", "....", "....", "#..#"], enhance([".#.", "#..", "###"]))
+
+
+class ArtPiece:
+    def __init__(self, initial_pattern, rule_book):
+        self.rule_book = rule_book
+        initial_rule = self.rule_book.find_rule_for(initial_pattern)
+        self.rules = [[initial_rule]]
+
+
+class TestArtPiece(unittest.TestCase):
+    def setUp(self):
+        self.initial_pattern = [".#.", "..#", "###"]
+        rule_lines = [
+            "../.# => ##./#../...",
+            ".#./..#/### => #..#/..../..../#..#",
+        ]
+        self.rule_book = RuleBook(rule_lines)
+        self.art_piece = ArtPiece(self.initial_pattern, self.rule_book)
+
+    def test_initialises_with_rule(self):
+        initial_rule = self.rule_book.find_rule_for(self.initial_pattern)
+        self.assertListEqual([[initial_rule]], self.art_piece.rules)
