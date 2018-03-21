@@ -60,6 +60,15 @@ class Rule:
             reverse(flip(rotate(self.pattern))),
         )
 
+    def children(self):
+        if len(self.enhanced) == 3:
+            yield self.enhanced
+        else:
+            yield [self.enhanced[0][:2], self.enhanced[1][:2]]
+            yield [self.enhanced[0][2:], self.enhanced[1][2:]]
+            yield [self.enhanced[2][:2], self.enhanced[3][:2]]
+            yield [self.enhanced[2][2:], self.enhanced[3][2:]]
+
 
 class TestRule(unittest.TestCase):
     def setUp(self):
@@ -69,6 +78,12 @@ class TestRule(unittest.TestCase):
     def test_init(self):
         self.assertEqual(["..#", ".#.", "#.#"], self.pattern2x2.enhanced)
         self.assertEqual(["###.", ".###", "#.##", ".#.."], self.pattern3x3.enhanced)
+
+    def test_returns_children_patterns(self):
+        self.assertListEqual([["..#", ".#.", "#.#"]],
+                             list(self.pattern2x2.children()))
+        self.assertListEqual([["##", ".#"], ["#.", "##"], ["#.", ".#"], ["##", ".."]],
+                             list(self.pattern3x3.children()))
 
     def test_ignores_end_of_line_in_input(self):
         with_end_of_line = Rule("#./.. => ..#/.#./#.#\n")
