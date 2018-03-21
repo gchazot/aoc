@@ -9,9 +9,9 @@ def rotate(p):
         ]
     else:
         return [
-            "".join([p[1][0], p[0][0], p[0][1]]),
-            "".join([p[2][0], p[1][1], p[0][2]]),
-            "".join([p[2][1], p[2][2], p[1][2]]),
+            "".join([p[2][0], p[1][0], p[0][0]]),
+            "".join([p[2][1], p[1][1], p[0][1]]),
+            "".join([p[2][2], p[1][2], p[0][2]]),
         ]
 
 
@@ -21,6 +21,25 @@ def flip(p):
 
 def reverse(p):
     return ["".join(reversed(line)) for line in reversed(p)]
+
+
+class TestAlterations(unittest.TestCase):
+    def setUp(self):
+        self.pattern2x2 = ["#.", ".."]
+        self.pattern3x3 = ["##.", "#..", "..."]
+
+    def test_rotate(self):
+        self.assertListEqual([".#", ".."], rotate(self.pattern2x2))
+        self.assertListEqual([".##", "..#", "..."], rotate(self.pattern3x3))
+        self.assertListEqual(["#..", "#.#", "##."], rotate([".#.", "..#", "###"]))
+
+    def test_flip(self):
+        self.assertListEqual(["..", "#."], flip(self.pattern2x2))
+        self.assertListEqual(["...", "#..", "##."], flip(self.pattern3x3))
+
+    def test_reverse(self):
+        self.assertListEqual(["..", ".#"], reverse(self.pattern2x2))
+        self.assertListEqual(["...", "..#", ".##"], reverse(self.pattern3x3))
 
 
 class Rule:
@@ -61,7 +80,7 @@ class TestRule(unittest.TestCase):
 
     def test_matches_rotated(self):
         self.assertTrue(self.pattern2x2.matches([".#", ".."]))
-        self.assertTrue(self.pattern3x3.matches(["###", "...", "..."]))
+        self.assertTrue(self.pattern3x3.matches([".##", "..#", "..."]))
 
     def test_matches_flipped(self):
         self.assertTrue(self.pattern2x2.matches(["..", "#."]))
@@ -69,7 +88,7 @@ class TestRule(unittest.TestCase):
 
     def test_matches_rotated_and_flipped(self):
         self.assertTrue(self.pattern2x2.matches(["..", ".#"]))
-        self.assertTrue(self.pattern3x3.matches(["...", "...", "###"]))
+        self.assertTrue(self.pattern3x3.matches(["...", "..#", ".##"]))
 
     def test_matches_reversed(self):
         self.assertTrue(self.pattern2x2.matches(["..", ".#"]))
@@ -77,7 +96,7 @@ class TestRule(unittest.TestCase):
 
     def test_matches_reversed_rotated(self):
         self.assertTrue(self.pattern2x2.matches(["..", "#."]))
-        self.assertTrue(self.pattern3x3.matches(["...", "...", "###"]))
+        self.assertTrue(self.pattern3x3.matches(["...", "#..", "##."]))
 
     def test_matches_reversed_flipped(self):
         self.assertTrue(self.pattern2x2.matches([".#", ".."]))
@@ -85,19 +104,7 @@ class TestRule(unittest.TestCase):
 
     def test_matches_reversed_rotated_and_flipped(self):
         self.assertTrue(self.pattern2x2.matches(["#.", ".."]))
-        self.assertTrue(self.pattern3x3.matches(["...", "...", "###"]))
-
-    def test_rotate(self):
-        self.assertListEqual([".#", ".."], rotate(self.pattern2x2.pattern))
-        self.assertListEqual(["###", "...", "..."], rotate(self.pattern3x3.pattern))
-
-    def test_flip(self):
-        self.assertListEqual(["..", "#."], flip(self.pattern2x2.pattern))
-        self.assertListEqual(["...", "#..", "##."], flip(self.pattern3x3.pattern))
-
-    def test_reverse(self):
-        self.assertListEqual(["..", ".#"], reverse(self.pattern2x2.pattern))
-        self.assertListEqual(["...", "..#", ".##"], reverse(self.pattern3x3.pattern))
+        self.assertTrue(self.pattern3x3.matches(["##.", "#..", "..."]))
 
 
 class RuleBook:
