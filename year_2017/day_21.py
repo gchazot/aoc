@@ -132,12 +132,18 @@ class RuleBook:
                 return rule
         return None
 
+    def children_of(self, pattern):
+        rule = self.find_rule_for(pattern)
+        return rule.children()
+
 
 class TestRuleBook(unittest.TestCase):
     def setUp(self):
         self.rule_lines = [
             "../.# => ##./#../...",
             ".#./..#/### => #..#/..../..../#..#",
+            ".##/..#/... => #..#/.##./.##./#..#",
+            "#./.# => #.#/#.#/.#.",
         ]
         self.rule_book = RuleBook(self.rule_lines)
 
@@ -154,6 +160,24 @@ class TestRuleBook(unittest.TestCase):
         self.assertListEqual(["#..#", "....", "....", "#..#"], enhance([".#.", "..#", "###"]))
         self.assertListEqual(["##.", "#..", "..."], enhance(["..", "#."]))
         self.assertListEqual(["#..#", "....", "....", "#..#"], enhance([".#.", "#..", "###"]))
+
+    def test_finds_rules_children(self):
+        def check_children(pattern, expected_child_patterns):
+            children = list(self.rule_book.children_of(pattern))
+            self.assertEqual(len(expected_child_patterns), len(children))
+            for i, child_pattern in enumerate(children):
+                rule = self.rule_book.find_rule_for(child_pattern)
+                expected_pattern = expected_child_patterns[i]
+                self.assertTrue(rule.matches(expected_pattern))
+
+        check_children(["..", ".#"], [["##.", "#..", "..."]])
+        check_children([".#", ".."], [["##.", "#..", "..."]])
+
+        check_children([".#.", "..#", "###"], [["#.", ".."] for _ in range(4)])
+        check_children(["#..", "#.#", "##."], [["#.", ".."] for _ in range(4)])
+
+        check_children([".##", "..#", "..."], [["#.", ".#"] for _ in range(4)])
+        check_children(["##.", "#..", "..."], [["#.", ".#"] for _ in range(4)])
 
 
 class ArtPiece:
