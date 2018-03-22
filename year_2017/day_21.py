@@ -75,7 +75,7 @@ class TestRule(unittest.TestCase):
         self.pattern2x2 = Rule("#./.. => ..#/.#./#.#")
         self.pattern3x3 = Rule("##./#../... => ###./.###/#.##/.#..")
 
-    def test_init(self):
+    def test_splits_enhanced(self):
         self.assertEqual(["..#", ".#.", "#.#"], self.pattern2x2.enhanced)
         self.assertEqual(["###.", ".###", "#.##", ".#.."], self.pattern3x3.enhanced)
 
