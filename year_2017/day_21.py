@@ -1,4 +1,5 @@
 import unittest
+from aoc_utils import data_file
 
 
 def rotate(p):
@@ -188,23 +189,109 @@ class TestRuleBook(unittest.TestCase):
         check_children(["##.", "#..", "..."], [["#.", ".#"] for _ in range(4)])
 
 
-class ArtPiece:
-    def __init__(self, initial_pattern, rule_book):
+class PatternTree:
+    class Node:
+        def __init__(self, pattern):
+            self.pattern = pattern
+            self.children = []
+
+        def add_child(self, pattern):
+            node = PatternTree.Node(pattern)
+            self.children.append(node)
+
+        def count_pixels(self):
+            return sum(line.count("#") for line in self.pattern)
+
+    def __init__(self, rule_book, depth):
         self.rule_book = rule_book
-        initial_rule = self.rule_book.find_rule_for(initial_pattern)
-        self.rules = [[initial_rule]]
+        self.base = PatternTree.Node([".#.", "..#", "###"])
+
+        self._init_nodes_to_depth([self.base], depth)
+
+    def _init_nodes_to_depth(self, nodes, depth):
+        if depth <= 0:
+            return
+
+        for node in nodes:
+            child_patterns = self.rule_book.children_of(node.pattern)
+            for pattern in child_patterns:
+                node.add_child(pattern)
+            self._init_nodes_to_depth(node.children, depth-1)
+
+    def count_at_depth(self, depth):
+        return self._count_for_nodes_at_depth([self.base], depth)
+
+    def _count_for_nodes_at_depth(self, nodes, depth):
+        if depth == 0:
+            return sum(node.count_pixels() for node in nodes)
+        elif depth > 0:
+            return sum(self._count_for_nodes_at_depth(node.children, depth-1) for node in nodes)
+        else:
+            raise RuntimeError("depth must be > 0")
 
 
-class TestArtPiece(unittest.TestCase):
+class PatternTreeTest(unittest.TestCase):
     def setUp(self):
-        self.initial_pattern = [".#.", "..#", "###"]
-        rule_lines = [
+        self.rule_lines = [
             "../.# => ##./#../...",
             ".#./..#/### => #..#/..../..../#..#",
         ]
-        self.rule_book = RuleBook(rule_lines)
-        self.art_piece = ArtPiece(self.initial_pattern, self.rule_book)
+        self.rule_book = RuleBook(self.rule_lines)
 
-    def test_initialises_with_rule(self):
-        initial_rule = self.rule_book.find_rule_for(self.initial_pattern)
-        self.assertListEqual([[initial_rule]], self.art_piece.rules)
+    def test_node_counts_pixels(self):
+        def check_count(expected_count, pattern):
+            node = PatternTree.Node(pattern)
+            self.assertEqual(expected_count, node.count_pixels())
+
+        check_count(1, ["..", ".#"])
+        check_count(2, [".#", ".#"])
+        check_count(3, ["##", ".#"])
+        check_count(4, ["##", "##"])
+
+        check_count(4, [".#.", "..#", "#.#"])
+        check_count(5, [".#.", "..#", "###"])
+
+    def test_initialises_with_start_pattern(self):
+        tree = PatternTree(self.rule_book, 0)
+        self.assertListEqual([".#.", "..#", "###"], tree.base.pattern)
+        self.assertEqual(0, len(tree.base.children))
+
+    def test_initialises_to_depth_1(self):
+        tree = PatternTree(self.rule_book, 1)
+        self.assertEqual(4, len(tree.base.children))
+
+        for child in tree.base.children:
+            self.assertEqual(0, len(child.children))
+
+    def test_initialises_to_depth_2(self):
+        tree = PatternTree(self.rule_book, 2)
+        self.assertEqual(4, len(tree.base.children))
+
+        for child in tree.base.children:
+            self.assertEqual(1, len(child.children))
+            for grand_child in child.children:
+                self.assertEqual(0, len(grand_child.children))
+
+    def test_count_pixels_at_depth(self):
+        tree = PatternTree(self.rule_book, 2)
+
+        self.assertEqual(5, tree.count_at_depth(0))
+        self.assertEqual(4, tree.count_at_depth(1))
+        self.assertEqual(12, tree.count_at_depth(2))
+
+    def test_mine(self):
+        with open(data_file(2017, "day_21_mine.txt")) as f:
+            rules_lines = f.readlines()
+
+        rule_book = RuleBook(rules_lines)
+        art = PatternTree(rule_book, 7)
+
+        self.assertEqual(5, art.count_at_depth(0))
+        self.assertEqual(6, art.count_at_depth(1))
+        self.assertEqual(16, art.count_at_depth(2))
+        self.assertEqual(34, art.count_at_depth(3))
+        self.assertEqual(72, art.count_at_depth(4))
+        self.assertEqual(122, art.count_at_depth(5))
+        self.assertEqual(264, art.count_at_depth(6))
+        self.assertEqual(482, art.count_at_depth(7))
+
