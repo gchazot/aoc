@@ -2,17 +2,20 @@ import unittest
 
 
 def rotate(p):
-    if len(p) == 2:
+    size = len(p)
+    if size == 2:
         return [
             "".join([p[1][0], p[0][0]]),
             "".join([p[1][1], p[0][1]]),
         ]
-    else:
+    elif size == 3:
         return [
             "".join([p[2][0], p[1][0], p[0][0]]),
             "".join([p[2][1], p[1][1], p[0][1]]),
             "".join([p[2][2], p[1][2], p[0][2]]),
         ]
+    else:
+        raise RuntimeError("Argh, size is ", size)
 
 
 def flip(p):
@@ -49,7 +52,7 @@ class Rule:
         self.enhanced = enhanced.split("/")
 
     def matches(self, pattern):
-        return pattern in (
+        options = (
             self.pattern,
             rotate(self.pattern),
             flip(self.pattern),
@@ -60,14 +63,19 @@ class Rule:
             reverse(flip(rotate(self.pattern))),
         )
 
+        return pattern in options
+
     def children(self):
-        if len(self.enhanced) == 3:
+        size = len(self.enhanced)
+        if size == 3:
             yield self.enhanced
-        else:
+        elif size == 4:
             yield [self.enhanced[0][:2], self.enhanced[1][:2]]
             yield [self.enhanced[0][2:], self.enhanced[1][2:]]
             yield [self.enhanced[2][:2], self.enhanced[3][:2]]
             yield [self.enhanced[2][2:], self.enhanced[3][2:]]
+        else:
+            raise RuntimeError("Argh, size is ", size)
 
 
 class TestRule(unittest.TestCase):
