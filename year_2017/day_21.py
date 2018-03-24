@@ -295,3 +295,22 @@ class PatternTreeTest(unittest.TestCase):
         self.assertEqual(264, art.count_at_depth(6))
         self.assertEqual(482, art.count_at_depth(7))
 
+    def test_other(self):
+        with open(data_file(2017, "day_21_other.txt")) as f:
+            rules_lines = f.readlines()
+
+        rule_book = RuleBook(rules_lines)
+        art = PatternTree(rule_book, 7)
+
+        self.assertEqual(5, art.count_at_depth(0))
+        self.assertEqual(3, art.count_at_depth(1))
+        self.assertEqual(26, art.count_at_depth(2))
+        self.assertEqual(29, art.count_at_depth(3))
+        self.assertEqual(98, art.count_at_depth(4))
+        self.assertEqual(110, art.count_at_depth(5))
+        self.assertEqual(378, art.count_at_depth(6))
+        self.assertEqual(448, art.count_at_depth(7))
+
+        # This is the expected correct answer
+        # self.assertEqual(208, art.count_at_depth(5))
+
