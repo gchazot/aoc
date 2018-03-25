@@ -359,7 +359,7 @@ class ArtPiece:
             for j, pattern in enumerate(pattern_row):
                 enhanced_patterns = self.rule_book.children_of(pattern)
                 for n, new_pattern in enumerate(enhanced_patterns):
-                    new_pattern_i = n / self.enhanced_pattern_size()
+                    new_pattern_i = int(n / self.enhanced_pattern_size())
                     for v, new_pattern_row in enumerate(new_pattern):
                         new_i = top_row + new_pattern_i * self.enhanced_pattern_size() + v
                         new_image[new_i] += new_pattern_row
@@ -379,7 +379,7 @@ class ArtPiece:
             yield pattern_row
 
     def num_patterns_to_enhance(self):
-        return self.image_size() / self.image_pattern_size()
+        return int(self.image_size() / self.image_pattern_size())
 
     def image_pattern_size(self):
         if self.image_size() % 2 == 0:
