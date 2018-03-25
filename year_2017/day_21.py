@@ -332,7 +332,7 @@ class ArtPiece:
         for i in range(self.num_patterns_to_enhance()):
             pattern_row = []
             for j in range(self.num_patterns_to_enhance()):
-                new_patterns = self._gen_pattern(self.image_pattern_size(), i, j)
+                new_patterns = self._gen_pattern(i, j)
                 pattern_row.append(list(new_patterns))
             yield pattern_row
 
@@ -345,7 +345,8 @@ class ArtPiece:
         elif self.image_size() % 3 == 0:
             return 3
 
-    def _gen_pattern(self, pattern_size, row, col):
+    def _gen_pattern(self, row, col):
+        pattern_size = self.image_pattern_size()
         for k in range(pattern_size):
             row_num = row * pattern_size + k
             first_col_num = col * pattern_size
@@ -353,18 +354,21 @@ class ArtPiece:
             yield self.image[row_num][first_col_num:last_col_num]
 
     def enhanced_image_size(self):
-        next_pattern_num = self.num_enhanced_patterns()
+        next_pattern_num = self.num_patterns_to_enhance() * self.patterns_enhancement_factor()
 
-        next_pattern_size = 2 + 3 - self.image_pattern_size()
+        next_pattern_size = self.enhanced_pattern_size()
         next_image_size = next_pattern_num * next_pattern_size
 
         return next_image_size
 
-    def num_enhanced_patterns(self):
+    def enhanced_pattern_size(self):
+        return 2 + 3 - self.image_pattern_size()
+
+    def patterns_enhancement_factor(self):
         if self.image_pattern_size() == 2:
-            return self.num_patterns_to_enhance()
+            return 1
         elif self.image_pattern_size() == 3:
-            return self.num_patterns_to_enhance() * 2
+            return 2
 
 
 class ArtPieceTest(unittest.TestCase):
