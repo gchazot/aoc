@@ -322,6 +322,9 @@ class ArtPiece:
         self.rule_book = rule_book
         self.image = start_pattern
 
+    def count_pixels(self):
+        return sum(line.count("#") for line in self.image)
+
     def image_size(self):
         return len(self.image)
 
@@ -385,6 +388,17 @@ class ArtPieceTest(unittest.TestCase):
         for pattern in (self.image2x2, self.image3x3, self.image4x4, self.image6x6):
             art = ArtPiece(self.rule_book, pattern)
             self.assertListEqual(pattern, art.image)
+
+    def test_count_pixels(self):
+        def check_pixels_count(expected_count, image):
+            art = ArtPiece(None, image)
+            self.assertEqual(expected_count, art.count_pixels())
+
+        check_pixels_count(1, self.image2x2)
+        check_pixels_count(5, self.image3x3)
+        check_pixels_count(6, self.image4x4)
+        check_pixels_count(16, self.image6x6)
+        check_pixels_count(36, self.image9x9)
 
     def test_choose_pattern_size(self):
         def check_image_pattern_size(expected_size, image):
