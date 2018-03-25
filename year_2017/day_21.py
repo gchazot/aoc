@@ -2,6 +2,23 @@ import unittest
 from aoc_utils import data_file
 
 
+def hash_pattern(pattern):
+    return "".join(pattern)
+
+
+def cache_result(func):
+    cache = {}
+
+    def inner(pattern):
+        h = hash_pattern(pattern)
+        if h not in cache:
+            cache[h] = func(pattern)
+        return cache[h]
+
+    return inner
+
+
+@cache_result
 def rotate(p):
     size = len(p)
     if size == 2:
@@ -19,10 +36,12 @@ def rotate(p):
         raise RuntimeError("Argh, size is ", size)
 
 
+@cache_result
 def flip(p):
     return list(reversed(p))
 
 
+@cache_result
 def reverse(p):
     return ["".join(reversed(line)) for line in reversed(p)]
 
@@ -134,12 +153,16 @@ class TestRule(unittest.TestCase):
 class RuleBook:
     def __init__(self, lines):
         self.rules = [Rule(line) for line in lines]
+        self.index = {}
 
     def find_rule_for(self, pattern):
-        for rule in self.rules:
-            if rule.matches(pattern):
-                return rule
-        return None
+        h = hash_pattern(pattern)
+        if h not in self.index:
+            self.index[h] = None
+            for rule in self.rules:
+                if rule.matches(pattern):
+                    self.index[h] = rule
+        return self.index[h]
 
     def children_of(self, pattern):
         rule = self.find_rule_for(pattern)
@@ -470,3 +493,16 @@ class ArtPieceTest(unittest.TestCase):
         art = ArtPiece(self.rule_book, self.image2x2)
         art.enhance_image_once()
         self.assertListEqual(["##.", "#..", "..."], art.image)
+
+    def test_mine(self):
+        with open(data_file(2017, "day_21_mine.txt")) as f:
+            rules_lines = f.readlines()
+
+        rule_book = RuleBook(rules_lines)
+        art = ArtPiece(rule_book, [".#.", "..#", "###", ])
+
+        art.enhance_image(5)
+        self.assertEqual(150, art.count_pixels())
+
+        art.enhance_image(18 - 5)
+        self.assertEqual(2606275, art.count_pixels())
