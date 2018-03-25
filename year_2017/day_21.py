@@ -33,7 +33,7 @@ def rotate(p):
             "".join([p[2][2], p[1][2], p[0][2]]),
         ]
     else:
-        raise RuntimeError("Argh, size is ", size)
+        raise RuntimeError("Error, size is ", size)
 
 
 @cache_result
@@ -95,7 +95,7 @@ class Rule:
             yield [self.enhanced[2][:2], self.enhanced[3][:2]]
             yield [self.enhanced[2][2:], self.enhanced[3][2:]]
         else:
-            raise RuntimeError("Argh, size is ", size)
+            raise RuntimeError("Error, size is ", size)
 
 
 class TestRule(unittest.TestCase):
@@ -353,17 +353,19 @@ class ArtPiece:
         return sum(line.count("#") for line in self.image)
 
     def enhance_image_once(self):
+        enhanced_pattern_size = self.enhanced_pattern_size()
+
         new_image = ["" for _ in range(self.enhanced_image_size())]
         for i, pattern_row in enumerate(self.split_image_to_patterns()):
-            top_row = i * self.enhanced_pattern_size() * self.patterns_enhancement_factor()
-            for j, pattern in enumerate(pattern_row):
+            top_row = i * enhanced_pattern_size * self.patterns_enhancement_factor()
+            for pattern in pattern_row:
                 enhanced_patterns = self.rule_book.children_of(pattern)
                 for n, new_pattern in enumerate(enhanced_patterns):
-                    new_pattern_i = int(n / self.enhanced_pattern_size())
+                    enhanced_pattern_i = int(n / enhanced_pattern_size)
+                    enhanced_pattern_top_row = top_row + enhanced_pattern_i * enhanced_pattern_size
                     for v, new_pattern_row in enumerate(new_pattern):
-                        new_i = top_row + new_pattern_i * self.enhanced_pattern_size() + v
+                        new_i = enhanced_pattern_top_row + v
                         new_image[new_i] += new_pattern_row
-                        pass
 
         self.image = new_image
 
@@ -397,7 +399,6 @@ class ArtPiece:
 
     def enhanced_image_size(self):
         next_pattern_num = self.num_patterns_to_enhance() * self.patterns_enhancement_factor()
-
         next_pattern_size = self.enhanced_pattern_size()
         next_image_size = next_pattern_num * next_pattern_size
 
@@ -494,6 +495,7 @@ class ArtPieceTest(unittest.TestCase):
         art.enhance_image_once()
         self.assertListEqual(["##.", "#..", "..."], art.image)
 
+    @unittest.skip("Just a bit too slow")
     def test_mine(self):
         with open(data_file(2017, "day_21_mine.txt")) as f:
             rules_lines = f.readlines()
