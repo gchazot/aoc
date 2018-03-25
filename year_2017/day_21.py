@@ -316,3 +316,108 @@ class PatternTreeTest(unittest.TestCase):
         # This is the expected correct answer
         # self.assertEqual(208, art.count_at_depth(5))
 
+
+class ArtPiece:
+    def __init__(self, rule_book, start_pattern):
+        self.rule_book = rule_book
+        self.image = start_pattern
+
+    def image_size(self):
+        return len(self.image)
+
+    def split_image_to_patterns(self):
+        for i in range(self.num_patterns_to_enhance()):
+            pattern_row = []
+            for j in range(self.num_patterns_to_enhance()):
+                new_patterns = self._gen_pattern(self.image_pattern_size(), i, j)
+                pattern_row.append(list(new_patterns))
+            yield pattern_row
+
+    def num_patterns_to_enhance(self):
+        return self.image_size() / self.image_pattern_size()
+
+    def image_pattern_size(self):
+        if self.image_size() % 2 == 0:
+            return 2
+        elif self.image_size() % 3 == 0:
+            return 3
+
+    def _gen_pattern(self, pattern_size, row, col):
+        for k in range(pattern_size):
+            row_num = row * pattern_size + k
+            first_col_num = col * pattern_size
+            last_col_num = first_col_num + pattern_size
+            yield self.image[row_num][first_col_num:last_col_num]
+
+    def enhanced_image_size(self):
+        next_pattern_num = self.num_enhanced_patterns()
+
+        next_pattern_size = 2 + 3 - self.image_pattern_size()
+        next_image_size = next_pattern_num * next_pattern_size
+
+        return next_image_size
+
+    def num_enhanced_patterns(self):
+        if self.image_pattern_size() == 2:
+            return self.num_patterns_to_enhance()
+        elif self.image_pattern_size() == 3:
+            return self.num_patterns_to_enhance() * 2
+
+
+class ArtPieceTest(unittest.TestCase):
+    def setUp(self):
+        self.rule_lines = [
+            "../.# => ##./#../...",
+            ".#./..#/### => #..#/..../..../#..#",
+        ]
+        self.rule_book = RuleBook(self.rule_lines)
+
+        self.image2x2 = [".#", "..", ]
+        self.image3x3 = [".#.", "..#", "###", ]
+        self.image4x4 = [".#.#", "....", "####", "....", ]
+        self.image6x6 = [".#.#.#", "......", "######",
+                         "......", "##..##", "#.#.#.", ]
+        self.image9x9 = [".#.#.#.#.", ".........", "#########",
+                         ".........", "##..##..#", "#.#.#.#.#",
+                         ".#.#.#.#.", "..#..#..#", "#.##.##.#", ]
+
+    def test_initialises_to_start_pattern(self):
+        for pattern in (self.image2x2, self.image3x3, self.image4x4, self.image6x6):
+            art = ArtPiece(self.rule_book, pattern)
+            self.assertListEqual(pattern, art.image)
+
+    def test_choose_pattern_size(self):
+        def check_image_pattern_size(expected_size, image):
+            art = ArtPiece(self.rule_book, image)
+            self.assertEqual(expected_size, art.image_pattern_size())
+
+        check_image_pattern_size(2, self.image2x2)
+        check_image_pattern_size(3, self.image3x3)
+        check_image_pattern_size(2, self.image4x4)
+        check_image_pattern_size(2, self.image6x6)
+        check_image_pattern_size(3, self.image9x9)
+
+    def test_split_image_to_patterns(self):
+        def check_actual_split_size(expected_size, image):
+            art = ArtPiece(self.rule_book, image)
+            image_patterns = list(art.split_image_to_patterns())
+            self.assertEqual(expected_size, len(image_patterns))
+            for pattern_row in image_patterns:
+                self.assertEqual(expected_size, len(pattern_row))
+
+        check_actual_split_size(1, self.image2x2)
+        check_actual_split_size(1, self.image3x3)
+        check_actual_split_size(2, self.image4x4)
+        check_actual_split_size(3, self.image6x6)
+        check_actual_split_size(3, self.image9x9)
+
+    def test_calculate_enhanced_image_size(self):
+        def check_enhanced_image_size(expected_size, image):
+            art = ArtPiece(self.rule_book, image)
+            self.assertEqual(expected_size, art.enhanced_image_size())
+
+        check_enhanced_image_size(3, self.image2x2)
+        check_enhanced_image_size(4, self.image3x3)
+        check_enhanced_image_size(6, self.image4x4)
+        check_enhanced_image_size(9, self.image6x6)
+        check_enhanced_image_size(12, self.image9x9)
