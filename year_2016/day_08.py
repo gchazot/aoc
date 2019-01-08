@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from unittest import TestCase
 import itertools
 try:
@@ -41,10 +43,13 @@ class Screen:
             self.pixels[0][column] = first
 
     def display(self):
+        print("\n".join(self.print()))
+
+    def print(self):
         def show_pixel(on_off):
             return [" ", "#"][on_off]
         for row in self.pixels:
-            print("".join(map(show_pixel, row)))
+            yield "".join(map(show_pixel, row))
 
 
 class TestScreen(TestCase):
@@ -239,4 +244,12 @@ class TestCommandRunner(TestCase):
         runner = CommandRunner(Screen(6, 50))
         runner.execute_file("day_08_mine.txt")
         self.assertEqual(116, sum(runner.screen))
-        runner.screen.display()  # Shows UPOJFLBCEZ
+        expected = [
+            "#  # ###   ##    ## #### #    ###   ##  #### #### ",
+            "#  # #  # #  #    # #    #    #  # #  # #       # ",
+            "#  # #  # #  #    # ###  #    ###  #    ###    #  ",
+            "#  # ###  #  #    # #    #    #  # #    #     #   ",
+            "#  # #    #  # #  # #    #    #  # #  # #    #    ",
+            " ##  #     ##   ##  #    #### ###   ##  #### #### ",
+        ]
+        self.assertListEqual(expected, list(runner.screen.print()))
