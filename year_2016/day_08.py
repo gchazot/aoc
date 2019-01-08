@@ -2,7 +2,7 @@ from unittest import TestCase
 import itertools
 try:
     from mock import MagicMock
-except ModuleNotFoundError:
+except ImportError:
     from unittest.mock import MagicMock
 
 from aoc_utils import data_file

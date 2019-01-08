@@ -5,12 +5,12 @@ import unittest
 
 try:
     import Queue as queue
-except ModuleNotFoundError:
+except ImportError:
     import queue
 
 try:
     from mock import MagicMock
-except ModuleNotFoundError:
+except ImportError:
     from unittest.mock import MagicMock
 from aoc_utils import data_file
 
