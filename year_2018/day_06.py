@@ -29,6 +29,7 @@ class TestLandingArea(unittest.TestCase):
 
         self.assertEqual(('E', 17), landing.solve())
 
+    @unittest.skip("Too slow")
     def test_solve_widest_mine(self):
         with open(data_file(2018, 'day_06_mine.txt')) as f:
             lines = f.readlines()
@@ -52,6 +53,7 @@ class TestLandingArea(unittest.TestCase):
 
         self.assertEqual(16, landing.solve(max_distance=32))
 
+    @unittest.skip("Too slow")
     def test_solve_closest_mine(self):
         with open(data_file(2018, 'day_06_mine.txt')) as f:
             lines = f.readlines()
