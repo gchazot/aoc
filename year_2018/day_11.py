@@ -61,7 +61,7 @@ class TestFuelGrid(unittest.TestCase):
     @unittest.skip("too slow")
     def test_find_best_square_mine_with_size(self):
         grid_mine = self._grid(serial_num=1955)
-        self.assertEqual((231, 108), 14), grid_mine.find_best_square(square_sizes=range(1, 301)))
+        self.assertEqual(((231, 108), 14), grid_mine.find_best_square(square_sizes=range(1, 301)))
 
 
 class FuelGrid:
