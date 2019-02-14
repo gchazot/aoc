@@ -1,5 +1,5 @@
 from unittest import TestCase
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 def check_supports_tls(ipv7):
@@ -67,9 +67,8 @@ def check_member_has_abba(member):
 
 
 def test_all_ips(filename, check_function):
-    with open(data_file(2016, filename)) as f:
-        valid_ips = map(check_function, f.readlines())
-        return sum(valid_ips)
+    valid_ips = map(check_function, data_lines(2016, filename))
+    return sum(valid_ips)
 
 
 class TestIPv7(TestCase):

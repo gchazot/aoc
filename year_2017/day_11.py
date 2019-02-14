@@ -1,6 +1,6 @@
 from unittest import TestCase
 import operator
-from aoc_utils import data_file
+from aoc_utils import data_text
 
 
 class Coordinates(object):
@@ -88,8 +88,8 @@ class TestHexWalk(TestCase):
         self.assertEqual(3, shortest_distance("se,sw,se,sw,sw"))
 
     def test_mine(self):
-        with open(data_file(2017, "day_11_mine.txt")) as f:
-            walker = GridWalker()
-            walker.walk(f.read())
-            self.assertEqual(687, walker.distance())
-            self.assertEqual(1483, walker.furthest)
+        file_text = data_text(2017, "day_11_mine.txt")
+        walker = GridWalker()
+        walker.walk(file_text)
+        self.assertEqual(687, walker.distance())
+        self.assertEqual(1483, walker.furthest)

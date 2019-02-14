@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from aoc_utils import data_file
+from aoc_utils import data_text
 
 
 def open_marker(text, start):
@@ -42,9 +42,8 @@ def decompressed_size(text, recursive):
 
 
 def decompress_file(filename, recursive):
-    with open(data_file(2016, filename)) as f:
-        text = f.read()
-        return decompressed_size(text, recursive)
+    text = data_text(2016, filename)
+    return decompressed_size(text, recursive)
 
 
 class TestDecompression(TestCase):

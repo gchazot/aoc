@@ -1,5 +1,5 @@
 from unittest import TestCase
-from aoc_utils import data_file
+from aoc_utils import data_text
 
 
 class StreamParser:
@@ -79,6 +79,5 @@ class TestStreamParse(TestCase):
         self.assertEqual(17, score_stream("{{<a!>},{<a!>},{<a!>},{<ab>}}")[1])
 
     def test_parse_stream_mine(self):
-        with open(data_file(2017, "day_09_mine.txt")) as f:
-            stream = f.read()
-            self.assertEqual((11898, 5601), score_stream(stream))
+        stream = data_text(2017, "day_09_mine.txt")
+        self.assertEqual((11898, 5601), score_stream(stream))

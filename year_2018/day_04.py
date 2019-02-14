@@ -3,7 +3,7 @@ import datetime
 import re
 import unittest
 
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class TestGuardsJournal(unittest.TestCase):
@@ -44,11 +44,10 @@ class TestGuardsJournal(unittest.TestCase):
         journal.add("[1518-11-01 00:25] wakes up")
         self.assertEqual(3, journal.size())
 
-        with open(data_file(2018, "day_04_mine.txt")) as f:
-            myjournal = GuardsJournal()
-            for entry_line in f.readlines():
-                myjournal.add(entry_line.strip())
-            self.assertEqual(1097, myjournal.size())
+        myjournal = GuardsJournal()
+        for entry_line in data_lines(2018, "day_04_mine.txt"):
+            myjournal.add(entry_line.strip())
+        self.assertEqual(1097, myjournal.size())
 
     def test_get_entries_ordered(self):
         journal_preordered = GuardsJournal()
@@ -132,12 +131,11 @@ class TestGuardsJournal(unittest.TestCase):
 
         self.assertEqual(("1", 31, 10), journal.find_best_guard_best_minute())
 
-        with open(data_file(2018, "day_04_mine.txt")) as f:
-            myjournal = GuardsJournal()
-            for entry_line in f.readlines():
-                myjournal.add(entry_line.strip())
-            self.assertEqual(("727", 449, 49), myjournal.find_best_guard_best_minute())
-            self.assertEqual(35623, 727 * 49)
+        myjournal = GuardsJournal()
+        for entry_line in data_lines(2018, "day_04_mine.txt"):
+            myjournal.add(entry_line.strip())
+        self.assertEqual(("727", 449, 49), myjournal.find_best_guard_best_minute())
+        self.assertEqual(35623, 727 * 49)
 
     def test_find_best_minute_guard(self):
         journal = GuardsJournal()
@@ -146,12 +144,11 @@ class TestGuardsJournal(unittest.TestCase):
 
         self.assertEqual(("2", 12, 3), journal.find_best_minute_guard())
 
-        with open(data_file(2018, "day_04_mine.txt")) as f:
-            myjournal = GuardsJournal()
-            for entry_line in f.readlines():
-                myjournal.add(entry_line.strip())
-            self.assertEqual(("1097", 21, 15), myjournal.find_best_minute_guard())
-            self.assertEqual(23037, 1097 * 21)
+        myjournal = GuardsJournal()
+        for entry_line in data_lines(2018, "day_04_mine.txt"):
+            myjournal.add(entry_line.strip())
+        self.assertEqual(("1097", 21, 15), myjournal.find_best_minute_guard())
+        self.assertEqual(23037, 1097 * 21)
 
     def test_demo(self):
         journal = GuardsJournal()

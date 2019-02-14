@@ -1,6 +1,6 @@
 from collections import defaultdict
 import unittest
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class TestIdProperties(unittest.TestCase):
@@ -58,9 +58,7 @@ class TestCheckSumOfList(unittest.TestCase):
         self.assertEqual(5904, checksum_of(id_list))
 
     def get_ids_list_mine(self):
-        with open(data_file(2018, "day_02_mine.txt")) as f:
-            id_list = f.readlines()
-        return id_list
+        return list(data_lines(2018, "day_02_mine.txt"))
 
 
 def checksum_of(id_list):
@@ -116,9 +114,8 @@ class TestFindMatchingIds(unittest.TestCase):
         self.assertEqual("fgij", find_magic_id(
             ["abcde", "fghij", "klmno", "pqrst", "fguij", "axcye", "wvxyz"]))
 
-        with open(data_file(2018, "day_02_mine.txt")) as f:
-            id_list = f.readlines()
-            self.assertEqual("jiwamotgsfrudclzbyzkhlrvp", find_magic_id(id_list))
+        id_list = list(data_lines(2018, "day_02_mine.txt"))
+        self.assertEqual("jiwamotgsfrudclzbyzkhlrvp", find_magic_id(id_list))
 
 
 def find_magic_id(id_list):

@@ -1,5 +1,5 @@
 from __future__ import print_function
-from aoc_utils import data_file
+from aoc_utils import data_text
 import itertools
 import unittest
 
@@ -38,8 +38,7 @@ class TestFullProblem(unittest.TestCase):
 
 
 def read_frequencies_sequence():
-    with open(data_file(2018, "day_01_mine.txt")) as f:
-        seq_file = f.read()
+    seq_file = data_text(2018, "day_01_mine.txt")
     seq = parse_sequence(seq_file)
     return seq
 

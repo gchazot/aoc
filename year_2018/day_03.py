@@ -4,7 +4,7 @@ import collections
 import re
 import unittest
 
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class TestClaimsList(unittest.TestCase):
@@ -35,12 +35,11 @@ class TestClaimsList(unittest.TestCase):
 
         self.assertEqual(4, cls.count_overlaps())
 
-        with open(data_file(2018, "day_03_mine.txt")) as f:
-            claims_list = f.readlines()
-            claims_mine = ClaimsList()
-            for claim_string in claims_list:
-                claims_mine.add(claim_string.strip())
-            self.assertEqual(110389, claims_mine.count_overlaps())
+        claims_list = data_lines(2018, "day_03_mine.txt")
+        claims_mine = ClaimsList()
+        for claim_string in claims_list:
+            claims_mine.add(claim_string.strip())
+        self.assertEqual(110389, claims_mine.count_overlaps())
 
     def test_find_non_overlapped(self):
         cls = ClaimsList()
@@ -50,12 +49,11 @@ class TestClaimsList(unittest.TestCase):
 
         self.assertEqual([3], cls.find_non_overlapped())
 
-        with open(data_file(2018, "day_03_mine.txt")) as f:
-            claims_list = f.readlines()
-            claims_mine = ClaimsList()
-            for claim_string in claims_list:
-                claims_mine.add(claim_string.strip())
-            self.assertEqual([552], claims_mine.find_non_overlapped())
+        claims_list = data_lines(2018, "day_03_mine.txt")
+        claims_mine = ClaimsList()
+        for claim_string in claims_list:
+            claims_mine.add(claim_string.strip())
+        self.assertEqual([552], claims_mine.find_non_overlapped())
 
 
 class ClaimsList:

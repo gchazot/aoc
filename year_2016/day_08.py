@@ -7,7 +7,7 @@ try:
 except ImportError:
     from unittest.mock import MagicMock
 
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class Screen:
@@ -170,9 +170,8 @@ class CommandRunner(object):
         self.screen = screen
 
     def execute_file(self, filename):
-        with open(data_file(2016, filename)) as f:
-            for command_line in f.readlines():
-                self.execute_one(command_line)
+        for command_line in data_lines(2016, filename):
+            self.execute_one(command_line)
 
     def execute_one(self, command):
         args = command.split()

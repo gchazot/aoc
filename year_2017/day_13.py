@@ -1,16 +1,15 @@
 from unittest import TestCase, skip
 import time
-from aoc_utils import data_file
+from aoc_utils import data_lines
 from multiprocessing.pool import Pool
 
 
 def read_firewall(filename):
-    with open(data_file(2017, filename)) as f:
-        firewall = {}
-        for line in f.readlines():
-            depth, scan_range = map(int, line.split(": "))
-            firewall[depth] = scan_range
-        return firewall
+    firewall = {}
+    for line in data_lines(2017, filename):
+        depth, scan_range = map(int, line.split(": "))
+        firewall[depth] = scan_range
+    return firewall
 
 
 def not_none(obj):

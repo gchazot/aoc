@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from collections import defaultdict
 
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class MessageDecryptor:
@@ -33,11 +33,10 @@ def least_occurrences(occurrences):
 
 
 def decrypt_message(filename, algorithm):
-    with open(data_file(2016, filename)) as f:
-        decryptor = MessageDecryptor()
-        for line in f.readlines():
-            decryptor.update(line.strip())
-        return decryptor.word(algorithm)
+    decryptor = MessageDecryptor()
+    for line in data_lines(2016, filename):
+        decryptor.update(line.strip())
+    return decryptor.word(algorithm)
 
 
 class TestDecryptMessage(TestCase):

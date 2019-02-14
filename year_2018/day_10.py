@@ -1,7 +1,7 @@
 import re
 import unittest
 
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class TestSkyPoint(unittest.TestCase):
@@ -226,10 +226,9 @@ class TestSolver(unittest.TestCase):
 
     def test_example(self):
         sky = SkyMap()
-        with open(data_file(2018, "day_10_example.txt")) as f:
-            for point_str in f.readlines():
-                point = SkyPoint.parse(point_str)
-                sky.add(point)
+        for point_str in data_lines(2018, "day_10_example.txt"):
+            point = SkyPoint.parse(point_str)
+            sky.add(point)
 
         self.assertEqual(31, sky.size())
 
@@ -252,10 +251,9 @@ class TestSolver(unittest.TestCase):
     @unittest.skip("A bit troo slow")
     def test_mine(self):
         sky = SkyMap()
-        with open(data_file(2018, "day_10_mine.txt")) as f:
-            for point_str in f.readlines():
-                point = SkyPoint.parse(point_str)
-                sky.add(point)
+        for point_str in data_lines(2018, "day_10_mine.txt"):
+            point = SkyPoint.parse(point_str)
+            sky.add(point)
 
         self.assertEqual(328, sky.size())
 

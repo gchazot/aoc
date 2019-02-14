@@ -1,10 +1,10 @@
 import unittest
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class Labyrinth:
     def __init__(self, labyrinth_lines):
-        self._lines = labyrinth_lines
+        self._lines = list(labyrinth_lines)
         self._height = len(self._lines)
         self._width = max(map(len, self._lines))
 
@@ -289,8 +289,7 @@ class TestWalker(unittest.TestCase):
         ], num_steps=24)
 
     def test_example(self):
-        with open(data_file(2017, "day_19_example.txt")) as f:
-            labyrinth_lines = f.readlines()
+        labyrinth_lines = data_lines(2017, "day_19_example.txt")
 
         labyrinth = Labyrinth(labyrinth_lines)
         walker = Walker(labyrinth)
@@ -300,8 +299,7 @@ class TestWalker(unittest.TestCase):
         self.assertEqual(38, walker.steps())
 
     def test_mine(self):
-        with open(data_file(2017, "day_19_mine.txt")) as f:
-            labyrinth_lines = f.readlines()
+        labyrinth_lines = data_lines(2017, "day_19_mine.txt")
 
         labyrinth = Labyrinth(labyrinth_lines)
         walker = Walker(labyrinth)

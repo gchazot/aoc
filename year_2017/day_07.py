@@ -1,6 +1,6 @@
 from unittest import TestCase
 from collections import defaultdict
-from aoc_utils import data_file
+from aoc_utils import data_lines
 import re
 
 
@@ -11,10 +11,9 @@ class FoundImbalance(Exception):
 
 class ProgramTower:
     def __init__(self, data_filename):
-        with open(data_file(2017, data_filename)) as shouts:
-            programs_shouts = shouts.readlines()
-            programs_details = map(parse_program_shout, programs_shouts)
-            self.programs = dict(programs_details)
+        programs_shouts = data_lines(2017, data_filename)
+        programs_details = map(parse_program_shout, programs_shouts)
+        self.programs = dict(programs_details)
 
     def find_tower_base(self):
         program_ids = set(self.programs.keys())

@@ -1,7 +1,7 @@
 import collections
 import unittest
 
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 class TestLandingArea(unittest.TestCase):
@@ -31,10 +31,9 @@ class TestLandingArea(unittest.TestCase):
 
     @unittest.skip("Too slow")
     def test_solve_widest_mine(self):
-        with open(data_file(2018, 'day_06_mine.txt')) as f:
-            lines = f.readlines()
-            pairs = [line.split(', ') for line in lines]
-            coordss = [tuple(map(int, pair)) for pair in pairs]
+        lines = data_lines(2018, 'day_06_mine.txt')
+        pairs = [line.split(', ') for line in lines]
+        coordss = [tuple(map(int, pair)) for pair in pairs]
 
         landing = WidestLandingArea()
         for i, coords in enumerate(coordss):
@@ -55,10 +54,9 @@ class TestLandingArea(unittest.TestCase):
 
     @unittest.skip("Too slow")
     def test_solve_closest_mine(self):
-        with open(data_file(2018, 'day_06_mine.txt')) as f:
-            lines = f.readlines()
-            pairs = [line.split(', ') for line in lines]
-            coordss = [tuple(map(int, pair)) for pair in pairs]
+        lines = data_lines(2018, 'day_06_mine.txt')
+        pairs = [line.split(', ') for line in lines]
+        coordss = [tuple(map(int, pair)) for pair in pairs]
 
         landing = ClosestLandingArea()
         for i, coords in enumerate(coordss):

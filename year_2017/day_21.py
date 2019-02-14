@@ -1,5 +1,5 @@
 import unittest
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 def hash_pattern(pattern):
@@ -304,8 +304,7 @@ class PatternTreeTest(unittest.TestCase):
 
     @unittest.skip("Does not get the expected result")
     def test_mine(self):
-        with open(data_file(2017, "day_21_mine.txt")) as f:
-            rules_lines = f.readlines()
+        rules_lines = data_lines(2017, "day_21_mine.txt")
 
         rule_book = RuleBook(rules_lines)
         art = PatternTree(rule_book, 7)
@@ -321,8 +320,7 @@ class PatternTreeTest(unittest.TestCase):
 
     @unittest.skip("This is not my data")
     def test_other(self):
-        with open(data_file(2017, "day_21_other.txt")) as f:
-            rules_lines = f.readlines()
+        rules_lines = data_lines(2017, "day_21_other.txt")
 
         rule_book = RuleBook(rules_lines)
         art = PatternTree(rule_book, 7)
@@ -497,8 +495,7 @@ class ArtPieceTest(unittest.TestCase):
 
     @unittest.skip("Just a bit too slow")
     def test_mine(self):
-        with open(data_file(2017, "day_21_mine.txt")) as f:
-            rules_lines = f.readlines()
+        rules_lines = data_lines(2017, "day_21_mine.txt")
 
         rule_book = RuleBook(rules_lines)
         art = ArtPiece(rule_book, [".#.", "..#", "###", ])

@@ -1,4 +1,4 @@
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 import unittest
 
@@ -42,9 +42,8 @@ class TestInstructionManual(unittest.TestCase):
     def test_find_sequence_mine(self):
         manual = InstructionManual()
 
-        with open(data_file(2018, 'day_07_mine.txt')) as f:
-            for line in f.readlines():
-                manual.add(line)
+        for line in data_lines(2018, 'day_07_mine.txt'):
+            manual.add(line)
 
         self.assertEqual(26, manual.num_steps())
         self.assertEqual(101, manual.num_instructions())
@@ -69,9 +68,8 @@ class TestInstructionManual(unittest.TestCase):
     def test_calculate_time_mine(self):
         manual = InstructionManual()
 
-        with open(data_file(2018, 'day_07_mine.txt')) as f:
-            for line in f.readlines():
-                manual.add(line)
+        for line in data_lines(2018, 'day_07_mine.txt'):
+            manual.add(line)
 
         self.assertEqual(1107, manual.calculate_time(num_workers=5))
 

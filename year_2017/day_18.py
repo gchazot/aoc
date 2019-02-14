@@ -12,7 +12,8 @@ try:
     from mock import MagicMock
 except ImportError:
     from unittest.mock import MagicMock
-from aoc_utils import data_file
+
+from aoc_utils import data_lines
 
 
 SPECIAL_SOUND_REGISTER = u"__SPECIAL_SOUND__"
@@ -542,8 +543,7 @@ sound_instructions = {
 
 
 def read_code_file(filename):
-    with open(data_file(2017, filename)) as code:
-        return code.readlines()
+    return list(data_lines(2017, filename))
 
 
 class TestSoundProcessor(unittest.TestCase):

@@ -1,4 +1,4 @@
-from aoc_utils import data_file
+from aoc_utils import data_text
 import unittest
 
 
@@ -14,10 +14,9 @@ class TestKeyNode(unittest.TestCase):
         self.assertEqual(66, tree.value())
 
     def test_mine(self):
-        with open(data_file(2018, 'day_08_mine.txt')) as f:
-            tree_string = f.read()
-            tree_data = [int(num) for num in reversed(tree_string.split())]
-            tree = KeyNode(tree_data)
+        tree_string = data_text(2018, 'day_08_mine.txt')
+        tree_data = [int(num) for num in reversed(tree_string.split())]
+        tree = KeyNode(tree_data)
 
         self.assertEqual(43351, tree.sum_metadata())
         self.assertEqual(21502, tree.value())

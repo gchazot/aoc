@@ -1,16 +1,15 @@
 from unittest import TestCase
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 def read_network(filename):
     network = {}
-    with open(data_file(2017, filename)) as f:
-        for line in f.readlines():
-            program_id_str, contacts_str = line.split(" <-> ")
-            program_id = int(program_id_str)
-            contact_list_str = contacts_str.split(", ")
-            contacts = map(int, contact_list_str)
-            network[program_id] = list(contacts)
+    for line in data_lines(2017, filename):
+        program_id_str, contacts_str = line.split(" <-> ")
+        program_id = int(program_id_str)
+        contact_list_str = contacts_str.split(", ")
+        contacts = map(int, contact_list_str)
+        network[program_id] = list(contacts)
     return network
 
 

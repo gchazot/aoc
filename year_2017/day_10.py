@@ -1,7 +1,7 @@
 import functools
 from operator import xor
 from unittest import TestCase
-from aoc_utils import data_file
+from aoc_utils import data_text
 
 
 class KnotHash:
@@ -72,8 +72,8 @@ class TestRopeHash(TestCase):
         self.assertEqual(12, KnotHash(5).hash_v1("3,4,1,5"))
 
     def test_1_mine(self):
-        with open(data_file(2017, "day_10_mine.txt")) as f:
-            self.assertEqual(9656, KnotHash(256).hash_v1(f.read()))
+        file_text = data_text(2017, "day_10_mine.txt")
+        self.assertEqual(9656, KnotHash(256).hash_v1(file_text))
 
     def test_example_2(self):
         self.assertEqual("a2582a3a0e66e6e86e3812dcb672a272", KnotHash(256).hash_v2(""))
@@ -82,5 +82,5 @@ class TestRopeHash(TestCase):
         self.assertEqual("63960835bcdc130f0b66d7ff4f6a5a8e", KnotHash(256).hash_v2("1,2,4"))
 
     def test_2_mine(self):
-        with open(data_file(2017, "day_10_mine.txt")) as f:
-            self.assertEqual("20b7b54c92bf73cf3e5631458a715149", KnotHash(256).hash_v2(f.read()))
+        file_text = data_text(2017, "day_10_mine.txt")
+        self.assertEqual("20b7b54c92bf73cf3e5631458a715149", KnotHash(256).hash_v2(file_text))

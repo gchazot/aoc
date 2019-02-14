@@ -4,7 +4,7 @@ import operator
 import unittest
 import re
 
-from aoc_utils import data_file
+from aoc_utils import data_lines
 
 
 coordinates_pattern = re.compile("[pva]=<\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)>")
@@ -102,9 +102,8 @@ class Particle:
 
     @staticmethod
     def gen_from_file(filename):
-        with open(data_file(2017, filename)) as f:
-            for i, line in enumerate(f.readlines()):
-                yield Particle(i, line)
+        for i, line in enumerate(data_lines(2017, filename)):
+            yield Particle(i, line)
 
     @staticmethod
     def find_closest(particles):

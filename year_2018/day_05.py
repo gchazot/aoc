@@ -1,4 +1,4 @@
-from aoc_utils import data_file
+from aoc_utils import data_text
 
 import unittest
 
@@ -28,10 +28,9 @@ class TestPolymerReduce(unittest.TestCase):
         self.assertEqual("dabCBAcaDA", polymer_reduce("dabAcCaCBAcCcaDA"))
 
     def test_reduce_mine(self):
-        with open(data_file(2018, "day_05_mine.txt")) as f:
-            polymer = f.read()
-            reduced = polymer_reduce(polymer)
-            self.assertEqual(10584, len(reduced))
+        polymer = data_text(2018, "day_05_mine.txt")
+        reduced = polymer_reduce(polymer)
+        self.assertEqual(10584, len(reduced))
 
     def test_with_ignore(self):
         polymer = "dabAcCaCBAcCcaDA"
@@ -49,10 +48,9 @@ class TestPolymerReduce(unittest.TestCase):
 
     @unittest.skip("Too slow")
     def test_find_shortest_with_ignores_mine(self):
-        with open(data_file(2018, "day_05_mine.txt")) as f:
-            polymer = f.read()
-            best_reduced = find_shortest_with_ignores(polymer)
-            self.assertEqual(6968, len(best_reduced))
+        polymer = data_text(2018, "day_05_mine.txt")
+        best_reduced = find_shortest_with_ignores(polymer)
+        self.assertEqual(6968, len(best_reduced))
 
 
 def is_opposite_case(letter1, letter2):
