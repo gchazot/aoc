@@ -19,3 +19,8 @@ def data_lines(year, filename):
     with open_data_file(year, filename) as fh:
         for line in fh.readlines():
             yield line.strip('\n')
+
+
+def data_text(year, filename):
+    with open_data_file(year, filename) as fh:
+        return fh.read()
