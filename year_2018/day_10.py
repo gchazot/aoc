@@ -57,7 +57,7 @@ class TestSkyMap(unittest.TestCase):
     def test_starts_empty(self):
         sky = SkyMap()
         self.assertEqual(0, sky.size())
-        self.assertEqual([], list(sky.print()))
+        self.assertEqual([], list(sky.format()))
 
     def test_add(self):
         sky = SkyMap()
@@ -66,13 +66,13 @@ class TestSkyMap(unittest.TestCase):
         sky.add(SkyPoint(4, 5, 6, 7))
         self.assertEqual(2, sky.size())
 
-    def test_print(self):
+    def test_format(self):
         sky = SkyMap()
 
         sky.add(SkyPoint(0, 1, 2, 3))
         self.assertListEqual([
             "#",
-        ], list(sky.print()))
+        ], list(sky.format()))
 
         sky.add(SkyPoint(4, 5, 6, 7))
         self.assertListEqual([
@@ -81,7 +81,7 @@ class TestSkyMap(unittest.TestCase):
             "     ",
             "     ",
             "    #",
-        ], list(sky.print()))
+        ], list(sky.format()))
 
     def test_after(self):
         sky = SkyMap()
@@ -147,7 +147,7 @@ class SkyMap:
         sky.extend(map(lambda p: p.after(time), self._points))
         return sky
 
-    def print(self):
+    def format(self):
         for row in self._gen_table():
             chars = map(lambda v: "#" if v else " ", row)
             yield "".join(chars)
@@ -295,7 +295,7 @@ class SkySolver:
         iteration, surface = min(enumerate(self._surfaces), key=lambda i_surface: i_surface[1])
         best_sky = self._sky.after(iteration)
 
-        return surface, iteration, best_sky.print()
+        return surface, iteration, best_sky.format()
 
     def finished(self):
         deltas = list(self.deltas(source=self._surfaces))

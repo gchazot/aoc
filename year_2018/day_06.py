@@ -156,7 +156,7 @@ class WidestLandingArea(LandingArea):
                     closest.append(i)
             self._map[x, y] = closest[0] if len(closest) == 1 else None
 
-    def print(self):
+    def _print(self):
         for y in range(self._top_left[1], self._bottom_right[1] + 1):
             row = [self._map.get((x, y), '.') or '=' for x in
                    (range(self._top_left[0], self._bottom_right[0] + 1))]
@@ -184,7 +184,7 @@ class ClosestLandingArea(LandingArea):
                 distance = self._distance(coordinates, current)
                 self._map[current] += distance
 
-    def print(self):
+    def _print(self):
         x_range = range(self._top_left[0], self._bottom_right[0] + 1)
         y_range = range(self._top_left[1], self._bottom_right[1] + 1)
         for y in y_range:
