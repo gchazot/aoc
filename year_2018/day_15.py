@@ -91,13 +91,13 @@ class TestCharMap(unittest.TestCase):
     def test_find_all_closest(self):
         cmap = CharMap([
             "#######",
-            "#E..G.#",
+            "#E#.G.#",
             "#...#.#",
             "#.G.#G#",
             "#######",
         ])
         self.assertListEqual(
-            [(3, 1), (2, 2), (1, 3)],
+            [(2, 2), (1, 3)],
             list(cmap.find_all_closest(
                 from_coords=(1, 1),
                 target_list=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
@@ -160,6 +160,7 @@ class CharMap:
         return offset
 
     def find_all_closest(self, from_coords, target_list, allowed_values):
+        allowed_codes = {self._code(value) for value in allowed_values}
         steps = 0
         progress_points = [from_coords]
         found_one = False
@@ -179,7 +180,7 @@ class CharMap:
                         offset = self._get_offset(u, v)
                     except IndexError:
                         continue
-                    if distances[offset] == 0:
+                    if self._data[offset] in allowed_codes and distances[offset] == 0:
                         distances[offset] = steps
                         new_progress_points.append((u, v))
             progress_points = new_progress_points
