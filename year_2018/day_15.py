@@ -84,8 +84,8 @@ class TestCharMap(unittest.TestCase):
             "def",
         ])
         self.assertListEqual([
-            (0, 0, "a"), (1, 0, "b"), (2, 0, "c"),
-            (0, 1, "d"), (1, 1, "e"), (2, 1, "f"),
+            ((0, 0), "a"), ((1, 0), "b"), ((2, 0), "c"),
+            ((0, 1), "d"), ((1, 1), "e"), ((2, 1), "f"),
         ], list(cmap.items()))
 
     def test_find_all_closest(self):
@@ -124,12 +124,12 @@ class CharMap:
         self.width = widths[0]
         self.height = len(widths)
 
-    def __getitem__(self, (x, y)):
-        offset = self._get_offset(x, y)
+    def __getitem__(self, coordinates):
+        offset = self._get_offset(*coordinates)
         return self._data[offset]
 
-    def __setitem__(self, (x, y), value):
-        offset = self._get_offset(x, y)
+    def __setitem__(self, coordinates, value):
+        offset = self._get_offset(*coordinates)
         self._data = self._data[:offset] + value + self._data[offset+1:]
 
     def __len__(self):
@@ -145,8 +145,8 @@ class CharMap:
             yield value
 
     def items(self):
-        for x, y in self.coordinates():
-            yield x, y, self[x, y]
+        for cordinates in self.coordinates():
+            yield cordinates, self[cordinates]
 
     def _get_offset(self, x, y):
         if x < 0 or x >= self.width:
@@ -232,6 +232,6 @@ class Caves:
         return sorted(in_range, key=lambda tup: (tup[1], tup[0]))
 
     def get_targets(self, opponent):
-        for x, y, entry in self._caves.items():
+        for cordinates, entry in self._caves.items():
             if entry not in ['#', '.', opponent]:
-                yield x, y
+                yield cordinates
