@@ -110,7 +110,8 @@ class CharMap:
     def __init__(self, input_lines=None):
         self.width = 0
         self.height = 0
-        self._data = ""
+        self._data = array.array('B')
+        self._codes = {None: 0}
         if input_lines is not None:
             self.set_data(input_lines)
 
@@ -118,7 +119,7 @@ class CharMap:
         widths = []
         for line in input_lines:
             widths.append(len(line))
-            self._data += line
+            self._data.extend(self._code(c) for c in line)
 
         assert len(set(widths)) == 1
         self.width = widths[0]
@@ -126,11 +127,13 @@ class CharMap:
 
     def __getitem__(self, coordinates):
         offset = self._get_offset(*coordinates)
-        return self._data[offset]
+        code = self._data[offset]
+        return self._value(code)
 
     def __setitem__(self, coordinates, value):
         offset = self._get_offset(*coordinates)
-        self._data = self._data[:offset] + value + self._data[offset+1:]
+        code = self._code(value)
+        self._data[offset] = code
 
     def __len__(self):
         return len(self._data)
@@ -141,8 +144,8 @@ class CharMap:
                 yield x, y
 
     def values(self):
-        for value in self._data:
-            yield value
+        for code in self._data:
+            yield self._value(code)
 
     def items(self):
         for cordinates in self.coordinates():
@@ -181,8 +184,19 @@ class CharMap:
                         new_progress_points.append((u, v))
             progress_points = new_progress_points
 
+    def _code(self, value):
+        try:
+            return self._codes[value]
+        except KeyError:
+            next_code = len(self._codes)
+            self._codes[value] = next_code
+            return next_code
 
-
+    def _value(self, code):
+        for item_value, item_code in self._codes.items():
+            if item_code == code:
+                return item_value
+        raise ValueError("Code {} not found".format(code))
 
 
 class TestCaves(unittest.TestCase):
