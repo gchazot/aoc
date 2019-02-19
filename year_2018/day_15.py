@@ -10,14 +10,14 @@ class TestCharMap(unittest.TestCase):
     def test_raises_for_lines_of_different_lengths(self):
         cmap = CharMap()
 
-        self.assertRaises(AssertionError, cmap.set_data, [
+        self.assertRaises(AssertionError, cmap.from_lines, [
             "abcd",
             "ab"
         ])
 
     def test_set_and_access_data(self):
         cmap = CharMap()
-        cmap.set_data([
+        cmap.from_lines([
             "abcd",
             "efgh",
             "ijkl",
@@ -31,7 +31,7 @@ class TestCharMap(unittest.TestCase):
 
     def test_get_raises_for_index_out_of_range(self):
         cmap = CharMap()
-        cmap.set_data([
+        cmap.from_lines([
             "abcd",
             "efgh",
             "ijkl",
@@ -46,7 +46,7 @@ class TestCharMap(unittest.TestCase):
 
     def test_set_item_value(self):
         cmap = CharMap()
-        cmap.set_data([
+        cmap.from_lines([
             "abcd",
             "efgh",
             "ijkl",
@@ -57,7 +57,7 @@ class TestCharMap(unittest.TestCase):
 
     def test_iterate_coordinates_in_reading_order(self):
         cmap = CharMap()
-        cmap.set_data([
+        cmap.from_lines([
             "abc",
             "def",
         ])
@@ -68,7 +68,7 @@ class TestCharMap(unittest.TestCase):
 
     def test_iterate_values_in_reading_order(self):
         cmap = CharMap()
-        cmap.set_data([
+        cmap.from_lines([
             "abc",
             "def",
         ])
@@ -79,7 +79,7 @@ class TestCharMap(unittest.TestCase):
 
     def test_iterate_items_in_reading_order(self):
         cmap = CharMap()
-        cmap.set_data([
+        cmap.from_lines([
             "abc",
             "def",
         ])
@@ -107,15 +107,18 @@ class TestCharMap(unittest.TestCase):
 
 
 class CharMap:
-    def __init__(self, input_lines=None):
+    def __init__(self, input_lines=None, width_height=None):
         self.width = 0
         self.height = 0
         self._data = array.array('B')
         self._codes = {None: 0}
         if input_lines is not None:
-            self.set_data(input_lines)
+            self.from_lines(input_lines)
+        elif width_height is not None:
+            self.width, self.height = width_height
+            self._data = array.array('B', (0 for _ in range(self.width * self.height)))
 
-    def set_data(self, input_lines):
+    def from_lines(self, input_lines):
         widths = []
         for line in input_lines:
             widths.append(len(line))
@@ -229,7 +232,7 @@ class TestCaves(unittest.TestCase):
 class Caves:
     def __init__(self, initial_map):
         self._caves = CharMap()
-        self._caves.set_data(initial_map)
+        self._caves.from_lines(initial_map)
 
     def get_in_range(self, opponent):
         in_range = []
