@@ -163,30 +163,9 @@ class CharMap:
         return offset
 
     def find_all_closest(self, from_coords, target_list, allowed_values):
-        allowed_codes = {self._code(value) for value in allowed_values}
-        steps = 0
-        progress_points = [from_coords]
-        found_one = False
-        distances = array.array('B', (0 for _ in self._data))
-
-        while not found_one and len(progress_points) > 0:
-            steps += 1
-            new_progress_points = []
-            for x, y in progress_points:
-                if (x, y) in target_list:
-                    yield (x, y)
-                    found_one = True
-                for i, j in ((0, -1), (-1, 0), (1, 0), (0, 1)):
-                    try:
-                        u = x + i
-                        v = y + j
-                        offset = self._get_offset(u, v)
-                    except IndexError:
-                        continue
-                    if self._data[offset] in allowed_codes and distances[offset] == 0:
-                        distances[offset] = steps
-                        new_progress_points.append((u, v))
-            progress_points = new_progress_points
+        closest = ClosestFinder(self, allowed_values).find_all_closest(from_coords, target_list)
+        for result in closest:
+            yield result
 
     def _code(self, value):
         try:
@@ -201,6 +180,41 @@ class CharMap:
             if item_code == code:
                 return item_value
         raise ValueError("Code {} not found".format(code))
+
+
+class ClosestFinder:
+    def __init__(self, char_map, allowed_values):
+        self._map = char_map
+        self._allowed_values = allowed_values
+        self._distances = CharMap(width_height=(char_map.width, char_map.height))
+
+    def find_all_closest(self, start_coordinates, targets):
+        steps = 0
+        progress_points = [start_coordinates]
+        found_one = False
+
+        while not found_one and len(progress_points) > 0:
+            steps += 1
+            new_progress_points = []
+            for coordinates in progress_points:
+                if coordinates in targets:
+                    yield coordinates
+                    found_one = True
+                    continue
+                for next_coordinates, value in self._next_items(coordinates):
+                    if value in self._allowed_values and self._distances[next_coordinates] is None:
+                        self._distances[next_coordinates] = steps
+                        new_progress_points.append(next_coordinates)
+            progress_points = new_progress_points
+
+    def _next_items(self, from_coordinates):
+        for i, j in ((0, -1), (-1, 0), (1, 0), (0, 1)):
+            try:
+                next_coordinates = from_coordinates[0] + i, from_coordinates[1] + j
+                value = self._map[next_coordinates]
+                yield next_coordinates, value
+            except IndexError:
+                continue
 
 
 class TestCaves(unittest.TestCase):
