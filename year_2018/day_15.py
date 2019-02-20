@@ -128,6 +128,14 @@ class CharMap:
         self.width = widths[0]
         self.height = len(widths)
 
+    def __contains__(self, coordinates):
+        try:
+            self._get_offset(coordinates)
+        except IndexError:
+            return False
+        else:
+            return True
+
     def __getitem__(self, coordinates):
         offset = self._get_offset(*coordinates)
         code = self._data[offset]
