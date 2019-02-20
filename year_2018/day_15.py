@@ -210,20 +210,22 @@ class ClosestFinder:
                     yield coordinates
                     found_one = True
                     continue
-                for next_coordinates, value in self._next_items(coordinates):
-                    if value in self._allowed_values and self._distances[next_coordinates] is None:
-                        self._distances[next_coordinates] = steps
+                for next_coordinates in self._next_coordinates(coordinates):
+                    if self._progress_to(next_coordinates, steps):
                         new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
 
-    def _next_items(self, from_coordinates):
+    def _progress_to(self, coordinates, steps):
+        if self._map[coordinates] in self._allowed_values and self._distances[coordinates] is None:
+            self._distances[coordinates] = steps
+            return True
+        return False
+
+    def _next_coordinates(self, from_coordinates):
         for i, j in ((0, -1), (-1, 0), (1, 0), (0, 1)):
-            try:
-                next_coordinates = from_coordinates[0] + i, from_coordinates[1] + j
-                value = self._map[next_coordinates]
-                yield next_coordinates, value
-            except IndexError:
-                continue
+            next_coordinates = from_coordinates[0] + i, from_coordinates[1] + j
+            if next_coordinates in self._map:
+                yield next_coordinates
 
 
 class TestCaves(unittest.TestCase):
