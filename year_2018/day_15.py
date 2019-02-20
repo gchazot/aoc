@@ -137,12 +137,12 @@ class CharMap:
             return True
 
     def __getitem__(self, coordinates):
-        offset = self._get_offset(*coordinates)
+        offset = self._get_offset(coordinates)
         code = self._data[offset]
         return self._value(code)
 
     def __setitem__(self, coordinates, value):
-        offset = self._get_offset(*coordinates)
+        offset = self._get_offset(coordinates)
         code = self._code(value)
         self._data[offset] = code
 
@@ -162,7 +162,8 @@ class CharMap:
         for cordinates in self.coordinates():
             yield cordinates, self[cordinates]
 
-    def _get_offset(self, x, y):
+    def _get_offset(self, coordinates):
+        x, y = coordinates
         if x < 0 or x >= self.width:
             raise IndexError("x={} out of range".format(x))
         if y < 0 or y >= self.height:
