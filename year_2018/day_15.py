@@ -197,23 +197,39 @@ class ClosestFinder:
         self._allowed_values = allowed_values
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
 
+    class ProgressRules:
+        def __init__(self, targets):
+            self._targets = targets
+            self._found_one = False
+            self.results = []
+
+        def stop(self):
+            return self._found_one
+
+        def evaluate(self, coordinates):
+            if coordinates in self._targets:
+                self._found_one = True
+                self.results.append(coordinates)
+                return False
+            return True
+
     def find_all_closest(self, start_coordinates, targets):
         steps = 0
         progress_points = [start_coordinates]
-        found_one = False
 
-        while not found_one and len(progress_points) > 0:
+        rules = ClosestFinder.ProgressRules(targets)
+
+        while len(progress_points) > 0 and not rules.stop():
             steps += 1
             new_progress_points = []
             for coordinates in progress_points:
-                if coordinates in targets:
-                    yield coordinates
-                    found_one = True
+                if not rules.evaluate(coordinates):
                     continue
                 for next_coordinates in self._next_coordinates(coordinates):
                     if self._progress_to(next_coordinates, steps):
                         new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
+        return rules.results
 
     def _progress_to(self, coordinates, steps):
         if self._map[coordinates] in self._allowed_values and self._distances[coordinates] is None:
