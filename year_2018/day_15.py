@@ -88,23 +88,6 @@ class TestCharMap(unittest.TestCase):
             ((0, 1), "d"), ((1, 1), "e"), ((2, 1), "f"),
         ], list(cmap.items()))
 
-    def test_find_all_closest(self):
-        cmap = CharMap([
-            "#######",
-            "#E#.G.#",
-            "#...#.#",
-            "#.G.#G#",
-            "#######",
-        ])
-        self.assertListEqual(
-            [(2, 2), (1, 3)],
-            list(cmap.find_all_closest(
-                from_coords=(1, 1),
-                target_list=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
-                allowed_values=["."]
-            ))
-        )
-
 
 class CharMap:
     def __init__(self, input_lines=None, width_height=None):
@@ -170,11 +153,6 @@ class CharMap:
             raise IndexError("x={} out of range".format(y))
         offset = self.width * y + x
         return offset
-
-    def find_all_closest(self, from_coords, target_list, allowed_values):
-        closest = ClosestFinder(self, allowed_values).find_all_closest(from_coords, target_list)
-        for result in closest:
-            yield result
 
     def _code(self, value):
         try:
@@ -269,11 +247,34 @@ class TestCaves(unittest.TestCase):
         self.assertListEqual([(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
                              list(caves.get_in_range("E")))
 
+    def test_find_all_closest(self):
+        caves = Caves([
+            "#######",
+            "#E#.G.#",
+            "#...#.#",
+            "#.G.#G#",
+            "#######",
+        ])
+        self.assertListEqual(
+            [(2, 2), (1, 3)],
+            list(caves._find_all_closest(
+                from_coords=(1, 1),
+                target_list=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
+                allowed_values=["."]
+            ))
+        )
+
 
 class Caves:
     def __init__(self, initial_map):
         self._caves = CharMap()
         self._caves.from_lines(initial_map)
+
+    def _find_all_closest(self, from_coords, target_list, allowed_values):
+        finder = ClosestFinder(self._caves, allowed_values)
+        closest = finder.find_all_closest(from_coords, target_list)
+        for result in closest:
+            yield result
 
     def get_in_range(self, opponent):
         in_range = []
