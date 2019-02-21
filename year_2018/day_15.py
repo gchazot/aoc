@@ -6,16 +6,21 @@ class TestCharMap(unittest.TestCase):
     def test_starts_empty(self):
         cmap = CharMap()
         self.assertEqual(0, len(cmap))
+        self.assertEqual(0, cmap.width)
+        self.assertEqual(0, cmap.height)
 
-    def test_raises_for_lines_of_different_lengths(self):
-        cmap = CharMap()
+    def test_create_with_dimensions(self):
+        width = 4
+        height = 3
+        cmap = CharMap(width_height=(width, height))
 
-        self.assertRaises(AssertionError, cmap.from_lines, [
-            "abcd",
-            "ab"
-        ])
+        self.assertEqual(width, cmap.width)
+        self.assertEqual(height, cmap.height)
+        for x in range(width):
+            for y in range(height):
+                self.assertEqual(None, cmap[x, y])
 
-    def test_set_and_access_data(self):
+    def test_from_lines(self):
         cmap = CharMap()
         cmap.from_lines([
             "abcd",
@@ -28,6 +33,26 @@ class TestCharMap(unittest.TestCase):
         self.assertEqual('b', cmap[1, 0])
         self.assertEqual('k', cmap[2, 2])
         self.assertEqual('l', cmap[3, 2])
+
+    def test_raises_for_lines_of_different_lengths(self):
+        cmap = CharMap()
+
+        self.assertRaises(AssertionError, cmap.from_lines, [
+            "abcd",
+            "ab"
+        ])
+
+    def test_contains(self):
+        width = 4
+        height = 3
+        cmap = CharMap(width_height=(width, height))
+
+        for x in range(-1, width + 1):
+            for y in range(-1, height + 1):
+                if 0 <= x < width and 0 <= y < height:
+                    self.assertTrue((x, y) in cmap)
+                else:
+                    self.assertFalse((x, y) in cmap)
 
     def test_get_raises_for_index_out_of_range(self):
         cmap = CharMap()
