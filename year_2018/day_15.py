@@ -202,9 +202,7 @@ class ClosestFinder:
 
     def find_all_closest(self, start_coordinates, targets):
         rules = FindAllClosestRules(targets, self._allowed_values)
-        starting_points = [start_coordinates]
-
-        return self._explore(starting_points, rules)
+        return self._explore([start_coordinates], rules)
 
     def _explore(self, starting_points, rules):
         progress_points = starting_points[:]
