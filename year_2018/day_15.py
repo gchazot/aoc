@@ -200,39 +200,16 @@ class ClosestFinder:
         self._allowed_values = allowed_values
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
 
-    class ProgressRules:
-        def __init__(self, targets, allowed_values):
-            self._targets = targets
-            self._allowed_values = allowed_values
-            self._found_one = False
-            self.results = []
-
-        def stop_progressing(self):
-            return self._found_one
-
-        def examine(self, coordinates):
-            if coordinates in self._targets:
-                self._found_one = True
-                self.results.append(coordinates)
-                return False
-            return True
-
-        def next_coordinates(self, from_coordinates):
-            for delta in ((0, -1), (-1, 0), (1, 0), (0, 1)):
-                yield self._add_coordinates(from_coordinates, delta)
-
-        def progress_to(self, _coordinates, value):
-            return value in self._allowed_values
-
-        def _add_coordinates(self, a, b):
-            return tuple(u + v for u, v in zip(a, b))
-
     def find_all_closest(self, start_coordinates, targets):
+        rules = FindAllClosestRules(targets, self._allowed_values)
+        starting_points = [start_coordinates]
+
+        return self._explore(starting_points, rules)
+
+    def _explore(self, starting_points, rules):
+        progress_points = starting_points[:]
+
         steps = 0
-        progress_points = [start_coordinates]
-
-        rules = ClosestFinder.ProgressRules(targets, self._allowed_values)
-
         while len(progress_points) > 0 and not rules.stop_progressing():
             steps += 1
             new_progress_points = []
@@ -245,6 +222,34 @@ class ClosestFinder:
                             new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
         return rules.results
+
+
+class FindAllClosestRules:
+    def __init__(self, targets, allowed_values):
+        self._targets = targets
+        self._allowed_values = allowed_values
+        self._found_one = False
+        self.results = []
+
+    def stop_progressing(self):
+        return self._found_one
+
+    def examine(self, coordinates):
+        if coordinates in self._targets:
+            self._found_one = True
+            self.results.append(coordinates)
+            return False
+        return True
+
+    def next_coordinates(self, from_coordinates):
+        for delta in ((0, -1), (-1, 0), (1, 0), (0, 1)):
+            yield self._add_coordinates(from_coordinates, delta)
+
+    def progress_to(self, _coordinates, value):
+        return value in self._allowed_values
+
+    def _add_coordinates(self, a, b):
+        return tuple(u + v for u, v in zip(a, b))
 
 
 class TestCaves(unittest.TestCase):
