@@ -214,11 +214,11 @@ class ClosestFinder:
             steps += 1
             new_progress_points = []
             for coordinates in filter(rules.examine, progress_points):
+                self._distances[coordinates] = steps
                 for next_coordinates in rules.next_coordinates(coordinates):
                     if self._distances[next_coordinates] is None:
                         value = self._map[next_coordinates]
                         if rules.progress_to(next_coordinates, value):
-                            self._distances[next_coordinates] = steps
                             new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
         return rules.results
