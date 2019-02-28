@@ -201,50 +201,50 @@ class ClosestFinder:
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
 
     class ProgressRules:
-        def __init__(self, targets):
+        def __init__(self, targets, allowed_values):
             self._targets = targets
+            self._allowed_values = allowed_values
             self._found_one = False
             self.results = []
 
-        def stop(self):
+        def stop_progressing(self):
             return self._found_one
 
-        def evaluate(self, coordinates):
+        def examine(self, coordinates):
             if coordinates in self._targets:
                 self._found_one = True
                 self.results.append(coordinates)
                 return False
             return True
 
+        def next_coordinates(self, from_coordinates):
+            for delta in ((0, -1), (-1, 0), (1, 0), (0, 1)):
+                yield self._add_coordinates(from_coordinates, delta)
+
+        def progress_to(self, _coordinates, value):
+            return value in self._allowed_values
+
+        def _add_coordinates(self, a, b):
+            return tuple(u + v for u, v in zip(a, b))
+
     def find_all_closest(self, start_coordinates, targets):
         steps = 0
         progress_points = [start_coordinates]
 
-        rules = ClosestFinder.ProgressRules(targets)
+        rules = ClosestFinder.ProgressRules(targets, self._allowed_values)
 
-        while len(progress_points) > 0 and not rules.stop():
+        while len(progress_points) > 0 and not rules.stop_progressing():
             steps += 1
             new_progress_points = []
-            for coordinates in progress_points:
-                if not rules.evaluate(coordinates):
-                    continue
-                for next_coordinates in self._next_coordinates(coordinates):
-                    if self._progress_to(next_coordinates, steps):
-                        new_progress_points.append(next_coordinates)
+            for coordinates in filter(rules.examine, progress_points):
+                for next_coordinates in rules.next_coordinates(coordinates):
+                    if self._distances[next_coordinates] is None:
+                        value = self._map[next_coordinates]
+                        if rules.progress_to(next_coordinates, value):
+                            self._distances[next_coordinates] = steps
+                            new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
         return rules.results
-
-    def _progress_to(self, coordinates, steps):
-        if self._map[coordinates] in self._allowed_values and self._distances[coordinates] is None:
-            self._distances[coordinates] = steps
-            return True
-        return False
-
-    def _next_coordinates(self, from_coordinates):
-        for i, j in ((0, -1), (-1, 0), (1, 0), (0, 1)):
-            next_coordinates = from_coordinates[0] + i, from_coordinates[1] + j
-            if next_coordinates in self._map:
-                yield next_coordinates
 
 
 class TestCaves(unittest.TestCase):
