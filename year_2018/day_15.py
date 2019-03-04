@@ -279,10 +279,13 @@ class TestCaves(unittest.TestCase):
             "#######",
         ])
 
-        rules = FindAllClosestRules([(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)], ["."])
         self.assertListEqual(
             [(2, 2), (1, 3)],
-            list(caves._find_all_closest(from_coords=(1, 1), rules=rules))
+            list(caves._find_all_closest(
+                from_coords=(1, 1),
+                targets=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
+                allowed_values=["."])
+            )
         )
 
 
@@ -291,8 +294,9 @@ class Caves:
         self._caves = CharMap()
         self._caves.from_lines(initial_map)
 
-    def _find_all_closest(self, from_coords, rules):
+    def _find_all_closest(self, from_coords, targets, allowed_values):
         finder = MapExplorer(self._caves)
+        rules = FindAllClosestRules(targets, allowed_values)
         closest = finder.explore([from_coords], rules)
         for result in closest:
             yield result
