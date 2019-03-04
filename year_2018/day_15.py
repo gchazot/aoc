@@ -114,7 +114,7 @@ class CharMap:
         self._codes = {None: 0}
 
         if input_lines is not None:
-            self.from_lines(input_lines)
+            self._init_from_lines(input_lines)
         elif width_height is not None:
             self._init_from_dimensions(*width_height)
 
@@ -123,7 +123,7 @@ class CharMap:
         self.height = height
         self._data = array.array('B', (0 for _ in range(self.width * self.height)))
 
-    def from_lines(self, input_lines):
+    def _init_from_lines(self, input_lines):
         widths = []
         for line in input_lines:
             widths.append(len(line))
