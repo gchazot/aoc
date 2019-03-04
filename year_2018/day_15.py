@@ -288,6 +288,14 @@ class TestCaves(unittest.TestCase):
             )
         )
 
+    def test_solve_tie(self):
+        self.assertEqual(None, Caves._solve_tie([]))
+        self.assertEqual((12, 34), Caves._solve_tie([(12, 34)]))
+        self.assertEqual((1, 1), Caves._solve_tie([(1, 1), (2, 2)]))
+        self.assertEqual((1, 1), Caves._solve_tie([(2, 2), (1, 1)]))
+        self.assertEqual((1, 2), Caves._solve_tie([(1, 2), (2, 1)]))
+        self.assertEqual((1, 2), Caves._solve_tie([(2, 1), (1, 2)]))
+
 
 class Caves:
     def __init__(self, initial_map):
@@ -300,6 +308,11 @@ class Caves:
         closest = finder.explore(from_coords, rules)
         for result in closest:
             yield result
+
+    @staticmethod
+    def _solve_tie(potential_targets):
+        if len(potential_targets):
+            return sorted(potential_targets)[0]
 
     def get_in_range(self, opponent):
         in_range = []
