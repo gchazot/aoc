@@ -21,8 +21,7 @@ class TestCharMap(unittest.TestCase):
                 self.assertEqual(None, cmap[x, y])
 
     def test_from_lines(self):
-        cmap = CharMap()
-        cmap.from_lines([
+        cmap = CharMap(input_lines=[
             "abcd",
             "efgh",
             "ijkl",
@@ -35,9 +34,7 @@ class TestCharMap(unittest.TestCase):
         self.assertEqual('l', cmap[3, 2])
 
     def test_raises_for_lines_of_different_lengths(self):
-        cmap = CharMap()
-
-        self.assertRaises(AssertionError, cmap.from_lines, [
+        self.assertRaises(AssertionError, CharMap, input_lines=[
             "abcd",
             "ab"
         ])
@@ -55,8 +52,7 @@ class TestCharMap(unittest.TestCase):
                     self.assertFalse((x, y) in cmap)
 
     def test_get_raises_for_index_out_of_range(self):
-        cmap = CharMap()
-        cmap.from_lines([
+        cmap = CharMap(input_lines=[
             "abcd",
             "efgh",
             "ijkl",
@@ -70,8 +66,7 @@ class TestCharMap(unittest.TestCase):
         self.assertRaises(IndexError, cmap.__getitem__, [4, 3])
 
     def test_set_item_value(self):
-        cmap = CharMap()
-        cmap.from_lines([
+        cmap = CharMap(input_lines=[
             "abcd",
             "efgh",
             "ijkl",
@@ -81,8 +76,7 @@ class TestCharMap(unittest.TestCase):
         self.assertEqual("z", cmap[1, 1])
 
     def test_iterate_coordinates_in_reading_order(self):
-        cmap = CharMap()
-        cmap.from_lines([
+        cmap = CharMap(input_lines=[
             "abc",
             "def",
         ])
@@ -92,8 +86,7 @@ class TestCharMap(unittest.TestCase):
         ], list(cmap.coordinates()))
 
     def test_iterate_values_in_reading_order(self):
-        cmap = CharMap()
-        cmap.from_lines([
+        cmap = CharMap(input_lines=[
             "abc",
             "def",
         ])
@@ -103,8 +96,7 @@ class TestCharMap(unittest.TestCase):
         ], list(cmap.values()))
 
     def test_iterate_items_in_reading_order(self):
-        cmap = CharMap()
-        cmap.from_lines([
+        cmap = CharMap(input_lines=[
             "abc",
             "def",
         ])
@@ -299,8 +291,7 @@ class TestCaves(unittest.TestCase):
 
 class Caves:
     def __init__(self, initial_map):
-        self._caves = CharMap()
-        self._caves.from_lines(initial_map)
+        self._caves = CharMap(input_lines=initial_map)
 
     def _find_all_closest(self, from_coords, targets, allowed_values):
         finder = MapExplorer(self._caves)
