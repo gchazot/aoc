@@ -199,8 +199,8 @@ class MapExplorer:
         self._map = char_map
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
 
-    def explore(self, starting_points, rules):
-        progress_points = starting_points[:]
+    def explore(self, starting_point, rules):
+        progress_points = [starting_point]
 
         steps = 0
         while len(progress_points) > 0 and not rules.stop_progressing():
@@ -297,7 +297,7 @@ class Caves:
     def _find_all_closest(self, from_coords, targets, allowed_values):
         finder = MapExplorer(self._caves)
         rules = FindAllClosestRules(targets, allowed_values)
-        closest = finder.explore([from_coords], rules)
+        closest = finder.explore(from_coords, rules)
         for result in closest:
             yield result
 
