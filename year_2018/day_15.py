@@ -195,16 +195,11 @@ class CharMap:
 
 
 class ClosestFinder:
-    def __init__(self, char_map, allowed_values):
+    def __init__(self, char_map):
         self._map = char_map
-        self._allowed_values = allowed_values
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
 
-    def find_all_closest(self, start_coordinates, targets):
-        rules = FindAllClosestRules(targets, self._allowed_values)
-        return self._explore([start_coordinates], rules)
-
-    def _explore(self, starting_points, rules):
+    def explore(self, starting_points, rules):
         progress_points = starting_points[:]
 
         steps = 0
@@ -283,13 +278,11 @@ class TestCaves(unittest.TestCase):
             "#.G.#G#",
             "#######",
         ])
+
+        rules = FindAllClosestRules([(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)], ["."])
         self.assertListEqual(
             [(2, 2), (1, 3)],
-            list(caves._find_all_closest(
-                from_coords=(1, 1),
-                target_list=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
-                allowed_values=["."]
-            ))
+            list(caves._find_all_closest(from_coords=(1, 1), rules=rules))
         )
 
 
@@ -298,9 +291,9 @@ class Caves:
         self._caves = CharMap()
         self._caves.from_lines(initial_map)
 
-    def _find_all_closest(self, from_coords, target_list, allowed_values):
-        finder = ClosestFinder(self._caves, allowed_values)
-        closest = finder.find_all_closest(from_coords, target_list)
+    def _find_all_closest(self, from_coords, rules):
+        finder = ClosestFinder(self._caves)
+        closest = finder.explore([from_coords], rules)
         for result in closest:
             yield result
 
