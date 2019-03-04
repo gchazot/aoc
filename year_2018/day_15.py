@@ -112,11 +112,16 @@ class CharMap:
         self.height = 0
         self._data = array.array('B')
         self._codes = {None: 0}
+
         if input_lines is not None:
             self.from_lines(input_lines)
         elif width_height is not None:
-            self.width, self.height = width_height
-            self._data = array.array('B', (0 for _ in range(self.width * self.height)))
+            self._init_from_dimensions(*width_height)
+
+    def _init_from_dimensions(self, width, height):
+        self.width = width
+        self.height = height
+        self._data = array.array('B', (0 for _ in range(self.width * self.height)))
 
     def from_lines(self, input_lines):
         widths = []
