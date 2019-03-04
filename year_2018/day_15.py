@@ -20,7 +20,7 @@ class TestCharMap(unittest.TestCase):
             for y in range(height):
                 self.assertEqual(None, cmap[x, y])
 
-    def test_from_lines(self):
+    def test_create_from_lines(self):
         cmap = CharMap(input_lines=[
             "abcd",
             "efgh",
