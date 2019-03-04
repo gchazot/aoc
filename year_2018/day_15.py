@@ -194,7 +194,7 @@ class CharMap:
         raise ValueError("Code {} not found".format(code))
 
 
-class ClosestFinder:
+class MapExplorer:
     def __init__(self, char_map):
         self._map = char_map
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
@@ -292,7 +292,7 @@ class Caves:
         self._caves.from_lines(initial_map)
 
     def _find_all_closest(self, from_coords, rules):
-        finder = ClosestFinder(self._caves)
+        finder = MapExplorer(self._caves)
         closest = finder.explore([from_coords], rules)
         for result in closest:
             yield result
