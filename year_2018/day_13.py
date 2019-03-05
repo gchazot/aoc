@@ -109,7 +109,7 @@ class CartNetwork:
     def last_standing(self):
         while len(self._carts) > 1:
             self.tick()
-        last_standing = self._carts.keys()[0]
+        last_standing = list(self._carts.keys())[0]
         return last_standing[1], last_standing[0]
 
     def tick(self):
