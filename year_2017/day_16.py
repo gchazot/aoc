@@ -1,6 +1,6 @@
 import unittest
 from collections import defaultdict
-from aoc_utils import data_file
+from aoc_utils.data import data_file
 
 
 class Dancers:

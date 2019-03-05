@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from collections import defaultdict
 
-from aoc_utils import data_lines
+from aoc_utils.data import data_lines
 
 
 class MessageDecryptor:

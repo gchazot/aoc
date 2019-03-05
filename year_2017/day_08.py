@@ -1,6 +1,6 @@
 from unittest import TestCase
 from collections import defaultdict
-from aoc_utils import data_file
+from aoc_utils.data import data_file
 import re
 
 

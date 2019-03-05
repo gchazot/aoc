@@ -1,5 +1,5 @@
 from unittest import TestCase
-from aoc_utils import data_file
+from aoc_utils.data import data_file
 
 
 def no_same_words(phrase):

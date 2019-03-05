@@ -4,8 +4,7 @@ import operator
 import unittest
 import re
 
-from aoc_utils import data_lines
-
+from aoc_utils.data import data_lines
 
 coordinates_pattern = re.compile("[pva]=<\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)>")
 

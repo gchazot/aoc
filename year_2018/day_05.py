@@ -1,4 +1,4 @@
-from aoc_utils import data_text
+from aoc_utils.data import data_text
 
 import unittest
 

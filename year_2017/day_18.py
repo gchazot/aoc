@@ -13,8 +13,7 @@ try:
 except ImportError:
     from unittest.mock import MagicMock
 
-from aoc_utils import data_lines
-
+from aoc_utils.data import data_lines
 
 SPECIAL_SOUND_REGISTER = u"__SPECIAL_SOUND__"
 

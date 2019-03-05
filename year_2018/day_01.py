@@ -1,5 +1,5 @@
 from __future__ import print_function
-from aoc_utils import data_text
+from aoc_utils.data import data_text
 import itertools
 import unittest
 

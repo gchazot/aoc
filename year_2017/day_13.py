@@ -1,6 +1,6 @@
 from unittest import TestCase, skip
 import time
-from aoc_utils import data_lines
+from aoc_utils.data import data_lines
 from multiprocessing.pool import Pool
 
 

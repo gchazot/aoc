@@ -1,5 +1,5 @@
 from unittest import TestCase
-from aoc_utils import data_lines
+from aoc_utils.data import data_lines
 
 
 def check_supports_tls(ipv7):

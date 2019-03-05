@@ -1,7 +1,7 @@
 import functools
 from operator import xor
 from unittest import TestCase
-from aoc_utils import data_text
+from aoc_utils.data import data_text
 
 
 class KnotHash:
