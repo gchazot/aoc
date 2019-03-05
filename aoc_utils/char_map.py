@@ -212,3 +212,46 @@ class MapExplorer:
                             new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
         return rules.results
+
+
+class ProgressRules(object):
+    def __init__(self, allowed_values):
+        self._allowed_values = allowed_values
+
+    def stop_progressing(self):
+        """
+        Decide whether to continue with the next iteration of progress
+        :return: True to stop, False to continue
+        """
+        return False
+
+    def examine(self, _coordinates):
+        """
+        Examine some coordinates and decide whether to continue progressing from those
+        :param _coordinates: The coordinates to examine
+        :return: True to continue progressing from coordinates, False otherwise
+        """
+        return True
+
+    def next_coordinates(self, from_coordinates):
+        """
+        Generate the next possible coordinates to progress
+        :param from_coordinates: The coordinates to progress from
+        :return: a generator of the next coordinates
+        """
+        for delta in ((0, -1), (-1, 0), (1, 0), (0, 1)):
+            yield self.add_coordinates(from_coordinates, delta)
+
+    def progress_to(self, _coordinates, value):
+        """
+        Check whether it is allowed to progress to some coordinates with a given value
+        :param _coordinates: The coordinates to check
+        :param value: The value at the coordinates
+        :return: True iff progress is allowed
+        """
+        return value in self._allowed_values
+
+    @staticmethod
+    def add_coordinates(a, b):
+        """Helper to add 2 coordinates vectors"""
+        return tuple(u + v for u, v in zip(a, b))

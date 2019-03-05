@@ -1,12 +1,12 @@
 import unittest
 
-from aoc_utils.char_map import CharMap, MapExplorer
+from aoc_utils.char_map import CharMap, MapExplorer, ProgressRules
 
 
-class FindAllClosestRules:
+class FindAllClosestRules(ProgressRules):
     def __init__(self, targets, allowed_values):
+        super(FindAllClosestRules, self).__init__(allowed_values)
         self._targets = targets
-        self._allowed_values = allowed_values
         self._found_one = False
         self.results = []
 
@@ -19,16 +19,6 @@ class FindAllClosestRules:
             self.results.append(coordinates)
             return False
         return True
-
-    def next_coordinates(self, from_coordinates):
-        for delta in ((0, -1), (-1, 0), (1, 0), (0, 1)):
-            yield self._add_coordinates(from_coordinates, delta)
-
-    def progress_to(self, _coordinates, value):
-        return value in self._allowed_values
-
-    def _add_coordinates(self, a, b):
-        return tuple(u + v for u, v in zip(a, b))
 
 
 class TestCaves(unittest.TestCase):
