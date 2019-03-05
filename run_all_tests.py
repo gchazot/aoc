@@ -4,7 +4,7 @@ import os
 
 def discover(path):
     loader = unittest.TestLoader()
-    return loader.discover(path, pattern="day_*.py")
+    return loader.discover(path, pattern="*.py")
 
 
 def run_all(path):
