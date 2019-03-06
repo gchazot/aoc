@@ -191,6 +191,81 @@ class CharMap:
         raise ValueError("Code {} not found".format(code))
 
 
+def monitored_rules(rules_class):
+    assert issubclass(rules_class, ProgressRules)
+
+    class Monitored(rules_class):
+        def __init__(self, *args, **kwargs):
+            super(Monitored, self).__init__(*args, **kwargs)
+            self.iterations = 0
+            self.examined = 0
+
+        def stop_progressing(self, *args, **kwargs):
+            self.iterations += 1
+            return super(Monitored, self).stop_progressing(*args, **kwargs)
+
+        def examine(self, *args, **kwargs):
+            self.examined += 1
+            return super(Monitored, self).examine(*args, **kwargs)
+
+    return Monitored
+
+
+class TestMapExplorer(unittest.TestCase):
+    def test_stop_on_find_target(self):
+        lines = [
+            "#######",
+            "#.....#",
+            "#.....#",
+            "#.....#",
+            "#.....#",
+            "#.....#",
+            "#######",
+        ]
+        char_map = CharMap(input_lines=lines)
+        rules_5_5 = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
+
+        MapExplorer(char_map).explore(starting_point=(2, 3), rules=rules_5_5)
+        self.assertTrue(rules_5_5.found_target)
+        self.assertEqual(6, rules_5_5.iterations)
+        self.assertEqual(75, rules_5_5.examined)
+
+        MapExplorer(char_map).explore(starting_point=(1, 1), rules=rules_5_5)
+        self.assertTrue(rules_5_5.found_target)
+        self.assertEqual(7, rules_5_5.iterations)
+        self.assertEqual(75, rules_5_5.examined)
+
+        rules_1_1 = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(1, 1))
+
+        MapExplorer(char_map).explore(starting_point=(4, 3), rules=rules_1_1)
+        self.assertTrue(rules_1_1.found_target)
+        self.assertEqual(6, rules_1_1.iterations)
+        self.assertEqual(75, rules_1_1.examined)
+
+        MapExplorer(char_map).explore(starting_point=(5, 5), rules=rules_1_1)
+        self.assertTrue(rules_1_1.found_target)
+        self.assertEqual(7, rules_1_1.iterations)
+        self.assertEqual(75, rules_1_1.examined)
+
+    def test_unreachable_target(self):
+        lines = [
+            "#######",
+            "#.....#",
+            "#.....#",
+            "#######",
+            "#.....#",
+            "#.....#",
+            "#######",
+        ]
+        char_map = CharMap(input_lines=lines)
+        rules = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
+
+        MapExplorer(char_map).explore(starting_point=(3, 1), rules=rules)
+        self.assertFalse(rules.found_target)
+        self.assertEqual(4, rules.iterations)
+        self.assertEqual(16, rules.examined)
+
+
 class MapExplorer:
     def __init__(self, char_map):
         self._map = char_map
