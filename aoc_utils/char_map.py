@@ -225,24 +225,24 @@ class TestMapExplorer(unittest.TestCase):
         char_map = CharMap(input_lines=lines)
         rules_5_5 = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
 
-        MapExplorer(char_map).explore(starting_point=(2, 3), rules=rules_5_5)
+        MapExplorer(char_map).explore(start_point=(2, 3), rules=rules_5_5)
         self.assertTrue(rules_5_5.found_target)
         self.assertEqual(6, rules_5_5.iterations)
         self.assertEqual(75, rules_5_5.examined)
 
-        MapExplorer(char_map).explore(starting_point=(1, 1), rules=rules_5_5)
+        MapExplorer(char_map).explore(start_point=(1, 1), rules=rules_5_5)
         self.assertTrue(rules_5_5.found_target)
         self.assertEqual(7, rules_5_5.iterations)
         self.assertEqual(75, rules_5_5.examined)
 
         rules_1_1 = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(1, 1))
 
-        MapExplorer(char_map).explore(starting_point=(4, 3), rules=rules_1_1)
+        MapExplorer(char_map).explore(start_point=(4, 3), rules=rules_1_1)
         self.assertTrue(rules_1_1.found_target)
         self.assertEqual(6, rules_1_1.iterations)
         self.assertEqual(75, rules_1_1.examined)
 
-        MapExplorer(char_map).explore(starting_point=(5, 5), rules=rules_1_1)
+        MapExplorer(char_map).explore(start_point=(5, 5), rules=rules_1_1)
         self.assertTrue(rules_1_1.found_target)
         self.assertEqual(7, rules_1_1.iterations)
         self.assertEqual(75, rules_1_1.examined)
@@ -260,7 +260,7 @@ class TestMapExplorer(unittest.TestCase):
         char_map = CharMap(input_lines=lines)
         rules = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
 
-        MapExplorer(char_map).explore(starting_point=(3, 1), rules=rules)
+        MapExplorer(char_map).explore(start_point=(3, 1), rules=rules)
         self.assertFalse(rules.found_target)
         self.assertEqual(4, rules.iterations)
         self.assertEqual(16, rules.examined)
@@ -271,8 +271,8 @@ class MapExplorer:
         self._map = char_map
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
 
-    def explore(self, starting_point, rules):
-        progress_points = [starting_point]
+    def explore(self, start_point, rules):
+        progress_points = [start_point]
 
         steps = 0
         while len(progress_points) > 0 and not rules.stop_progressing():
