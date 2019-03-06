@@ -212,7 +212,7 @@ def monitored_rules(rules_class):
 
 
 class TestMapExplorer(unittest.TestCase):
-    def test_stop_on_find_target(self):
+    def make_simple_map(self):
         lines = [
             "#######",
             "#.....#",
@@ -222,7 +222,22 @@ class TestMapExplorer(unittest.TestCase):
             "#.....#",
             "#######",
         ]
-        char_map = CharMap(input_lines=lines)
+        return CharMap(input_lines=lines)
+
+    def make_complex_map(self):
+        lines = [
+            "#######",
+            "#.#...#",
+            "#.#.#.#",
+            "#.#.#.#",
+            "#.#.#.#",
+            "#...#.#",
+            "#######",
+        ]
+        return CharMap(input_lines=lines)
+
+    def test_explore_stop_on_find_target(self):
+        char_map = self.make_simple_map()
         rules_5_5 = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
 
         MapExplorer(char_map).explore(start_point=(2, 3), rules=rules_5_5)
@@ -247,7 +262,7 @@ class TestMapExplorer(unittest.TestCase):
         self.assertEqual(7, rules_1_1.iterations)
         self.assertEqual(75, rules_1_1.examined)
 
-    def test_unreachable_target(self):
+    def test_explore_unreachable_target(self):
         lines = [
             "#######",
             "#.....#",
@@ -265,11 +280,66 @@ class TestMapExplorer(unittest.TestCase):
         self.assertEqual(4, rules.iterations)
         self.assertEqual(16, rules.examined)
 
+    def test_explore_find_complex_path(self):
+        char_map = self.make_complex_map()
+        rules = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
+
+        MapExplorer(char_map).explore(start_point=(1, 1), rules=rules)
+        self.assertTrue(rules.found_target)
+        self.assertEqual(17, rules.iterations)
+        self.assertEqual(17, rules.examined)
+
+    def test_shortest_path_fails_if_target_changed(self):
+        char_map = self.make_simple_map()
+        rules = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
+
+        explorer = MapExplorer(char_map)
+        explorer.explore(start_point=(1, 1), rules=rules)
+
+        self.assertRaises(
+            AssertionError,
+            explorer.shortest_path, start_point=(1, 1), end_point=(4, 5), rules=rules
+        )
+
+    def test_shortest_path_fails_if_not_explored(self):
+        char_map = self.make_simple_map()
+        rules = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
+
+        explorer = MapExplorer(char_map)
+
+        self.assertRaises(
+            AssertionError,
+            explorer.shortest_path, start_point=(1, 1), end_point=(5, 5), rules=rules
+        )
+
+    def test_shortest_path_simple(self):
+        char_map = self.make_simple_map()
+        rules = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
+
+        explorer = MapExplorer(char_map)
+        explorer.explore(start_point=(1, 1), rules=rules)
+
+        path = explorer.shortest_path(start_point=(1, 1), end_point=(5, 5), rules=rules)
+
+        self.assertEqual(9, len(path))
+
+    def test_shortest_path_complex(self):
+        char_map = self.make_complex_map()
+        rules = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(5, 5))
+
+        explorer = MapExplorer(char_map)
+        explorer.explore(start_point=(1, 1), rules=rules)
+
+        path = explorer.shortest_path(start_point=(1, 1), end_point=(5, 5), rules=rules)
+
+        self.assertEqual(17, len(path))
+
 
 class MapExplorer:
     def __init__(self, char_map):
         self._map = char_map
         self._distances = CharMap(width_height=(char_map.width, char_map.height))
+        self._explored = False
 
     def explore(self, start_point, rules):
         progress_points = [start_point]
@@ -286,7 +356,27 @@ class MapExplorer:
                         if rules.progress_to(next_coordinates, value):
                             new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
+
+        self._explored = True
         return
+
+    def shortest_path(self, start_point, end_point, rules):
+        assert self._explored
+        assert self._distances[end_point] is None
+
+        path = [end_point]
+
+        while path[-1] != start_point:
+            current = path[-1]
+            next_coordinates = rules.next_coordinates(current)
+            next_scores = {
+                self._distances[coordinates]: coordinates
+                for coordinates in next_coordinates
+                if coordinates not in path and rules.progress_to(coordinates, self._map[coordinates])
+            }
+            next_step = min(next_scores.items())[1]
+            path.append(next_step)
+        return list(reversed(path))
 
 
 class ProgressRules(object):
