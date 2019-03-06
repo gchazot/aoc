@@ -211,7 +211,7 @@ class MapExplorer:
                         if rules.progress_to(next_coordinates, value):
                             new_progress_points.append(next_coordinates)
             progress_points = new_progress_points
-        return rules.results
+        return
 
 
 class ProgressRules(object):

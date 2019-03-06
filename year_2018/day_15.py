@@ -80,9 +80,9 @@ class Caves:
     def _find_all_closest(self, from_coords, targets, allowed_values):
         finder = MapExplorer(self._caves)
         rules = FindAllClosestRules(targets, allowed_values)
-        closest = finder.explore(from_coords, rules)
-        for result in closest:
-            yield result
+        finder.explore(from_coords, rules)
+        closest = rules.results
+        return closest
 
     @staticmethod
     def _solve_tie(potential_targets):
