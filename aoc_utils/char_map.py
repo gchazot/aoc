@@ -255,3 +255,19 @@ class ProgressRules(object):
     def add_coordinates(a, b):
         """Helper to add 2 coordinates vectors"""
         return tuple(u + v for u, v in zip(a, b))
+
+
+class ShortestPathRules(ProgressRules):
+    def __init__(self, allowed_values, target):
+        self.target = target
+        self.found_target = False
+        super(ShortestPathRules, self).__init__(allowed_values)
+
+    def stop_progressing(self):
+        return self.found_target
+
+    def examine(self, coordinates):
+        if coordinates == self.target:
+            self.found_target = True
+            return False
+        return True
