@@ -22,7 +22,7 @@ class FindAllClosestRules(ProgressRules):
 
 
 class TestCaves(unittest.TestCase):
-    def test_get_targets(self):
+    def make_default_caves(self):
         caves = Caves([
             "#######",
             "#E..G.#",
@@ -30,18 +30,24 @@ class TestCaves(unittest.TestCase):
             "#.G.#G#",
             "#######",
         ])
+        return caves
+
+    def test_init_fighters(self):
+        caves = self.make_default_caves()
+        fighters = caves.fighters
+
+        self.assertSetEqual({'E', 'G'}, set(fighters.keys()))
+        self.assertEqual({(1, 1): 200}, fighters['E'])
+        self.assertEqual({(4, 1): 200, (2, 3): 200, (5, 3): 200}, fighters['G'])
+
+    def test_get_targets(self):
+        caves = self.make_default_caves()
 
         self.assertListEqual([(4, 1), (2, 3), (5, 3)], list(caves.get_targets("E")))
         self.assertListEqual([(1, 1)], list(caves.get_targets("G")))
 
     def test_get_in_range(self):
-        caves = Caves([
-            "#######",
-            "#E..G.#",
-            "#...#.#",
-            "#.G.#G#",
-            "#######",
-        ])
+        caves = self.make_default_caves()
 
         self.assertListEqual([(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
                              list(caves.get_in_range("E")))
@@ -73,9 +79,16 @@ class TestCaves(unittest.TestCase):
         self.assertEqual((1, 2), Caves._solve_tie([(2, 1), (1, 2)]))
 
 
+TEAMS = {'E', 'G'}
+
+
 class Caves:
     def __init__(self, initial_map):
         self._caves = CharMap(input_lines=initial_map)
+        self.fighters = {team: {} for team in TEAMS}
+        for position, entry in self._caves.items():
+            if entry in TEAMS:
+                self.fighters[entry][position] = 200
 
     def _find_all_closest(self, from_coords, targets, allowed_values):
         finder = MapExplorer(self._caves)
