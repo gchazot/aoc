@@ -78,6 +78,12 @@ class TestCaves(unittest.TestCase):
         self.assertEqual((1, 2), Caves._solve_tie([(1, 2), (2, 1)]))
         self.assertEqual((1, 2), Caves._solve_tie([(2, 1), (1, 2)]))
 
+    def test_iterate_team(self):
+        caves = self.make_default_caves()
+
+        self.assertListEqual([(1, 1)], caves._iterate_team('E'))
+        self.assertListEqual([(4, 1), (2, 3), (5, 3)], caves._iterate_team('G'))
+
 
 TEAMS = {'E', 'G'}
 
@@ -95,6 +101,12 @@ class Caves:
         rules = FindAllClosestRules(targets, allowed_values)
         finder.explore(from_coords, rules)
         return rules.results
+
+    def _iterate_team(self, team):
+        return sorted(
+            self.fighters[team].keys(),
+            key=lambda coords: tuple(i for i in reversed(coords))
+        )
 
     @staticmethod
     def _solve_tie(options):
