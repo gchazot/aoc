@@ -94,13 +94,12 @@ class Caves:
         finder = MapExplorer(self._caves)
         rules = FindAllClosestRules(targets, allowed_values)
         finder.explore(from_coords, rules)
-        closest = rules.results
-        return closest
+        return rules.results
 
     @staticmethod
-    def _solve_tie(potential_targets):
-        if len(potential_targets):
-            return sorted(potential_targets)[0]
+    def _solve_tie(options):
+        if len(options):
+            return sorted(options)[0]
 
     def get_in_range(self, opponent):
         in_range = []
