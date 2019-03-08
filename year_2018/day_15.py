@@ -75,8 +75,8 @@ class TestCaves(unittest.TestCase):
         self.assertEqual((12, 34), Caves._solve_tie([(12, 34)]))
         self.assertEqual((1, 1), Caves._solve_tie([(1, 1), (2, 2)]))
         self.assertEqual((1, 1), Caves._solve_tie([(2, 2), (1, 1)]))
-        self.assertEqual((1, 2), Caves._solve_tie([(1, 2), (2, 1)]))
-        self.assertEqual((1, 2), Caves._solve_tie([(2, 1), (1, 2)]))
+        self.assertEqual((2, 1), Caves._solve_tie([(1, 2), (2, 1)]))
+        self.assertEqual((2, 1), Caves._solve_tie([(2, 1), (1, 2)]))
 
     def test_iterate_team(self):
         caves = self.make_default_caves()
@@ -111,7 +111,15 @@ class Caves:
     @staticmethod
     def _solve_tie(options):
         if len(options):
-            return sorted(options)[0]
+            return Caves._sorted_by_priority(options)[0]
+
+    @staticmethod
+    def _sorted_by_priority(options):
+        return sorted(options, key=Caves._reverse_coordinates)
+
+    @staticmethod
+    def _reverse_coordinates(coordinates):
+        return tuple(i for i in reversed(coordinates))
 
     def get_in_range(self, opponent):
         in_range = []
