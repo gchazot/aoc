@@ -1,3 +1,4 @@
+import itertools
 import unittest
 
 from aoc_utils.char_map import CharMap, MapExplorer, ProgressRules
@@ -78,11 +79,10 @@ class TestCaves(unittest.TestCase):
         self.assertEqual((2, 1), Caves._solve_tie([(1, 2), (2, 1)]))
         self.assertEqual((2, 1), Caves._solve_tie([(2, 1), (1, 2)]))
 
-    def test_iterate_team(self):
+    def test_iterate_units(self):
         caves = self.make_default_caves()
 
-        self.assertListEqual([(1, 1)], caves._iterate_team('E'))
-        self.assertListEqual([(4, 1), (2, 3), (5, 3)], caves._iterate_team('G'))
+        self.assertListEqual([(1, 1), (4, 1), (2, 3), (5, 3)], caves._iterate_units())
 
 
 TEAMS = {'E', 'G'}
@@ -102,8 +102,9 @@ class Caves:
         finder.explore(from_coords, rules)
         return rules.results
 
-    def _iterate_team(self, team):
-        return self._sorted_by_priority(self.fighters[team].keys())
+    def _iterate_units(self):
+        all_units = itertools.chain.from_iterable(team.keys() for team in self.fighters.values())
+        return self._sorted_by_priority(all_units)
 
     @staticmethod
     def _solve_tie(options):
