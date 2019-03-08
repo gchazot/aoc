@@ -103,10 +103,7 @@ class Caves:
         return rules.results
 
     def _iterate_team(self, team):
-        return sorted(
-            self.fighters[team].keys(),
-            key=lambda coords: tuple(i for i in reversed(coords))
-        )
+        return self._sorted_by_priority(self.fighters[team].keys())
 
     @staticmethod
     def _solve_tie(options):
