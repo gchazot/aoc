@@ -64,10 +64,11 @@ class TestCaves(unittest.TestCase):
 
         self.assertListEqual(
             [(2, 2), (1, 3)],
-            list(caves._find_all_closest(
-                from_coords=(1, 1),
-                targets=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
-                allowed_values=["."])
+            list(
+                caves._find_all_closest(
+                    from_coords=(1, 1),
+                    targets=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)]
+                )
             )
         )
 
@@ -86,6 +87,7 @@ class TestCaves(unittest.TestCase):
 
 
 TEAMS = {'E', 'G'}
+EMPTY_COORDINATES = '.'
 
 
 class Caves:
@@ -96,9 +98,9 @@ class Caves:
             if entry in TEAMS:
                 self.fighters[entry][position] = 200
 
-    def _find_all_closest(self, from_coords, targets, allowed_values):
+    def _find_all_closest(self, from_coords, targets):
         finder = MapExplorer(self._caves)
-        rules = FindAllClosestRules(targets, allowed_values)
+        rules = FindAllClosestRules(targets, [EMPTY_COORDINATES])
         finder.explore(from_coords, rules)
         return rules.results
 
