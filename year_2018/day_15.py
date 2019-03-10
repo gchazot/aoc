@@ -1,7 +1,8 @@
 import itertools
 import unittest
 
-from aoc_utils.char_map import CharMap, MapExplorer, ProgressRules
+from aoc_utils.char_map import CharMap, MapExplorer, ProgressRules, ADJACENT_COORDINATES_DELTAS, \
+    add_coordinates
 
 
 class FindAllClosestRules(ProgressRules):
@@ -52,6 +53,15 @@ class TestCaves(unittest.TestCase):
 
         self.assertListEqual([(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
                              list(caves.get_in_range("E")))
+        self.assertListEqual([(2, 1), (1, 2)],
+                             list(caves.get_in_range("G")))
+
+    def test_get_coordinates_around(self):
+        caves = self.make_default_caves()
+        self.assertListEqual([(2, 1), (1, 2)], list(caves.get_coordinates_around((1, 1))))
+        self.assertListEqual([(3, 1), (5, 1)], list(caves.get_coordinates_around((4, 1))))
+        self.assertListEqual([(2, 2), (1, 3), (3, 3)], list(caves.get_coordinates_around((2, 3))))
+        self.assertListEqual([(5, 2)], list(caves.get_coordinates_around((5, 3))))
 
     def test_find_all_closest(self):
         caves = Caves([
@@ -131,18 +141,18 @@ class Caves:
     def _reverse_coordinates(coordinates):
         return tuple(i for i in reversed(coordinates))
 
+    def get_coordinates_around(self, coordinates):
+        for delta in ADJACENT_COORDINATES_DELTAS:
+            adjacent = add_coordinates(coordinates, delta)
+            if adjacent in self._caves and self._caves[adjacent] != WALL_VALUE:
+                yield adjacent
+
     def get_in_range(self, opponent):
         in_range = []
         for target in self.get_targets(opponent):
-            for delta in ADJACENT_COORDINATES_DELTAS:
-                coordinates = add_coordinates(target, delta)
-                try:
-                    value = self._caves[coordinates]
-                except IndexError:
-                    continue
-                else:
-                    if value == EMPTY_VALUE:
-                        in_range.append(coordinates)
+            for coordinates in self.get_coordinates_around(target):
+                if self._caves[coordinates] == EMPTY_VALUE:
+                    in_range.append(coordinates)
         return sorted(in_range, key=lambda tup: (tup[1], tup[0]))
 
     def get_targets(self, opponent):
