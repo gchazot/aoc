@@ -82,8 +82,12 @@ class TestCaves(unittest.TestCase):
 
     def test_iterate_units(self):
         caves = self.make_default_caves()
-
         self.assertListEqual([(1, 1), (4, 1), (2, 3), (5, 3)], caves._iterate_units())
+
+    def test_find_next_target(self):
+        caves = self.make_default_caves()
+
+        self.assertEqual((3, 1), caves._find_next_target((1, 1), 'E'))
 
 
 TEAMS = {'E', 'G'}
@@ -97,6 +101,11 @@ class Caves:
         for position, entry in self._caves.items():
             if entry in TEAMS:
                 self.fighters[entry][position] = 200
+
+    def _find_next_target(self, unit, team):
+        targets = self.get_targets(team)
+        all_closest = self._find_all_closest(unit, targets)
+        return self._solve_tie(all_closest)
 
     def _find_all_closest(self, from_coords, targets):
         finder = MapExplorer(self._caves)

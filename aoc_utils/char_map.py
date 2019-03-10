@@ -379,6 +379,9 @@ class MapExplorer:
         return list(reversed(path))
 
 
+ADJACENT_COORDINATES_DELTAS = [(0, -1), (-1, 0), (1, 0), (0, 1)]
+
+
 class ProgressRules(object):
     def __init__(self, allowed_values):
         self._allowed_values = allowed_values
@@ -404,8 +407,8 @@ class ProgressRules(object):
         :param from_coordinates: The coordinates to progress from
         :return: a generator of the next coordinates
         """
-        for delta in ((0, -1), (-1, 0), (1, 0), (0, 1)):
-            yield self.add_coordinates(from_coordinates, delta)
+        for delta in ADJACENT_COORDINATES_DELTAS:
+            yield add_coordinates(from_coordinates, delta)
 
     def progress_to(self, _coordinates, value):
         """
@@ -416,10 +419,10 @@ class ProgressRules(object):
         """
         return value in self._allowed_values
 
-    @staticmethod
-    def add_coordinates(a, b):
-        """Helper to add 2 coordinates vectors"""
-        return tuple(u + v for u, v in zip(a, b))
+
+def add_coordinates(a, b):
+    """Helper to add 2 coordinates vectors"""
+    return tuple(u + v for u, v in zip(a, b))
 
 
 class ShortestPathRules(ProgressRules):
