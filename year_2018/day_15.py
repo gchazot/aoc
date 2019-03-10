@@ -91,7 +91,8 @@ class TestCaves(unittest.TestCase):
 
 
 TEAMS = {'E', 'G'}
-EMPTY_COORDINATES = '.'
+EMPTY_VALUE = '.'
+WALL_VALUE = '#'
 
 
 class Caves:
@@ -109,7 +110,7 @@ class Caves:
 
     def _find_all_closest(self, from_coords, targets):
         finder = MapExplorer(self._caves)
-        rules = FindAllClosestRules(targets, [EMPTY_COORDINATES])
+        rules = FindAllClosestRules(targets, [EMPTY_VALUE])
         finder.explore(from_coords, rules)
         return rules.results
 
@@ -132,20 +133,19 @@ class Caves:
 
     def get_in_range(self, opponent):
         in_range = []
-        for x, y in self.get_targets(opponent):
-            for i, j in ((0, -1), (-1, 0), (1, 0), (0, 1)):
+        for target in self.get_targets(opponent):
+            for delta in ADJACENT_COORDINATES_DELTAS:
+                coordinates = add_coordinates(target, delta)
                 try:
-                    u = x + i
-                    v = y + j
-                    value = self._caves[u, v]
+                    value = self._caves[coordinates]
                 except IndexError:
                     continue
                 else:
-                    if value == '.':
-                        in_range.append((u, v))
+                    if value == EMPTY_VALUE:
+                        in_range.append(coordinates)
         return sorted(in_range, key=lambda tup: (tup[1], tup[0]))
 
     def get_targets(self, opponent):
-        for cordinates, entry in self._caves.items():
-            if entry not in ['#', '.', opponent]:
-                yield cordinates
+        for coordinates, entry in self._caves.items():
+            if entry not in [WALL_VALUE, EMPTY_VALUE, opponent]:
+                yield coordinates
