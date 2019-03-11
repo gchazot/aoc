@@ -63,7 +63,7 @@ class TestCaves(unittest.TestCase):
         self.assertListEqual([(2, 2), (1, 3), (3, 3)], list(caves.get_coordinates_around((2, 3))))
         self.assertListEqual([(5, 2)], list(caves.get_coordinates_around((5, 3))))
 
-    def test_find_all_closest(self):
+    def test_find_all_closest_rules(self):
         caves = Caves([
             "#######",
             "#E#.G.#",
@@ -71,16 +71,13 @@ class TestCaves(unittest.TestCase):
             "#.G.#G#",
             "#######",
         ])
-
-        self.assertListEqual(
-            [(2, 2), (1, 3)],
-            list(
-                caves._find_all_closest(
-                    from_coords=(1, 1),
-                    targets=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)]
-                )
-            )
+        finder = MapExplorer(caves._caves)
+        rules = FindAllClosestRules(
+            targets=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
+            allowed_values=[EMPTY_VALUE]
         )
+        finder.explore(start_point=(1, 1), rules=rules)
+        self.assertListEqual([(2, 2), (1, 3)], list(rules.results))
 
     def test_solve_tie(self):
         self.assertEqual(None, Caves._solve_tie([]))
@@ -147,12 +144,6 @@ class Caves:
             return None
         all_closest = self._find_all_closest(unit, in_range)
         return self._solve_tie(all_closest)
-
-    def _find_all_closest(self, from_coords, targets):
-        finder = MapExplorer(self._caves)
-        rules = FindAllClosestRules(targets, [EMPTY_VALUE])
-        finder.explore(from_coords, rules)
-        return rules.results
 
     def _iterate_units(self):
         all_units = itertools.chain.from_iterable(team.keys() for team in self.fighters.values())
