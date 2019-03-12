@@ -1,4 +1,5 @@
 import array
+import collections
 import unittest
 
 
@@ -369,12 +370,22 @@ class MapExplorer:
         while path[-1] != start_point:
             current = path[-1]
             next_coordinates = rules.next_coordinates(current)
-            next_scores = {
-                self._distances[coordinates]: coordinates
-                for coordinates in next_coordinates
-                if coordinates not in path and rules.progress_to(coordinates, self._map[coordinates])
-            }
-            next_step = min(next_scores.items())[1]
+            next_scores = collections.defaultdict(list)
+            for coordinates in next_coordinates:
+                if coordinates in path:
+                    continue
+                if coordinates != start_point and not rules.progress_to(coordinates, self._map[coordinates]):
+                    continue
+                distance = self._distances[coordinates]
+                if distance is None:
+                    continue
+
+                next_scores[distance].append(coordinates)
+
+            min_scores = min(next_scores.keys())
+            next_step_options = next_scores[min_scores]
+            next_step = rules.solve_tie(next_step_options)
+
             path.append(next_step)
         return list(reversed(path))
 
@@ -418,6 +429,10 @@ class ProgressRules(object):
         :return: True iff progress is allowed
         """
         return value in self._allowed_values
+
+    def solve_tie(self, coordinate_options):
+        if coordinate_options:
+            return coordinate_options[0]
 
 
 def add_coordinates(a, b):

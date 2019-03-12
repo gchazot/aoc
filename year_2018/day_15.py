@@ -45,6 +45,9 @@ class FindAllClosestRules(ProgressRules):
             return False
         return True
 
+    def solve_tie(self, coordinate_options):
+        return solve_tie(coordinate_options)
+
 
 class TestCaves(unittest.TestCase):
     def make_default_caves(self):
