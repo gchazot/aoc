@@ -5,6 +5,29 @@ from aoc_utils.char_map import CharMap, MapExplorer, ProgressRules, ADJACENT_COO
     add_coordinates
 
 
+class TestCoordinatesUtils(unittest.TestCase):
+    def test_solve_tie(self):
+        self.assertEqual(None, solve_tie([]))
+        self.assertEqual((12, 34), solve_tie([(12, 34)]))
+        self.assertEqual((1, 1), solve_tie([(1, 1), (2, 2)]))
+        self.assertEqual((1, 1), solve_tie([(2, 2), (1, 1)]))
+        self.assertEqual((2, 1), solve_tie([(1, 2), (2, 1)]))
+        self.assertEqual((2, 1), solve_tie([(2, 1), (1, 2)]))
+
+
+def solve_tie(options):
+    if len(options):
+        return sorted_by_priority(options)[0]
+
+
+def sorted_by_priority(options):
+    return sorted(options, key=reverse_coordinates)
+
+
+def reverse_coordinates(coordinates):
+    return tuple(i for i in reversed(coordinates))
+
+
 class FindAllClosestRules(ProgressRules):
     def __init__(self, targets, allowed_values):
         super(FindAllClosestRules, self).__init__(allowed_values)
@@ -79,14 +102,6 @@ class TestCaves(unittest.TestCase):
         finder.explore(start_point=(1, 1), rules=rules)
         self.assertListEqual([(2, 2), (1, 3)], list(rules.results))
 
-    def test_solve_tie(self):
-        self.assertEqual(None, Caves._solve_tie([]))
-        self.assertEqual((12, 34), Caves._solve_tie([(12, 34)]))
-        self.assertEqual((1, 1), Caves._solve_tie([(1, 1), (2, 2)]))
-        self.assertEqual((1, 1), Caves._solve_tie([(2, 2), (1, 1)]))
-        self.assertEqual((2, 1), Caves._solve_tie([(1, 2), (2, 1)]))
-        self.assertEqual((2, 1), Caves._solve_tie([(2, 1), (1, 2)]))
-
     def test_iterate_units(self):
         caves = self.make_default_caves()
         self.assertListEqual([(1, 1), (4, 1), (2, 3), (5, 3)], caves._iterate_units())
@@ -147,20 +162,7 @@ class Caves:
 
     def _iterate_units(self):
         all_units = itertools.chain.from_iterable(team.keys() for team in self.fighters.values())
-        return self._sorted_by_priority(all_units)
-
-    @staticmethod
-    def _solve_tie(options):
-        if len(options):
-            return Caves._sorted_by_priority(options)[0]
-
-    @staticmethod
-    def _sorted_by_priority(options):
-        return sorted(options, key=Caves._reverse_coordinates)
-
-    @staticmethod
-    def _reverse_coordinates(coordinates):
-        return tuple(i for i in reversed(coordinates))
+        return sorted_by_priority(all_units)
 
     def get_coordinates_around(self, coordinates):
         for delta in ADJACENT_COORDINATES_DELTAS:
