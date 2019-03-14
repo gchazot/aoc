@@ -151,6 +151,27 @@ class TestCaves(unittest.TestCase):
         self.assertEqual({(3, 1): 200}, fighters['E'])
         self.assertEqual({(2, 3): 200, (5, 3): 200}, fighters['G'])
 
+    def test_play_round(self):
+        caves = self.make_default_caves()
+        fighters = caves.fighters
+
+        caves.play_round()
+        self.assertEqual({(2, 1): 200}, fighters['E'])
+        self.assertEqual({(3, 1): 200, (2, 2): 200, (5, 3): 200}, fighters['G'])
+
+        caves.play_round()
+        self.assertEqual({(2, 1): 194}, fighters['E'])
+        self.assertEqual({(3, 1): 197, (2, 2): 200, (5, 3): 200}, fighters['G'])
+
+        for _ in range(32):
+            caves.play_round()
+        self.assertEqual({(2, 1): 2}, fighters['E'])
+        self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
+
+        caves.play_round()
+        self.assertEqual({}, fighters['E'])
+        self.assertEqual({(3, 1): 98, (2, 2): 200, (5, 3): 200}, fighters['G'])
+
 
 TEAMS = {'E', 'G'}
 EMPTY_VALUE = '.'
@@ -164,6 +185,11 @@ class Caves:
         for position, entry in self._caves.items():
             if entry in TEAMS:
                 self.fighters[entry][position] = 200
+
+    def play_round(self):
+        for unit in self._iterate_units():
+            team = self._caves[unit]
+            self.play_unit(unit, team)
 
     def play_unit(self, unit, team):
         attack_target = self.get_attack_target(unit, team)
