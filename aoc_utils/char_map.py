@@ -191,6 +191,10 @@ class CharMap:
                 return item_value
         raise ValueError("Code {} not found".format(code))
 
+    def echo(self):
+        for y in range(self.height):
+            print("".join(map(str, (self[x, y] or ' ' for x in range(self.width)))))
+
 
 def monitored_rules(rules_class):
     assert issubclass(rules_class, ProgressRules)
