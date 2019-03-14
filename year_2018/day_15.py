@@ -122,20 +122,12 @@ class TestCaves(unittest.TestCase):
         self.assertEqual(None, caves_2.get_attack_target((2, 3), 'G'))
         self.assertEqual(None, caves_2.get_attack_target((5, 3), 'G'))
 
-    def test_find_next_destination(self):
+    def test_find_next_step(self):
         caves = self.make_default_caves()
-        self.assertEqual((3, 1), caves.find_next_destination((1, 1), 'E'))
-        self.assertEqual((2, 1), caves.find_next_destination((4, 1), 'G'))
-
-        caves_2 = Caves([
-            "#######",
-            "#..EG.#",
-            "#...#.#",
-            "#.G.#G#",
-            "#######",
-        ])
-        self.assertEqual((2, 2), caves_2.find_next_destination((3, 1), 'E'))
-        self.assertEqual(None, caves_2.find_next_destination((4, 1), 'G'))
+        self.assertEqual((2, 1), caves.find_next_step((1, 1), 'E'))
+        self.assertEqual((3, 1), caves.find_next_step((4, 1), 'G'))
+        self.assertEqual((2, 2), caves.find_next_step((2, 3), 'G'))
+        self.assertEqual(None, caves.find_next_step((5, 3), 'G'))
 
 
 TEAMS = {'E', 'G'}
@@ -156,12 +148,21 @@ class Caves:
             if self._caves[adjacent] not in [EMPTY_VALUE, team]:
                 return adjacent
 
-    def find_next_destination(self, unit, team):
+    def find_next_step(self, unit, team):
         in_range = self.get_in_range(team)
-        if not in_range or unit in in_range:
+        if not in_range:
             return None
-        all_closest = self._find_all_closest(unit, in_range)
-        return self._solve_tie(all_closest)
+
+        finder = MapExplorer(self._caves)
+        rules = FindAllClosestRules(targets=in_range, allowed_values=[EMPTY_VALUE])
+        finder.explore(unit, rules)
+
+        closest = solve_tie(rules.results)
+        if not closest:
+            return None
+
+        path = finder.shortest_path(start_point=unit, end_point=closest, rules=rules)
+        return path[1]
 
     def _iterate_units(self):
         all_units = itertools.chain.from_iterable(team.keys() for team in self.fighters.values())
