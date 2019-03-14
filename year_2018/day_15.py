@@ -129,6 +129,28 @@ class TestCaves(unittest.TestCase):
         self.assertEqual((2, 2), caves.find_next_step((2, 3), 'G'))
         self.assertEqual(None, caves.find_next_step((5, 3), 'G'))
 
+    def test_play_round(self):
+        caves = self.make_default_caves()
+        fighters = caves.fighters
+
+        caves.play_round((1, 1), 'E')
+        self.assertEqual({(2, 1): 200}, fighters['E'])
+        self.assertEqual({(4, 1): 200, (2, 3): 200, (5, 3): 200}, fighters['G'])
+
+        caves.play_round((2, 1), 'E')
+        caves.play_round((3, 1), 'E')
+        self.assertEqual({(3, 1): 200}, fighters['E'])
+        self.assertEqual({(4, 1): 197, (2, 3): 200, (5, 3): 200}, fighters['G'])
+
+        for _ in range(65):
+            caves.play_round((3, 1), 'E')
+        self.assertEqual({(3, 1): 200}, fighters['E'])
+        self.assertEqual({(4, 1): 2, (2, 3): 200, (5, 3): 200}, fighters['G'])
+
+        caves.play_round((3, 1), 'E')
+        self.assertEqual({(3, 1): 200}, fighters['E'])
+        self.assertEqual({(2, 3): 200, (5, 3): 200}, fighters['G'])
+
 
 TEAMS = {'E', 'G'}
 EMPTY_VALUE = '.'
@@ -142,6 +164,29 @@ class Caves:
         for position, entry in self._caves.items():
             if entry in TEAMS:
                 self.fighters[entry][position] = 200
+
+    def play_round(self, unit, team):
+        attack_target = self.get_attack_target(unit, team)
+        if attack_target:
+            self._attack(attack_target)
+            return
+
+        new_position = self.find_next_step(unit, team)
+        if new_position:
+            self._move_unit(team, unit, new_position)
+
+    def _attack(self, unit):
+        target_team = self._caves[unit]
+        self.fighters[target_team][unit] -= 3
+        if self.fighters[target_team][unit] <= 0:
+            del self.fighters[target_team][unit]
+            self._caves[unit] = EMPTY_VALUE
+
+    def _move_unit(self, team, from_coordinates, to_coordinates):
+        self._caves[to_coordinates] = team
+        self._caves[from_coordinates] = EMPTY_VALUE
+        self.fighters[team][to_coordinates] = self.fighters[team][from_coordinates]
+        del self.fighters[team][from_coordinates]
 
     def get_attack_target(self, unit, team):
         for adjacent in self.get_coordinates_around(unit):
