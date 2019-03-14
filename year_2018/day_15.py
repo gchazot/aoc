@@ -155,20 +155,20 @@ class TestCaves(unittest.TestCase):
         caves = self.make_default_caves()
         fighters = caves.fighters
 
-        caves.play_round()
+        self.assertTrue(caves.play_round())
         self.assertEqual({(2, 1): 200}, fighters['E'])
         self.assertEqual({(3, 1): 200, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
-        caves.play_round()
+        self.assertTrue(caves.play_round())
         self.assertEqual({(2, 1): 194}, fighters['E'])
         self.assertEqual({(3, 1): 197, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
         for _ in range(32):
-            caves.play_round()
+            self.assertTrue(caves.play_round())
         self.assertEqual({(2, 1): 2}, fighters['E'])
         self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
-        caves.play_round()
+        self.assertFalse(caves.play_round())
         self.assertEqual({}, fighters['E'])
         self.assertEqual({(3, 1): 98, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
@@ -176,7 +176,7 @@ class TestCaves(unittest.TestCase):
         caves = self.make_default_caves()
         fighters = caves.fighters
 
-        caves.play()
+        self.assertEqual(34, caves.play())
         self.assertEqual({}, fighters['E'])
         self.assertEqual({(3, 1): 98, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
@@ -195,13 +195,21 @@ class Caves:
                 self.fighters[entry][position] = 200
 
     def play(self):
-        while all(team for team in self.fighters.values()):
-            self.play_round()
+        rounds = 0
+        while self.play_round():
+            rounds += 1
+        return rounds
+
+    def game_on(self):
+        return all(team for team in self.fighters.values())
 
     def play_round(self):
         for unit in self._iterate_units():
+            if not self.game_on():
+                return False
             team = self._caves[unit]
             self.play_unit(unit, team)
+        return True
 
     def play_unit(self, unit, team):
         attack_target = self.get_attack_target(unit, team)
