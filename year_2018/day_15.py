@@ -278,6 +278,8 @@ class Caves:
             if not self.game_on():
                 return False
             team = self._caves[unit]
+            if team == EMPTY_VALUE:
+                continue
             self.play_unit(unit, team)
         return True
 
