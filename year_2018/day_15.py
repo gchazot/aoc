@@ -106,7 +106,7 @@ class TestCaves(unittest.TestCase):
 
     def test_iterate_units(self):
         caves = self.make_default_caves()
-        self.assertListEqual([(1, 1), (4, 1), (2, 3), (5, 3)], caves._iterate_units())
+        self.assertListEqual([(1, 1), (4, 1), (2, 3), (5, 3)], caves.iterate_units())
 
     def test_get_attack_target(self):
         caves_2 = Caves([
@@ -281,7 +281,7 @@ class Caves:
         return all(team for team in self.fighters.values())
 
     def play_round(self):
-        for unit in self._iterate_units():
+        for unit in self.iterate_units():
             if not self.game_on():
                 return False
             team = self._caves[unit]
@@ -293,25 +293,25 @@ class Caves:
     def play_unit(self, unit, team):
         attack_target = self.get_attack_target(unit, team)
         if attack_target:
-            self._attack(attack_target)
+            self.attack(attack_target)
             return
 
         new_position = self.find_next_step(unit, team)
         if new_position:
-            self._move_unit(team, unit, new_position)
+            self.move_unit(team, unit, new_position)
 
             attack_target = self.get_attack_target(new_position, team)
             if attack_target:
-                self._attack(attack_target)
+                self.attack(attack_target)
 
-    def _attack(self, unit):
+    def attack(self, unit):
         target_team = self._caves[unit]
         self.fighters[target_team][unit] -= 3
         if self.fighters[target_team][unit] <= 0:
             del self.fighters[target_team][unit]
             self._caves[unit] = EMPTY_VALUE
 
-    def _move_unit(self, team, from_coordinates, to_coordinates):
+    def move_unit(self, team, from_coordinates, to_coordinates):
         self._caves[to_coordinates] = team
         self._caves[from_coordinates] = EMPTY_VALUE
         self.fighters[team][to_coordinates] = self.fighters[team][from_coordinates]
@@ -348,7 +348,7 @@ class Caves:
         path = finder.shortest_path(start_point=unit, end_point=closest, rules=rules)
         return path[1]
 
-    def _iterate_units(self):
+    def iterate_units(self):
         all_units = itertools.chain.from_iterable(team.keys() for team in self.fighters.values())
         return sorted_by_priority(all_units)
 
