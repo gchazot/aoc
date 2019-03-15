@@ -175,9 +175,22 @@ class TestCaves(unittest.TestCase):
         caves = self.make_default_caves()
         fighters = caves.fighters
 
-        self.assertEqual(34, caves.play())
+        self.assertEqual(16533, caves.play())
         self.assertEqual({}, fighters['E'])
         self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
+
+    def test_play_example(self):
+        caves = Caves([
+            '#######',
+            '#.G...#',
+            '#...EG#',
+            '#.#.#G#',
+            '#..G#E#',
+            '#.....#',
+            '#######',
+        ])
+        outcome = caves.play()
+        self.assertEqual(27730, outcome)
 
 
 TEAMS = {'E', 'G'}
@@ -197,7 +210,8 @@ class Caves:
         rounds = 0
         while self.play_round():
             rounds += 1
-        return rounds
+        remaining_hit_points = sum(hp for team in self.fighters.values() for hp in team.values())
+        return rounds * remaining_hit_points
 
     def game_on(self):
         return all(team for team in self.fighters.values())
