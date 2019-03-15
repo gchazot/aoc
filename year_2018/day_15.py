@@ -1,8 +1,7 @@
 import itertools
 import unittest
 
-from aoc_utils.char_map import CharMap, MapExplorer, ProgressRules, ADJACENT_COORDINATES_DELTAS, \
-    add_coordinates
+from aoc_utils import char_map
 
 
 class TestCoordinatesUtils(unittest.TestCase):
@@ -28,7 +27,7 @@ def reverse_coordinates(coordinates):
     return tuple(i for i in reversed(coordinates))
 
 
-class FindAllClosestRules(ProgressRules):
+class FindAllClosestRules(char_map.ProgressRules):
     def __init__(self, targets, allowed_values):
         super(FindAllClosestRules, self).__init__(allowed_values)
         self._targets = targets
@@ -97,7 +96,7 @@ class TestCaves(unittest.TestCase):
             "#.G.#G#",
             "#######",
         ])
-        finder = MapExplorer(caves._caves)
+        finder = char_map.MapExplorer(caves._caves)
         rules = FindAllClosestRules(
             targets=[(3, 1), (5, 1), (2, 2), (5, 2), (1, 3), (3, 3)],
             allowed_values=[EMPTY_VALUE]
@@ -257,7 +256,7 @@ WALL_VALUE = '#'
 
 class Caves:
     def __init__(self, initial_map):
-        self._caves = CharMap(input_lines=initial_map)
+        self._caves = char_map.CharMap(input_lines=initial_map)
         self.fighters = {team: {} for team in TEAMS}
         for position, entry in self._caves.items():
             if entry in TEAMS:
@@ -330,7 +329,7 @@ class Caves:
         if not in_range:
             return None
 
-        finder = MapExplorer(self._caves)
+        finder = char_map.MapExplorer(self._caves)
         rules = FindAllClosestRules(targets=in_range, allowed_values=[EMPTY_VALUE])
         finder.explore(unit, rules)
 
@@ -346,8 +345,8 @@ class Caves:
         return sorted_by_priority(all_units)
 
     def get_coordinates_around(self, coordinates):
-        for delta in ADJACENT_COORDINATES_DELTAS:
-            adjacent = add_coordinates(coordinates, delta)
+        for delta in char_map.ADJACENT_COORDINATES_DELTAS:
+            adjacent = char_map.add_coordinates(coordinates, delta)
             if adjacent in self._caves and self._caves[adjacent] != WALL_VALUE:
                 yield adjacent
 
