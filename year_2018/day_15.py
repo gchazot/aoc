@@ -138,7 +138,6 @@ class TestCaves(unittest.TestCase):
         self.assertEqual({(4, 1): 200, (2, 3): 200, (5, 3): 200}, fighters['G'])
 
         caves.play_unit((2, 1), 'E')
-        caves.play_unit((3, 1), 'E')
         self.assertEqual({(3, 1): 200}, fighters['E'])
         self.assertEqual({(4, 1): 197, (2, 3): 200, (5, 3): 200}, fighters['G'])
 
@@ -156,21 +155,21 @@ class TestCaves(unittest.TestCase):
         fighters = caves.fighters
 
         self.assertTrue(caves.play_round())
-        self.assertEqual({(2, 1): 200}, fighters['E'])
+        self.assertEqual({(2, 1): 194}, fighters['E'])
         self.assertEqual({(3, 1): 200, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
         self.assertTrue(caves.play_round())
-        self.assertEqual({(2, 1): 194}, fighters['E'])
+        self.assertEqual({(2, 1): 188}, fighters['E'])
         self.assertEqual({(3, 1): 197, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
-        for _ in range(32):
+        for _ in range(31):
             self.assertTrue(caves.play_round())
         self.assertEqual({(2, 1): 2}, fighters['E'])
-        self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
+        self.assertEqual({(3, 1): 104, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
         self.assertFalse(caves.play_round())
         self.assertEqual({}, fighters['E'])
-        self.assertEqual({(3, 1): 98, (2, 2): 200, (5, 3): 200}, fighters['G'])
+        self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
     def test_play(self):
         caves = self.make_default_caves()
@@ -178,7 +177,7 @@ class TestCaves(unittest.TestCase):
 
         self.assertEqual(34, caves.play())
         self.assertEqual({}, fighters['E'])
-        self.assertEqual({(3, 1): 98, (2, 2): 200, (5, 3): 200}, fighters['G'])
+        self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
 
 TEAMS = {'E', 'G'}
@@ -221,6 +220,10 @@ class Caves:
         if new_position:
             self._move_unit(team, unit, new_position)
 
+            attack_target = self.get_attack_target(new_position, team)
+            if attack_target:
+                self._attack(attack_target)
+
     def _attack(self, unit):
         target_team = self._caves[unit]
         self.fighters[target_team][unit] -= 3
@@ -235,9 +238,19 @@ class Caves:
         del self.fighters[team][from_coordinates]
 
     def get_attack_target(self, unit, team):
+        adjacents = []
+        min_hp = None
         for adjacent in self.get_coordinates_around(unit):
-            if self._caves[adjacent] not in [EMPTY_VALUE, team]:
-                return adjacent
+            opponent = self._caves[adjacent]
+            if opponent in [EMPTY_VALUE, team]:
+                continue
+            hp = self.fighters[opponent][adjacent]
+            if min_hp is None or hp < min_hp:
+                min_hp = hp
+                adjacents = [adjacent]
+            elif hp == min_hp:
+                adjacents.append(adjacent)
+        return solve_tie(adjacents)
 
     def find_next_step(self, unit, team):
         in_range = self.get_in_range(team)
