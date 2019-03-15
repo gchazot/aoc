@@ -192,8 +192,12 @@ class CharMap:
         raise ValueError("Code {} not found".format(code))
 
     def echo(self):
+        for line in self.lines():
+            print(line)
+
+    def lines(self):
         for y in range(self.height):
-            print("".join(map(str, (self[x, y] or ' ' for x in range(self.width)))))
+            yield "".join(map(str, (self[x, y] or ' ' for x in range(self.width))))
 
 
 def monitored_rules(rules_class):

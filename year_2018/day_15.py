@@ -277,3 +277,11 @@ class Caves:
         for coordinates, entry in self._caves.items():
             if entry not in [WALL_VALUE, EMPTY_VALUE, opponent]:
                 yield coordinates
+
+    def echo(self):
+        all_fighters = {unit: hp for team in self.fighters.values() for unit, hp in team.items()}
+        for y, line in enumerate(self._caves.lines()):
+            line += " "
+            line_units = sorted_by_priority(unit for unit in all_fighters if unit[1] == y)
+            line += " ".join(str(all_fighters[unit]) for unit in line_units)
+            print(line)
