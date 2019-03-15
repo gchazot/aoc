@@ -277,9 +277,6 @@ class Caves:
         remaining_hit_points = sum(hp for team in self.fighters.values() for hp in team.values())
         return rounds * remaining_hit_points
 
-    def game_on(self):
-        return all(team for team in self.fighters.values())
-
     def play_round(self):
         for unit in self.iterate_units():
             if not self.game_on():
@@ -289,6 +286,9 @@ class Caves:
                 continue
             self.play_unit(unit, team)
         return True
+
+    def game_on(self):
+        return all(team for team in self.fighters.values())
 
     def play_unit(self, unit, team):
         attack_target = self.get_attack_target(unit, team)
