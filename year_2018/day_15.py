@@ -179,8 +179,15 @@ class TestCaves(unittest.TestCase):
         self.assertEqual({}, fighters['E'])
         self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
-    def test_play_example(self):
-        caves = Caves([
+    def test_play_examples(self):
+        def check(expected_outcome, cave_lines, echo=False):
+            caves = Caves(cave_lines)
+            outcome = caves.play()
+            if echo:
+                caves.echo()
+            self.assertEqual(expected_outcome, outcome)
+
+        check(27730, [
             '#######',
             '#.G...#',
             '#...EG#',
@@ -189,8 +196,58 @@ class TestCaves(unittest.TestCase):
             '#.....#',
             '#######',
         ])
-        outcome = caves.play()
-        self.assertEqual(27730, outcome)
+
+        check(36334, [
+            '#######',
+            '#G..#E#',
+            '#E#E.E#',
+            '#G.##.#',
+            '#...#E#',
+            '#...E.#',
+            '#######',
+        ])
+
+        check(39514, [
+            '#######',
+            '#E..EG#',
+            '#.#G.E#',
+            '#E.##E#',
+            '#G..#.#',
+            '#..E#.#',
+            '#######',
+        ])
+
+        check(27755, [
+            '#######',
+            '#E.G#.#',
+            '#.#G..#',
+            '#G.#.G#',
+            '#G..#.#',
+            '#...E.#',
+            '#######',
+        ])
+
+        check(28944, [
+            '#######',
+            '#.E...#',
+            '#.#..G#',
+            '#.###.#',
+            '#E#G#G#',
+            '#...#G#',
+            '#######',
+        ])
+
+        check(18740, [
+            '#########',
+            '#G......#',
+            '#.E.#...#',
+            '#..##..G#',
+            '#...##..#',
+            '#...#...#',
+            '#.G...G.#',
+            '#.....G.#',
+            '#########',
+        ])
 
 
 TEAMS = {'E', 'G'}
