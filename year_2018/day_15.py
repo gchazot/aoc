@@ -1,7 +1,7 @@
 import itertools
 import unittest
 
-from aoc_utils import char_map
+from aoc_utils import char_map, data
 
 
 class TestCoordinatesUtils(unittest.TestCase):
@@ -247,6 +247,14 @@ class TestCaves(unittest.TestCase):
             '#.....G.#',
             '#########',
         ])
+
+    @unittest.skip("Way too long (2h30)")
+    def test_play_mine(self):
+        caves_lines = data.data_lines(2018, "day_15_mine.txt")
+        caves = Caves(caves_lines)
+
+        outcome = caves.play()
+        self.assertEqual(201123, outcome)
 
 
 TEAMS = {'E', 'G'}
