@@ -258,7 +258,7 @@ class TestCaves(unittest.TestCase):
         self.assertEqual(201123, outcome)
 
 
-TEAMS = {'E': 3, 'G': 3}
+TEAMS_STRENGTH = {'E': 3, 'G': 3}
 EMPTY_VALUE = '.'
 WALL_VALUE = '#'
 
@@ -268,11 +268,12 @@ class FightIsOver(Exception):
 
 
 class Caves:
-    def __init__(self, initial_map):
+    def __init__(self, initial_map, teams_strength=TEAMS_STRENGTH):
         self._caves = char_map.CharMap(input_lines=initial_map)
-        self.fighters = {team: {} for team in TEAMS}
+        self.strength = teams_strength
+        self.fighters = {team: {} for team in teams_strength}
         for position, entry in self._caves.items():
-            if entry in TEAMS:
+            if entry in teams_strength:
                 self.fighters[entry][position] = 200
 
     def play(self):
@@ -305,7 +306,7 @@ class Caves:
         for unit in self.iterate_units():
             team = self._caves[unit]
             target = self.get_attack_target(unit, team)
-            attackers[target] += TEAMS[team]
+            attackers[target] += self.strength[team]
 
         rounds = min(
             math.floor(self.fighters[self._caves[unit]][unit] / attackers[unit])
@@ -325,7 +326,7 @@ class Caves:
     def play_unit(self, unit, team):
         attack_target = self.get_attack_target(unit, team)
         if attack_target:
-            return self.attack(attack_target, TEAMS[team])
+            return self.attack(attack_target, self.strength[team])
 
         new_position = self.find_next_step(unit, team)
         if new_position:
@@ -333,7 +334,7 @@ class Caves:
 
             attack_target = self.get_attack_target(new_position, team)
             if attack_target:
-                return self.attack(attack_target, TEAMS[team])
+                return self.attack(attack_target, self.strength[team])
             return False
         return True
 
