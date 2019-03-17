@@ -253,24 +253,24 @@ class TestMapExplorer(unittest.TestCase):
         MapExplorer(char_map).explore(start_point=(2, 3), rules=rules_5_5)
         self.assertTrue(rules_5_5.found_target)
         self.assertEqual(6, rules_5_5.iterations)
-        self.assertEqual(75, rules_5_5.examined)
+        self.assertEqual(25, rules_5_5.examined)
 
         MapExplorer(char_map).explore(start_point=(1, 1), rules=rules_5_5)
         self.assertTrue(rules_5_5.found_target)
         self.assertEqual(7, rules_5_5.iterations)
-        self.assertEqual(75, rules_5_5.examined)
+        self.assertEqual(25, rules_5_5.examined)
 
         rules_1_1 = monitored_rules(ShortestPathRules)(allowed_values=['.'], target=(1, 1))
 
         MapExplorer(char_map).explore(start_point=(4, 3), rules=rules_1_1)
         self.assertTrue(rules_1_1.found_target)
         self.assertEqual(6, rules_1_1.iterations)
-        self.assertEqual(75, rules_1_1.examined)
+        self.assertEqual(25, rules_1_1.examined)
 
         MapExplorer(char_map).explore(start_point=(5, 5), rules=rules_1_1)
         self.assertTrue(rules_1_1.found_target)
         self.assertEqual(7, rules_1_1.iterations)
-        self.assertEqual(75, rules_1_1.examined)
+        self.assertEqual(25, rules_1_1.examined)
 
     def test_explore_unreachable_target(self):
         lines = [
@@ -288,7 +288,7 @@ class TestMapExplorer(unittest.TestCase):
         MapExplorer(char_map).explore(start_point=(3, 1), rules=rules)
         self.assertFalse(rules.found_target)
         self.assertEqual(4, rules.iterations)
-        self.assertEqual(16, rules.examined)
+        self.assertEqual(10, rules.examined)
 
     def test_explore_find_complex_path(self):
         char_map = self.make_complex_map()
@@ -361,6 +361,8 @@ class MapExplorer:
             for coordinates in filter(rules.examine, progress_points):
                 self._distances[coordinates] = steps
                 for next_coordinates in rules.next_coordinates(coordinates):
+                    if next_coordinates in new_progress_points:
+                        continue
                     if self._distances[next_coordinates] is None:
                         value = self._map[next_coordinates]
                         if rules.progress_to(next_coordinates, value):
