@@ -250,7 +250,6 @@ class TestCaves(unittest.TestCase):
             '#########',
         ])
 
-    @unittest.skip("Way too long (2h30)")
     def test_play_mine(self):
         caves_lines = data.data_lines(2018, "day_15_mine.txt")
         caves = Caves(caves_lines)
