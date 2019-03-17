@@ -258,7 +258,7 @@ class TestCaves(unittest.TestCase):
         self.assertEqual(201123, outcome)
 
 
-TEAMS = {'E', 'G'}
+TEAMS = {'E': 3, 'G': 3}
 EMPTY_VALUE = '.'
 WALL_VALUE = '#'
 
@@ -305,7 +305,7 @@ class Caves:
         for unit in self.iterate_units():
             team = self._caves[unit]
             target = self.get_attack_target(unit, team)
-            attackers[target] += 3
+            attackers[target] += TEAMS[team]
 
         rounds = min(
             math.floor(self.fighters[self._caves[unit]][unit] / attackers[unit])
@@ -325,7 +325,7 @@ class Caves:
     def play_unit(self, unit, team):
         attack_target = self.get_attack_target(unit, team)
         if attack_target:
-            return self.attack(attack_target)
+            return self.attack(attack_target, TEAMS[team])
 
         new_position = self.find_next_step(unit, team)
         if new_position:
@@ -333,13 +333,13 @@ class Caves:
 
             attack_target = self.get_attack_target(new_position, team)
             if attack_target:
-                return self.attack(attack_target)
+                return self.attack(attack_target, TEAMS[team])
             return False
         return True
 
-    def attack(self, unit):
+    def attack(self, unit, strength):
         target_team = self._caves[unit]
-        self.fighters[target_team][unit] -= 3
+        self.fighters[target_team][unit] -= strength
         if self.fighters[target_team][unit] <= 0:
             del self.fighters[target_team][unit]
             self._caves[unit] = EMPTY_VALUE
