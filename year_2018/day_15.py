@@ -1,4 +1,6 @@
+import collections
 import itertools
+import math
 import unittest
 
 from aoc_utils import char_map, data
@@ -153,7 +155,7 @@ class TestCaves(unittest.TestCase):
         caves = self.make_default_caves()
         fighters = caves.fighters
 
-        self.assertTrue(caves.play_round())
+        self.assertFalse(caves.play_round())
         self.assertEqual({(2, 1): 194}, fighters['E'])
         self.assertEqual({(3, 1): 200, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
@@ -166,7 +168,7 @@ class TestCaves(unittest.TestCase):
         self.assertEqual({(2, 1): 2}, fighters['E'])
         self.assertEqual({(3, 1): 104, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
-        self.assertFalse(caves.play_round())
+        self.assertRaises(FightIsOver, caves.play_round)
         self.assertEqual({}, fighters['E'])
         self.assertEqual({(3, 1): 101, (2, 2): 200, (5, 3): 200}, fighters['G'])
 
@@ -262,6 +264,10 @@ EMPTY_VALUE = '.'
 WALL_VALUE = '#'
 
 
+class FightIsOver(Exception):
+    pass
+
+
 class Caves:
     def __init__(self, initial_map):
         self._caves = char_map.CharMap(input_lines=initial_map)
@@ -272,20 +278,47 @@ class Caves:
 
     def play(self):
         rounds = 0
-        while self.play_round():
-            rounds += 1
+        while True:
+            try:
+                nobody_moved = self.play_round()
+                rounds += 1
+            except FightIsOver:
+                break
+            if nobody_moved:
+                rounds += self.play_frozen_situation()
         remaining_hit_points = sum(hp for team in self.fighters.values() for hp in team.values())
         return rounds * remaining_hit_points
 
     def play_round(self):
+        nobody_moved = True
         for unit in self.iterate_units():
             if not self.game_on():
-                return False
+                raise FightIsOver
             team = self._caves[unit]
             if team == EMPTY_VALUE:
                 continue
-            self.play_unit(unit, team)
-        return True
+            nobody_moved = self.play_unit(unit, team) and nobody_moved
+
+        return nobody_moved
+
+    def play_frozen_situation(self):
+        attackers = collections.defaultdict(lambda: 0)
+        for unit in self.iterate_units():
+            team = self._caves[unit]
+            target = self.get_attack_target(unit, team)
+            attackers[target] += 3
+
+        rounds = min(
+            math.floor(self.fighters[self._caves[unit]][unit] / attackers[unit])
+            for unit in self.iterate_units()
+            if attackers[unit] > 0
+        )
+
+        for unit in self.iterate_units():
+            team = self._caves[unit]
+            self.fighters[team][unit] -= rounds * attackers[unit]
+
+        return rounds
 
     def game_on(self):
         return all(team for team in self.fighters.values())
@@ -293,8 +326,7 @@ class Caves:
     def play_unit(self, unit, team):
         attack_target = self.get_attack_target(unit, team)
         if attack_target:
-            self.attack(attack_target)
-            return
+            return self.attack(attack_target)
 
         new_position = self.find_next_step(unit, team)
         if new_position:
@@ -302,7 +334,9 @@ class Caves:
 
             attack_target = self.get_attack_target(new_position, team)
             if attack_target:
-                self.attack(attack_target)
+                return self.attack(attack_target)
+            return False
+        return True
 
     def attack(self, unit):
         target_team = self._caves[unit]
@@ -310,6 +344,8 @@ class Caves:
         if self.fighters[target_team][unit] <= 0:
             del self.fighters[target_team][unit]
             self._caves[unit] = EMPTY_VALUE
+            return False
+        return True
 
     def move_unit(self, team, from_coordinates, to_coordinates):
         self._caves[to_coordinates] = team
