@@ -257,6 +257,21 @@ class TestCaves(unittest.TestCase):
         outcome = caves.play()
         self.assertEqual(201123, outcome)
 
+    def test_find_minimum_elves_strength(self):
+        for elf_strength in range(13, 20):
+            strengths = {'E': elf_strength, 'G': 3}
+            caves_lines = data.data_lines(2018, "day_15_mine.txt")
+            caves = Caves(caves_lines, teams_strength=strengths)
+
+            num_elves = len(caves.fighters['E'])
+
+            outcome = caves.play()
+            if len(caves.fighters['E']) == num_elves:
+                break
+
+        self.assertEqual(14, elf_strength)
+        self.assertEqual(54188, outcome)
+
 
 TEAMS_STRENGTH = {'E': 3, 'G': 3}
 EMPTY_VALUE = '.'
