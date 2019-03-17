@@ -1,5 +1,8 @@
 from contextlib import contextmanager
-from time import thread_time
+try:
+    from time import thread_time
+except ImportError:
+    from time import time as thread_time
 
 
 @contextmanager
