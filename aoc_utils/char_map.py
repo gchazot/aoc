@@ -107,7 +107,7 @@ class TestCharMap(unittest.TestCase):
         ], list(cmap.items()))
 
 
-class CharMap:
+class CharMap(object):
     def __init__(self, input_lines=None, width_height=None):
         self.width = 0
         self.height = 0
@@ -167,6 +167,10 @@ class CharMap:
     def items(self):
         for cordinates in self.coordinates():
             yield cordinates, self[cordinates]
+
+    def count_values(self, values):
+        codes = [self._code(value) for value in values]
+        return sum(1 for code in self._data if code in codes)
 
     def _get_offset(self, coordinates):
         x, y = coordinates
