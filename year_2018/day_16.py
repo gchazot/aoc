@@ -84,7 +84,7 @@ class TestProcessor(unittest.TestCase):
 
         all_matches = map(matching_instructions, samples)
         big_matches = filter(lambda matches: len(list(matches)) >= 3, all_matches)
-        self.assertEqual(531, len(big_matches))
+        self.assertEqual(531, len(list(big_matches)))
 
     def test_guess_instruction_ids(self):
         all_lines = data_lines(2018, "day_16_A_mine.txt")
