@@ -72,6 +72,25 @@ class TestLumberJacks(unittest.TestCase):
 
         self.assertEqual(678529, woodland.resource_value())
 
+    def test_resource_value_mine_loooong(self):
+        lines = data_lines(2018, "day_18_mine.txt")
+        woodland = Woodlands(input_lines=lines)
+
+        seen = {}
+        i = 0
+        while i < 1000000000:
+            key = woodland._data.tobytes()
+            if key in seen:
+                cycle = i - seen[key]
+                i += cycle * ((1000000000 - i) // cycle)
+            else:
+                seen[key] = i
+
+            woodland.iterate()
+            i += 1
+
+        self.assertEqual(224005, woodland.resource_value())
+
 
 OPEN = '.'
 TREES = '|'
