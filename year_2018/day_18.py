@@ -1,5 +1,5 @@
 from __future__ import print_function
-from collections import Counter
+from collections import Counter, defaultdict
 import unittest
 
 from aoc_utils.char_map import CharMap, add_coordinates
@@ -101,6 +101,7 @@ ADJACENT_DELTAS = [(u, v) for u in range(-1, 2) for v in range(-1, 2) if not (u 
 class Woodlands(CharMap):
     def __init__(self, input_lines):
         super(Woodlands, self).__init__(input_lines=input_lines)
+        self._counts = {coords: self.counts_around(coords) for coords in self.coordinates()}
 
     def counts_around(self, coordinates):
         counts = Counter({content: 0 for content in (OPEN, TREES, LUMBER)})
@@ -124,14 +125,20 @@ class Woodlands(CharMap):
         return state
 
     def iterate(self):
-        new_state = CharMap(width_height=(self.width, self.height))
-
+        adjustments = defaultdict(Counter)
         for coordinates, state in self.items():
-            counts = self.counts_around(coordinates)
+            counts = self._counts[coordinates]
             next_state = self.next_state(state, counts)
-            new_state[coordinates] = next_state
+            if next_state != state:
+                self[coordinates] = next_state
+                for delta in ADJACENT_DELTAS:
+                    adjacent = add_coordinates(coordinates, delta)
+                    adjustments[adjacent][state] -= 1
+                    adjustments[adjacent][next_state] += 1
 
-        self.swap(new_state)
+        for coordinates, adjustment in adjustments.items():
+            if coordinates in self._counts:
+                self._counts[coordinates] += adjustment
 
     def resource_value(self):
         counts = self.counts()
