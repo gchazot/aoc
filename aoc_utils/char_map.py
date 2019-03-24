@@ -172,6 +172,12 @@ class CharMap(object):
         codes = [self._code(value) for value in values]
         return sum(1 for code in self._data if code in codes)
 
+    def swap(self, other):
+        assert(len(self) == len(other))
+        swap = self._data, self._codes
+        self._data, self._codes = other._data, other._codes
+        other._data, other._codes = swap
+
     def _get_offset(self, coordinates):
         x, y = coordinates
         if x < 0 or x >= self.width:
