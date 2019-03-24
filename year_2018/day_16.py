@@ -165,7 +165,7 @@ def matching_instructions(sample):
     instruction_parameters = instruction[1:]
     for code in Processor.all_codes:
         processor = Processor(before)
-        getattr(processor, code)(*instruction_parameters)
+        processor.execute(code, *instruction_parameters)
         if processor.registers == after:
             yield code
 
@@ -175,6 +175,9 @@ class Processor(object):
 
     def __init__(self, registers):
         self.registers = copy.copy(registers)
+
+    def execute(self, code, *args):
+        self.__getattribute__(code)(*args)
 
     @classmethod
     def add_operation(cls, code, method):
