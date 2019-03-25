@@ -1,5 +1,6 @@
 from __future__ import print_function
 import copy
+import functools
 import operator
 import unittest
 
@@ -186,20 +187,30 @@ class Processor(object):
 
     @classmethod
     def register_register_operation(cls, code, op):
+        @functools.wraps(op)
         def inner(self, a, b, c):
             self.registers[c] = op(self.registers[a], self.registers[b])
         cls.add_operation(code, inner)
 
     @classmethod
     def register_immediate_operation(cls, code, op):
+        @functools.wraps(op)
         def inner(self, a, b, c):
             self.registers[c] = op(self.registers[a], b)
         cls.add_operation(code, inner)
 
     @classmethod
     def immediate_register_operation(cls, code, op):
+        @functools.wraps(op)
         def inner(self, a, b, c):
             self.registers[c] = op(a, self.registers[b])
+        cls.add_operation(code, inner)
+
+    @classmethod
+    def immediate_immediate_operation(cls, code, op):
+        @functools.wraps(op)
+        def inner(self, a, b, c):
+            self.registers[c] = op(a, b)
         cls.add_operation(code, inner)
 
 
@@ -220,7 +231,7 @@ def create_instruction_set():
     Processor.immediate_register_operation("gtir", instructions["gtr"])
     Processor.immediate_register_operation("eqir", instructions["eqr"])
 
-    Processor.immediate_register_operation("seti", lambda a, _b: a)
+    Processor.immediate_immediate_operation("seti", lambda a, _b: a)
     Processor.register_immediate_operation("setr", lambda a, _b: a)
 
 
