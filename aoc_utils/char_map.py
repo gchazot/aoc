@@ -108,11 +108,12 @@ class TestCharMap(unittest.TestCase):
 
 
 class CharMap(object):
-    def __init__(self, input_lines=None, width_height=None):
+    def __init__(self, input_lines=None, width_height=None, default_repr=' '):
         self.width = 0
         self.height = 0
         self._data = array.array('B')
         self._codes = {None: 0}
+        self._default_repr = default_repr
 
         if input_lines is not None:
             self._init_from_lines(input_lines)
@@ -207,7 +208,7 @@ class CharMap(object):
 
     def lines(self):
         for y in range(self.height):
-            yield "".join(map(str, (self[x, y] or ' ' for x in range(self.width))))
+            yield "".join(map(str, (self[x, y] or self._default_repr for x in range(self.width))))
 
 
 def monitored_rules(rules_class):

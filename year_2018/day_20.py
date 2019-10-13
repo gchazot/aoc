@@ -266,7 +266,7 @@ class RouteItem:
         def convert(x, y):
             return (x + offset_x)*2 + 1, (y + offset_y)*2 + 1
 
-        castle = CharMap(width_height=convert(dim_x, dim_y))
+        castle = CharMap(width_height=convert(dim_x, dim_y), default_repr='#')
         for current, options in network.items():
             castle[convert(*current)] = '.' if current != start_coords else 'X'
             for destination in options:
