@@ -58,16 +58,20 @@ class JumpingProcessor(Processor):
 class TestProgram(unittest.TestCase):
     @staticmethod
     def example_program():
-        program = Program(num_registers=6, input_lines=[
-            '#ip 0',
-            'seti 5 0 1',
-            'seti 6 0 2',
-            'addi 0 1 0',
-            'addr 1 2 3',
-            'setr 1 0 0',
-            'seti 8 0 4',
-            'seti 9 0 5',
-        ])
+        program = Program(
+            num_registers=6,
+            input_lines=[
+                '#ip 0',
+                'seti 5 0 1',
+                'seti 6 0 2',
+                'addi 0 1 0',
+                'addr 1 2 3',
+                'setr 1 0 0',
+                'seti 8 0 4',
+                'seti 9 0 5',
+            ],
+            processor_class=JumpingProcessor,
+        )
         return program
 
     def test_parse(self):
@@ -86,7 +90,11 @@ class TestProgram(unittest.TestCase):
 
     @unittest.skip("Too slow")
     def test_mine(self):
-        program = Program(num_registers=6, input_lines=data_lines(2018, "day_19_mine.txt"))
+        program = Program(
+            num_registers=6,
+            input_lines=data_lines(2018, "day_19_mine.txt"),
+            processor_class=JumpingProcessor,
+        )
         program.execute(10000000)
         self.assertEqual(2072, program.processor.registers[0])
 
@@ -96,6 +104,7 @@ class TestProgram(unittest.TestCase):
             num_registers=6,
             input_lines=data_lines(2018, "day_19_mine.txt"),
             initial_registers=[1, 0, 0, 0, 0, 0],
+            processor_class=JumpingProcessor,
         )
         program.execute(34)
 
@@ -127,7 +136,7 @@ class TestProgram(unittest.TestCase):
 
 
 class Program:
-    def __init__(self, num_registers, input_lines, initial_registers=None):
+    def __init__(self, num_registers, input_lines, initial_registers=None, processor_class=None):
         ip_register = None
         self.instructions = []
         for line in input_lines:
@@ -141,7 +150,10 @@ class Program:
 
         if initial_registers is None:
             initial_registers = [0 for _ in range(num_registers)]
-        self.processor = JumpingProcessor(initial_registers, ip_register)
+        if processor_class is None:
+            processor_class = JumpingProcessor
+
+        self.processor = processor_class(initial_registers, ip_register)
         self.total_instructions = 0
 
     def execute(self, num_instructions, log=False):
