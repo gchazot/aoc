@@ -3,6 +3,7 @@ import itertools
 import math
 import unittest
 
+import aoc_utils.geometry
 from aoc_utils import char_map, data
 
 
@@ -405,7 +406,7 @@ class Caves:
 
     def get_coordinates_around(self, coordinates):
         for delta in char_map.ADJACENT_COORDINATES_DELTAS:
-            adjacent = char_map.add_coordinates(coordinates, delta)
+            adjacent = aoc_utils.geometry.add_coordinates(coordinates, delta)
             if adjacent in self._caves and self._caves[adjacent] != WALL_VALUE:
                 yield adjacent
 

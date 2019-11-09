@@ -1,5 +1,6 @@
 import unittest
-from aoc_utils.char_map import CharMap, add_coordinates
+from aoc_utils.char_map import CharMap
+from aoc_utils.geometry import add_coordinates
 from aoc_utils.data import data_lines
 
 

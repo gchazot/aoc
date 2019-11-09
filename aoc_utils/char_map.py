@@ -2,6 +2,8 @@ import array
 import collections
 import unittest
 
+from aoc_utils.geometry import add_coordinates
+
 
 class TestCharMap(unittest.TestCase):
     def test_starts_empty(self):
@@ -454,11 +456,6 @@ class ProgressRules(object):
     def solve_tie(self, coordinate_options):
         if coordinate_options:
             return coordinate_options[0]
-
-
-def add_coordinates(a, b):
-    """Helper to add 2 coordinates vectors"""
-    return tuple(u + v for u, v in zip(a, b))
 
 
 class ShortestPathRules(ProgressRules):

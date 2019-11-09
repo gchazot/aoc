@@ -2,7 +2,8 @@ from __future__ import print_function
 from collections import defaultdict
 import unittest
 from aoc_utils.data import data_text
-from aoc_utils.char_map import add_coordinates, CharMap
+from aoc_utils.char_map import CharMap
+from aoc_utils.geometry import add_coordinates
 
 
 class TestRouteParser(unittest.TestCase):
