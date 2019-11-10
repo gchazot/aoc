@@ -1,10 +1,10 @@
 import collections
 import math
-import operator
 import unittest
 import re
 
 from aoc_utils.data import data_lines
+from aoc_utils.geometry import add_coordinates, manhattan_distance
 
 coordinates_pattern = re.compile("[pva]=<\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)>")
 
@@ -14,25 +14,25 @@ def scale_vector(factor, vector):
 
 
 def add_vectors(u, v):
-    return list(map(operator.add, u, v))
+    return add_coordinates(u, v)
 
 
 class Particle:
     def __init__(self, name, text):
         coordinates = coordinates_pattern.findall(text)
         self.name = name
-        self.position = list(map(int, coordinates[0]))
-        self.velocity = list(map(int, coordinates[1]))
-        self.acceleration = list(map(int, coordinates[2]))
+        self.position = tuple(map(int, coordinates[0]))
+        self.velocity = tuple(map(int, coordinates[1]))
+        self.acceleration = tuple(map(int, coordinates[2]))
 
     def manhattan_distance(self):
-        return sum(map(abs, self.position))
+        return manhattan_distance(self.position, (0, 0, 0))
 
     def manhattan_speed(self):
-        return sum(map(abs, self.velocity))
+        return manhattan_distance(self.velocity, (0, 0, 0))
 
     def manhattan_acceleration(self):
-        return sum(map(abs, self.acceleration))
+        return manhattan_distance(self.acceleration, (0, 0, 0))
 
     def closer_than(self, other):
         if self.manhattan_acceleration() < other.manhattan_acceleration():
@@ -118,15 +118,15 @@ class TestParticle(unittest.TestCase):
     def test_init_Particle(self):
         part1 = Particle(1, "p=< 1,2,3>, v=< 4,5,6>, a=< -7,-8,-9>")
         self.assertEqual(1, part1.name)
-        self.assertListEqual([1, 2, 3], part1.position)
-        self.assertListEqual([4, 5, 6], part1.velocity)
-        self.assertListEqual([-7, -8, -9], part1.acceleration)
+        self.assertEqual((1, 2, 3), part1.position)
+        self.assertEqual((4, 5, 6), part1.velocity)
+        self.assertEqual((-7, -8, -9), part1.acceleration)
 
         part2 = Particle(2, "p=< -1,-2,-3>, v=< -4,-5,-6>, a=< 7,8,9>")
         self.assertEqual(2, part2.name)
-        self.assertListEqual([-1, -2, -3], part2.position)
-        self.assertListEqual([-4, -5, -6], part2.velocity)
-        self.assertListEqual([7, 8, 9], part2.acceleration)
+        self.assertEqual((-1, -2, -3), part2.position)
+        self.assertEqual((-4, -5, -6), part2.velocity)
+        self.assertEqual((7, 8, 9), part2.acceleration)
 
     def test_find_closest_example(self):
         p0 = Particle(0, "p=< 3,0,0>, v=< 2,0,0>, a=<-1,0,0>")
@@ -150,16 +150,16 @@ class TestParticleAlgebraic(unittest.TestCase):
 class TestParticlesCollide(unittest.TestCase):
     def test_position_at_given_time(self):
         part1 = Particle(1, "p=< 1,2,3>, v=< 4,5,6>, a=< -7,-8,-9>")
-        self.assertListEqual([1, 2, 3], part1.position)
-        self.assertListEqual([1, 2, 3], part1.position_at(0))
-        self.assertListEqual([-2, -1, 0], part1.position_at(1))
-        self.assertListEqual([-12, -12, -12], part1.position_at(2))
+        self.assertEqual((1, 2, 3), part1.position)
+        self.assertEqual((1, 2, 3), part1.position_at(0))
+        self.assertEqual((-2, -1, 0), part1.position_at(1))
+        self.assertEqual((-12, -12, -12), part1.position_at(2))
 
         part2 = Particle(2, "p=< -1,-2,-3>, v=< -4,-5,-6>, a=< 7,8,9>")
-        self.assertListEqual([-1, -2, -3], part2.position)
-        self.assertListEqual([-1, -2, -3], part2.position_at(0))
-        self.assertListEqual([2, 1, 0], part2.position_at(1))
-        self.assertListEqual([12, 12, 12], part2.position_at(2))
+        self.assertEqual((-1, -2, -3), part2.position)
+        self.assertEqual((-1, -2, -3), part2.position_at(0))
+        self.assertEqual((2, 1, 0), part2.position_at(1))
+        self.assertEqual((12, 12, 12), part2.position_at(2))
 
     def test_collision_at_given_time(self):
         parts = [
