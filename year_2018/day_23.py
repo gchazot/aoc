@@ -2,6 +2,7 @@ import re
 import unittest
 
 from aoc_utils.data import data_lines
+from aoc_utils.geometry import manhattan_distance
 
 
 class TestEmergencyTeleporter(unittest.TestCase):
@@ -63,19 +64,3 @@ class EmergencyTeleporter:
         for position, strength in self.bots:
             if manhattan_distance(center, position) <= radius:
                 yield position, strength
-
-
-class TestMahattanDistance(unittest.TestCase):
-    def test_one_dimension_distance_is_difference(self):
-        self.assertEqual(0, manhattan_distance((42,), (42,)))
-        self.assertEqual(27, manhattan_distance((69,), (42,)))
-        self.assertEqual(27, manhattan_distance((42,), (69,)))
-        self.assertEqual(27, manhattan_distance((-69,), (-42,)))
-        self.assertEqual(27, manhattan_distance((-42,), (-69,)))
-        self.assertEqual(111, manhattan_distance((-42,), (69,)))
-        self.assertEqual(111, manhattan_distance((42,), (-69,)))
-
-
-def manhattan_distance(u, v):
-    assert len(u) == len(v)
-    return sum(abs(a-b) for a, b in zip(u, v))
