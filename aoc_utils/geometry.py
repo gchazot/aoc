@@ -7,6 +7,10 @@ def add_coordinates(a, b):
     return tuple(u + v for u, v in zip(a, b))
 
 
+def scale_coordinates(coordinates, factor):
+    return tuple(u * factor for u in coordinates)
+
+
 class TestMahattanDistance(unittest.TestCase):
     def test_one_dimension_distance_is_difference(self):
         self.assertEqual(0, manhattan_distance((42,), (42,)))
