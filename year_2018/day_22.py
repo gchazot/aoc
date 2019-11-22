@@ -76,7 +76,8 @@ class CavesAgain:
                     if next_point == (self.target[0], self.target[1], TORCH):
                         stop_after_distance = next_distance
 
-            closest_next_distance = min(next_exploration_points.values(), default=None)
+            next_distances = next_exploration_points.values()
+            closest_next_distance = min(next_distances) if next_distances else None
             if stop_after_distance is not None:
                 closest_next_distance = min(closest_next_distance, stop_after_distance)
             exploration_points = {

@@ -164,7 +164,9 @@ class Program:
             self.processor.execute(*instruction)
             if log:
                 print(
-                    f"{self.total_instructions:9d}({counter:4d}) {ip:2d} {str(instruction):20s}",
+                    "{0:9d}({1:4d}) {2:2d} {str(3):20s}".format(
+                        self.total_instructions, counter, ip, instruction,
+                    ),
                     self.processor.registers
                 )
             counter += 1

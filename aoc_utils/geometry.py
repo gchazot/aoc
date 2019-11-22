@@ -189,7 +189,7 @@ class HyperCube:
         return hash((self.dimension, self.lower, self.upper))
 
     def __repr__(self):
-        return f'Cube({self.lower}, {self.upper})'
+        return 'Cube({lower}, {upper})'.format(**self.__dict__)
 
 
 def collide(cube_a, weight_a, cube_b, weight_b):

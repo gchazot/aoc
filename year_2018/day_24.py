@@ -269,11 +269,11 @@ class TestParse(unittest.TestCase):
         self.assertSetEqual({5390, 1274, 4706, 2961}, {group.hit_points for group in groups})
         self.assertSetEqual(
             {'radiation', 'fire', 'bludgeoning', 'slashing', 'cold'},
-            {*itertools.chain.from_iterable(group.weaknesses for group in groups)},
+            frozenset(itertools.chain.from_iterable(group.weaknesses for group in groups)),
         )
         self.assertSetEqual(
             {'radiation', 'fire'},
-            {*itertools.chain.from_iterable(group.immunities for group in groups)},
+            frozenset(itertools.chain.from_iterable(group.immunities for group in groups)),
         )
 
     def test_mine(self):
