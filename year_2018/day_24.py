@@ -19,8 +19,8 @@ class TestSimulate(unittest.TestCase):
         self.assertEqual(5216, sum(g.units for g in surviving_groups))
 
     def test_simulate_mine(self):
-        example_lines = data_lines(2018, 'day_24_mine.txt')
-        groups = list(parse(example_lines))
+        lines = data_lines(2018, 'day_24_mine.txt')
+        groups = list(parse(lines))
 
         surviving_groups = simulate(groups)
 
@@ -28,22 +28,53 @@ class TestSimulate(unittest.TestCase):
 
         self.assertEqual(30881, sum(g.units for g in surviving_groups))
 
+    def test_find_smallest_boost_example(self):
+        example_lines = data_lines(2018, 'day_24_example.txt')
+        groups = list(parse(example_lines))
+        surviving_groups = find_smallest_boost(groups)
 
-def simulate(groups):
+        self.assertEqual(51, sum(g.units for g in surviving_groups))
+
+    @unittest.skip("Too Slow")
+    def test_find_smallest_boost_mine(self):
+        lines = data_lines(2018, 'day_24_mine.txt')
+        groups = list(parse(lines))
+        surviving_groups = find_smallest_boost(groups)
+
+        self.assertEqual(1847, sum(g.units for g in surviving_groups))
+
+
+def find_smallest_boost(groups):
+    boost = 0
+    while True:
+        survivors = simulate(groups, boost)
+        if survivors and survivors[0].army == "Immune System":
+            return survivors
+        boost += 1
+
+
+def simulate(groups, boost=0):
+    for group in groups:
+        group.reset(boost)
+
     while True:
         targets = {}
         for group in target_selection_order(groups):
-            valid_targets = {
+            valid_targets = [
                 other for other in groups
                 if other.army != group.army and other not in targets.values() and other.max_damage(group) > 0
-            }
+            ]
             if len(valid_targets) > 0:
                 target = group.best_target(valid_targets)
                 targets[group] = target
 
+        some_kills = False
         for attacker in initiative_order(targets.keys()):
             defender = targets[attacker]
-            defender.receive_damage(attacker)
+            some_kills |= defender.receive_damage(attacker)
+
+        if not some_kills:
+            return
 
         groups = [g for g in groups if g.units > 0]
 
@@ -153,18 +184,28 @@ class Group:
         self.hit_points = hit_points
         self.immunities = properties.get('immune', [])
         self.weaknesses = properties.get('weak', [])
-        self.strength = strength
+        self._strength = strength
         self.attack = attack
         self.initiative = initiative
+        self.boost = 0
+        self.original_units = units
 
     def __repr__(self):
-        result = '{army}: {units} units, {hit_points} hp, {strength} x {attack}'
+        result = '{army}: {units} units, {hit_points} hp, {_strength} x {attack}'
         if self.weaknesses:
             result += ', weak {weaknesses}'
         if self.immunities:
             result += ', immune {immunities}'
         result += ', initiative {initiative}'
         return result.format(**self.__dict__)
+
+    def reset(self, boost):
+        self.units = self.original_units
+        self.boost = boost if self.army == 'Immune System' else 0
+
+    @property
+    def strength(self):
+        return self._strength + self.boost
 
     @property
     def effective_power(self):
@@ -196,6 +237,7 @@ class Group:
         damage = self.max_damage(attacker)
         units_lost = damage // self.hit_points
         self.units = max(0, self.units - units_lost)
+        return units_lost > 0
 
 
 def target_selection_order(groups):
