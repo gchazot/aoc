@@ -18,7 +18,6 @@ class TestSimulate(unittest.TestCase):
 
         self.assertEqual(5216, sum(g.units for g in surviving_groups))
 
-    @unittest.skip("Not the right answer")
     def test_simulate_mine(self):
         example_lines = data_lines(2018, 'day_24_mine.txt')
         groups = list(parse(example_lines))
@@ -27,7 +26,7 @@ class TestSimulate(unittest.TestCase):
 
         self.assertTrue(all("Infection" == g.army for g in surviving_groups))
 
-        self.assertEqual(30399, sum(g.units for g in surviving_groups))
+        self.assertEqual(30881, sum(g.units for g in surviving_groups))
 
 
 def simulate(groups):
@@ -36,7 +35,7 @@ def simulate(groups):
         for group in target_selection_order(groups):
             valid_targets = {
                 other for other in groups
-                if other.army != group.army and other not in targets.values() and group.max_damage(other) > 0
+                if other.army != group.army and other not in targets.values() and other.max_damage(group) > 0
             }
             if len(valid_targets) > 0:
                 target = group.best_target(valid_targets)
@@ -79,9 +78,9 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(0, immune.max_damage(attack))
 
     def test_best_target_prefers_damage_first(self):
-        attack = Group(None, 1, None, {}, 0, 'attack_type', None)
-        weak = Group(None, 1, None, {'weak': ['attack_type']}, 0, None, None)
-        immune = Group(None, 1, None, {'immune': ['attack_type']}, 0, None, None)
+        attack = Group(None, 1, None, {}, 1, 'attack_type', None)
+        weak = Group(None, 1, None, {'weak': ['attack_type']}, 1, None, None)
+        immune = Group(None, 1, None, {'immune': ['attack_type']}, 1, None, None)
         groups = (attack, weak, immune)
 
         self.assertEqual(weak, attack.best_target(groups))
@@ -266,7 +265,7 @@ class TestParse(unittest.TestCase):
 
 group_pattern = re.compile(r'^(?P<units>.+?)( \((?P<properties>[^)]+)\))? with an(?P<strength>.*)$')
 unit_pattern = re.compile(r'(?P<units>\d+)\D+(?P<points>\d+)\D+')
-strength_pattern = re.compile(r'\D+(?P<attack>\d+) (?P<type>\w+) .*?(?P<initiative>\d+)$')
+strength_pattern = re.compile(r'\D+(?P<attack>\d+) (?P<type>\w+) damage.*?(?P<initiative>\d+)$')
 property_pattern = re.compile(r'(?P<style>\w+) to (?P<types>.*)')
 
 
