@@ -1,20 +1,19 @@
 import itertools
-import operator
 import unittest
 
 from aoc_utils.data import data_text
-from year_2019.int_code_processor import IntCodeProcessor, EndProgram, Instruction
+from year_2019.int_code_processor import IntCodeProcessor, instructions_day_02
 
 
 class TestIntCodeProcessor(unittest.TestCase):
     def test_initialise(self):
-        processor = IntCodeProcessor([1, 2, 3, 4, 0], initial_instructions)
+        processor = IntCodeProcessor([1, 2, 3, 4, 0], instructions_day_02)
         self.assertListEqual([1, 2, 3, 4, 0], processor.memory)
-        self.assertEqual(initial_instructions, processor.instructions)
+        self.assertEqual(instructions_day_02, processor.instructions)
 
     def test_execute_example_instructions(self):
         def check_instruction(expected_memory, address, initial_state):
-            processor = IntCodeProcessor(initial_state, initial_instructions)
+            processor = IntCodeProcessor(initial_state, instructions_day_02)
             processor.execute_instruction_at(address)
             self.assertListEqual(expected_memory, processor.memory)
 
@@ -26,7 +25,7 @@ class TestIntCodeProcessor(unittest.TestCase):
         check_instruction([30, 1, 1, 4, 2, 5, 6, 0, 99], 4, [1, 1, 1, 4, 2, 5, 6, 0, 99])
 
     def test_execute_example(self):
-        processor = IntCodeProcessor([1, 1, 1, 4, 99, 5, 6, 0, 99], initial_instructions)
+        processor = IntCodeProcessor([1, 1, 1, 4, 99, 5, 6, 0, 99], instructions_day_02)
         processor.execute()
         self.assertListEqual([30, 1, 1, 4, 2, 5, 6, 0, 99], processor.memory)
 
@@ -35,7 +34,7 @@ class TestIntCodeProcessor(unittest.TestCase):
         initial_memory[1] = 12
         initial_memory[2] = 2
 
-        processor = IntCodeProcessor(initial_memory, initial_instructions)
+        processor = IntCodeProcessor(initial_memory, instructions_day_02)
         try:
             processor.execute()
         except RuntimeError:
@@ -49,7 +48,7 @@ class TestIntCodeProcessor(unittest.TestCase):
             initial_memory[1] = noun
             initial_memory[2] = verb
 
-            processor = IntCodeProcessor(initial_memory, initial_instructions)
+            processor = IntCodeProcessor(initial_memory, instructions_day_02)
             try:
                 processor.execute()
             except RuntimeError:
@@ -63,9 +62,3 @@ class TestIntCodeProcessor(unittest.TestCase):
         self.assertEqual(8976, 100 * noun + verb)
 
 
-initial_instructions = {
-    0: Instruction(None),
-    1: Instruction(operator.add),
-    2: Instruction(operator.mul),
-    99: Instruction(EndProgram),
-}

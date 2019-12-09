@@ -1,4 +1,5 @@
 import inspect
+import operator
 
 
 class EndProgram(Exception):
@@ -52,3 +53,11 @@ class IntCodeProcessor:
         operation = self.instructions[operation_code]
 
         operation(instruction, self.memory)
+
+
+instructions_day_02 = {
+    0: Instruction(None),
+    1: Instruction(operator.add),
+    2: Instruction(operator.mul),
+    99: Instruction(EndProgram),
+}
