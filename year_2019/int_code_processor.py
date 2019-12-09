@@ -7,26 +7,31 @@ class EndProgram(Exception):
 
 
 class Instruction:
-    def __init__(self, operation):
+    def __init__(self, operation, num_arguments):
         self.operation = operation
+        self.num_arguments = num_arguments
 
-    def __call__(self, instruction, memory):
+    def __call__(self, address, memory):
         if self.operation == EndProgram:
             raise EndProgram
         elif self.operation is None:
             pass
         elif inspect.isbuiltin(self.operation) or inspect.isfunction(self.operation):
-            a_index = instruction[1]
-            b_index = instruction[2]
-            c_index = instruction[3]
+            arguments = memory[address+1:address+1+self.num_arguments]
+            a_index = arguments[0]
+            b_index = arguments[1]
+            c_index = arguments[2]
             memory[c_index] = self.operation(memory[a_index], memory[b_index])
+
+    @property
+    def size(self):
+        return self.num_arguments + 1
 
 
 class IntCodeProcessor:
     def __init__(self, initial_memory, instruction_set):
         self.memory = initial_memory
         self.instruction_pointer = 0
-        self.instruction_size = 4
         self.instructions = instruction_set
 
     @property
@@ -36,28 +41,21 @@ class IntCodeProcessor:
     def execute(self):
         while self.instruction_pointer < len(self.memory):
             try:
-                self.execute_instruction_at(self.instruction_pointer)
+                instruction_size = self.execute_instruction_at(self.instruction_pointer)
             except EndProgram:
                 return
-            self.instruction_pointer += self.instruction_size
+            self.instruction_pointer += instruction_size
 
     def execute_instruction_at(self, address):
-        instruction = self.get_instruction(address)
-        self.execute_instruction(instruction)
-
-    def get_instruction(self, address):
-        return self.memory[address:address + 4]
-
-    def execute_instruction(self, instruction):
-        operation_code = instruction[0]
-        operation = self.instructions[operation_code]
-
-        operation(instruction, self.memory)
+        operation_code = self.memory[address]
+        instruction = self.instructions[operation_code]
+        instruction(address, self.memory)
+        return instruction.size
 
 
 instructions_day_02 = {
-    0: Instruction(None),
-    1: Instruction(operator.add),
-    2: Instruction(operator.mul),
-    99: Instruction(EndProgram),
+    0: Instruction(None, 0),
+    1: Instruction(operator.add, 3),
+    2: Instruction(operator.mul, 3),
+    99: Instruction(EndProgram, 0),
 }
