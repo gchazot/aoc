@@ -8,12 +8,13 @@ from aoc_utils.data import data_text
 
 class TestIntCodeProcessor(unittest.TestCase):
     def test_initialise(self):
-        processor = IntCodeProcessor([1, 2, 3, 4, 0])
+        processor = IntCodeProcessor([1, 2, 3, 4, 0], initial_instructions)
         self.assertListEqual([1, 2, 3, 4, 0], processor.memory)
+        self.assertEqual(initial_instructions, processor.instructions)
 
     def test_execute_example_instructions(self):
         def check_instruction(expected_memory, address, initial_state):
-            processor = IntCodeProcessor(initial_state)
+            processor = IntCodeProcessor(initial_state, initial_instructions)
             processor.execute_instruction_at(address)
             self.assertListEqual(expected_memory, processor.memory)
 
@@ -25,7 +26,7 @@ class TestIntCodeProcessor(unittest.TestCase):
         check_instruction([30, 1, 1, 4, 2, 5, 6, 0, 99], 4, [1, 1, 1, 4, 2, 5, 6, 0, 99])
 
     def test_execute_example(self):
-        processor = IntCodeProcessor([1, 1, 1, 4, 99, 5, 6, 0, 99])
+        processor = IntCodeProcessor([1, 1, 1, 4, 99, 5, 6, 0, 99], initial_instructions)
         processor.execute()
         self.assertListEqual([30, 1, 1, 4, 2, 5, 6, 0, 99], processor.memory)
 
@@ -34,7 +35,7 @@ class TestIntCodeProcessor(unittest.TestCase):
         initial_memory[1] = 12
         initial_memory[2] = 2
 
-        processor = IntCodeProcessor(initial_memory)
+        processor = IntCodeProcessor(initial_memory, initial_instructions)
         try:
             processor.execute()
         except RuntimeError:
@@ -48,7 +49,7 @@ class TestIntCodeProcessor(unittest.TestCase):
             initial_memory[1] = noun
             initial_memory[2] = verb
 
-            processor = IntCodeProcessor(initial_memory)
+            processor = IntCodeProcessor(initial_memory, initial_instructions)
             try:
                 processor.execute()
             except RuntimeError:
@@ -75,11 +76,11 @@ initial_instructions = {
 
 
 class IntCodeProcessor:
-    def __init__(self, initial_memory):
+    def __init__(self, initial_memory, instruction_set):
         self.memory = initial_memory
         self.instruction_pointer = 0
         self.instruction_size = 4
-        self.instructions = initial_instructions
+        self.instructions = instruction_set
 
     @property
     def output(self):
