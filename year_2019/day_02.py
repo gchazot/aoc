@@ -3,7 +3,7 @@ import operator
 import unittest
 
 from aoc_utils.data import data_text
-from year_2019.int_code_processor import IntCodeProcessor, EndProgram
+from year_2019.int_code_processor import IntCodeProcessor, EndProgram, Instruction
 
 
 class TestIntCodeProcessor(unittest.TestCase):
@@ -64,8 +64,8 @@ class TestIntCodeProcessor(unittest.TestCase):
 
 
 initial_instructions = {
-    0: None,
-    1: operator.add,
-    2: operator.mul,
-    99: EndProgram,
+    0: Instruction(None),
+    1: Instruction(operator.add),
+    2: Instruction(operator.mul),
+    99: Instruction(EndProgram),
 }

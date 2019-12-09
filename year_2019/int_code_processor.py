@@ -5,6 +5,22 @@ class EndProgram(Exception):
     pass
 
 
+class Instruction:
+    def __init__(self, operation):
+        self.operation = operation
+
+    def __call__(self, instruction, memory):
+        if self.operation == EndProgram:
+            raise EndProgram
+        elif self.operation is None:
+            pass
+        elif inspect.isbuiltin(self.operation) or inspect.isfunction(self.operation):
+            a_index = instruction[1]
+            b_index = instruction[2]
+            c_index = instruction[3]
+            memory[c_index] = self.operation(memory[a_index], memory[b_index])
+
+
 class IntCodeProcessor:
     def __init__(self, initial_memory, instruction_set):
         self.memory = initial_memory
@@ -18,7 +34,10 @@ class IntCodeProcessor:
 
     def execute(self):
         while self.instruction_pointer < len(self.memory):
-            self.execute_instruction_at(self.instruction_pointer)
+            try:
+                self.execute_instruction_at(self.instruction_pointer)
+            except EndProgram:
+                return
             self.instruction_pointer += self.instruction_size
 
     def execute_instruction_at(self, address):
@@ -32,15 +51,4 @@ class IntCodeProcessor:
         operation_code = instruction[0]
         operation = self.instructions[operation_code]
 
-        if operation == EndProgram:
-            return
-        elif operation is None:
-            return
-        elif inspect.isbuiltin(operation) or inspect.isfunction(operation):
-            a_index = instruction[1]
-            b_index = instruction[2]
-            c_index = instruction[3]
-            self.memory[c_index] = operation(self.memory[a_index], self.memory[b_index])
-            return
-        else:
-            raise RuntimeError("Unknown operation_code {0}".format(operation_code))
+        operation(instruction, self.memory)
