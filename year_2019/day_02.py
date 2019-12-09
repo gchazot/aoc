@@ -1,3 +1,4 @@
+import inspect
 import itertools
 import operator
 import unittest
@@ -61,11 +62,24 @@ class TestIntCodeProcessor(unittest.TestCase):
         self.assertEqual(8976, 100 * noun + verb)
 
 
+class EndProgram(Exception):
+    pass
+
+
+initial_instructions = {
+    0: None,
+    1: operator.add,
+    2: operator.mul,
+    99: EndProgram,
+}
+
+
 class IntCodeProcessor:
     def __init__(self, initial_memory):
         self.memory = initial_memory
         self.instruction_pointer = 0
         self.instruction_size = 4
+        self.instructions = initial_instructions
 
     @property
     def output(self):
@@ -85,16 +99,17 @@ class IntCodeProcessor:
 
     def execute_instruction(self, instruction):
         operation_code = instruction[0]
-        if operation_code == 99:
+        operation = self.instructions[operation_code]
+
+        if operation == EndProgram:
             return
-        elif operation_code == 1:
-            func = operator.add
-        elif operation_code == 2:
-            func = operator.mul
+        elif operation is None:
+            return
+        elif inspect.isbuiltin(operation) or inspect.isfunction(operation):
+            a_index = instruction[1]
+            b_index = instruction[2]
+            c_index = instruction[3]
+            self.memory[c_index] = operation(self.memory[a_index], self.memory[b_index])
+            return
         else:
             raise RuntimeError("Unknown operation_code {0}".format(operation_code))
-
-        a_index = instruction[1]
-        b_index = instruction[2]
-        c_index = instruction[3]
-        self.memory[c_index] = func(self.memory[a_index], self.memory[b_index])
