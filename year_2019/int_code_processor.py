@@ -1,4 +1,3 @@
-import inspect
 import operator
 
 
@@ -12,20 +11,31 @@ class Instruction:
         self.num_arguments = num_arguments
 
     def __call__(self, address, memory):
-        if self.operation == EndProgram:
-            raise EndProgram
-        elif self.operation is None:
-            pass
-        elif inspect.isbuiltin(self.operation) or inspect.isfunction(self.operation):
-            arguments = memory[address+1:address+1+self.num_arguments]
-            a_index = arguments[0]
-            b_index = arguments[1]
-            c_index = arguments[2]
-            memory[c_index] = self.operation(memory[a_index], memory[b_index])
+        arguments = memory[address+1:address+1+self.num_arguments]
+        a_index = arguments[0]
+        b_index = arguments[1]
+        c_index = arguments[2]
+        memory[c_index] = self.operation(memory[a_index], memory[b_index])
 
     @property
     def size(self):
         return self.num_arguments + 1
+
+
+class NoopInstruction(Instruction):
+    def __init__(self):
+        super(NoopInstruction, self).__init__(None, 0)
+
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+class EndProgramInstruction(Instruction):
+    def __init__(self):
+        super(EndProgramInstruction, self).__init__(None, 0)
+
+    def __call__(self, *args, **kwargs):
+        raise EndProgram
 
 
 class IntCodeProcessor:
@@ -54,8 +64,8 @@ class IntCodeProcessor:
 
 
 instructions_day_02 = {
-    0: Instruction(None, 0),
+    0: NoopInstruction(),
     1: Instruction(operator.add, 3),
     2: Instruction(operator.mul, 3),
-    99: Instruction(EndProgram, 0),
+    99: EndProgramInstruction(),
 }
