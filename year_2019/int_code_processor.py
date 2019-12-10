@@ -44,6 +44,21 @@ class EndProgram(Exception):
 
 
 class Instruction:
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError
+
+
+class NoopInstruction(Instruction):
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+class EndProgramInstruction(Instruction):
+    def __call__(self, *args, **kwargs):
+        raise EndProgram
+
+
+class FunctionInstruction(Instruction):
     def __init__(self, operation, num_arguments):
         self.operation = operation
         self.num_arguments = num_arguments
@@ -87,22 +102,6 @@ class ArgumentWrapper:
             raise RuntimeError("Unknown mode {0}".format(self.mode))
 
 
-class NoopInstruction(Instruction):
-    def __init__(self):
-        super(NoopInstruction, self).__init__(None, 0)
-
-    def __call__(self, *args, **kwargs):
-        pass
-
-
-class EndProgramInstruction(Instruction):
-    def __init__(self):
-        super(EndProgramInstruction, self).__init__(None, 0)
-
-    def __call__(self, *args, **kwargs):
-        raise EndProgram
-
-
 class IntCodeProcessor:
     def __init__(self, initial_memory, instruction_set):
         self.memory = initial_memory
@@ -130,7 +129,7 @@ class IntCodeProcessor:
 
 instructions_day_02 = {
     0: NoopInstruction(),
-    1: Instruction(operator.add, 3),
-    2: Instruction(operator.mul, 3),
+    1: FunctionInstruction(operator.add, 3),
+    2: FunctionInstruction(operator.mul, 3),
     99: EndProgramInstruction(),
 }
