@@ -47,6 +47,9 @@ class Instruction:
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
 
+    def size(self):
+        return 1
+
 
 class NoopInstruction(Instruction):
     def __call__(self, *args, **kwargs):
@@ -75,7 +78,6 @@ class FunctionInstruction(Instruction):
         result = self.operation(arguments[0].get(), arguments[1].get())
         arguments[2].set(result)
 
-    @property
     def size(self):
         return self.num_arguments + 1
 
@@ -124,7 +126,7 @@ class IntCodeProcessor:
         operation_code = self.memory[address] % 100
         instruction = self.instructions[operation_code]
         instruction(address, self.memory)
-        return instruction.size
+        return instruction.size()
 
 
 instructions_day_02 = {
