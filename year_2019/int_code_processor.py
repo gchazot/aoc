@@ -1,3 +1,4 @@
+import functools
 import unittest
 import operator
 
@@ -22,10 +23,20 @@ class TestIntCodeProcessor(unittest.TestCase):
         check_instruction([1, 1, 1, 4, 2, 5, 6, 0, 99], 0, [1, 1, 1, 4, 99, 5, 6, 0, 99])
         check_instruction([30, 1, 1, 4, 2, 5, 6, 0, 99], 4, [1, 1, 1, 4, 2, 5, 6, 0, 99])
 
-    def test_execute_example(self):
-        processor = IntCodeProcessor([1, 1, 1, 4, 99, 5, 6, 0, 99], instructions_day_02)
+    def test_execute_mode_0(self):
+        day_2_assert = functools.partial(self._assert_result, instructions=instructions_day_02)
+        day_2_assert([30, 1, 1, 4, 2, 5, 6, 0, 99], [1, 1, 1, 4, 99, 5, 6, 0, 99])
+
+    def test_execute_mode_1(self):
+        day_2_assert = functools.partial(self._assert_result, instructions=instructions_day_02)
+
+        day_2_assert([1002, 4, 3, 4, 99], [1002, 4, 3, 4, 33])
+        day_2_assert([1101, 100, -1, 4, 99], [1101, 100, -1, 4, 0])
+
+    def _assert_result(self, expected_memory, initial_memory, instructions):
+        processor = IntCodeProcessor(initial_memory, instructions)
         processor.execute()
-        self.assertListEqual([30, 1, 1, 4, 2, 5, 6, 0, 99], processor.memory)
+        self.assertListEqual(expected_memory, processor.memory)
 
 
 class EndProgram(Exception):
@@ -38,15 +49,42 @@ class Instruction:
         self.num_arguments = num_arguments
 
     def __call__(self, address, memory):
-        arguments = memory[address+1:address+1+self.num_arguments]
-        a_index = arguments[0]
-        b_index = arguments[1]
-        c_index = arguments[2]
-        memory[c_index] = self.operation(memory[a_index], memory[b_index])
+        operation_code = memory[address]
+        modes = operation_code // 100
+        arguments = []
+        for i in range(self.num_arguments):
+            mode = modes % 10
+            modes //= 10
+            arguments.append(ArgumentWrapper(memory, address + 1 + i, mode))
+
+        result = self.operation(arguments[0].get(), arguments[1].get())
+        arguments[2].set(result)
 
     @property
     def size(self):
         return self.num_arguments + 1
+
+
+class ArgumentWrapper:
+    def __init__(self, memory, address, mode):
+        self.memory = memory
+        self.address = address
+        self.mode = mode
+
+    def get(self):
+        if self.mode == 0:
+            return self.memory[self.memory[self.address]]
+        elif self.mode == 1:
+            return self.memory[self.address]
+        raise RuntimeError("Unknown mode {0}".format(self.mode))
+
+    def set(self, value):
+        if self.mode == 0:
+            self.memory[self.memory[self.address]] = value
+        elif self.mode == 1:
+            self.memory[self.address] = value
+        else:
+            raise RuntimeError("Unknown mode {0}".format(self.mode))
 
 
 class NoopInstruction(Instruction):
@@ -84,7 +122,7 @@ class IntCodeProcessor:
             self.instruction_pointer += instruction_size
 
     def execute_instruction_at(self, address):
-        operation_code = self.memory[address]
+        operation_code = self.memory[address] % 100
         instruction = self.instructions[operation_code]
         instruction(address, self.memory)
         return instruction.size
