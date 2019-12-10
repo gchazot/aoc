@@ -57,6 +57,17 @@ class Instruction:
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
 
+    @staticmethod
+    def arguments(address, memory, num_arguments):
+        operation_code = memory[address]
+        modes = operation_code // 100
+        arguments = []
+        for i in range(num_arguments):
+            mode = modes % 10
+            modes //= 10
+            arguments.append(ArgumentWrapper(memory, address + 1 + i, mode))
+        return arguments
+
 
 class NoopInstruction(Instruction):
     def __call__(self, *args, **kwargs):
@@ -77,14 +88,7 @@ class FunctionInstruction(Instruction):
         return self.num_arguments + 1
 
     def __call__(self, address, memory, **kwargs):
-        operation_code = memory[address]
-        modes = operation_code // 100
-        arguments = []
-        for i in range(self.num_arguments):
-            mode = modes % 10
-            modes //= 10
-            arguments.append(ArgumentWrapper(memory, address + 1 + i, mode))
-
+        arguments = self.arguments(address, memory, self.num_arguments)
         result = self.operation(arguments[0].get(), arguments[1].get())
         arguments[2].set(result)
 
@@ -94,9 +98,7 @@ class InputInstruction(Instruction):
         return 2
 
     def __call__(self, address, memory, input_values, **kwargs):
-        operation_code = memory[address]
-        mode = operation_code // 100
-        argument = ArgumentWrapper(memory, address+1, mode)
+        argument = self.arguments(address, memory, 1)[0]
         input_value = input_values.pop(0)
         argument.set(input_value)
 
@@ -106,9 +108,7 @@ class OutputInstruction(Instruction):
         return 2
 
     def __call__(self, address, memory, **kwargs):
-        operation_code = memory[address]
-        mode = operation_code // 100
-        argument = ArgumentWrapper(memory, address+1, mode)
+        argument = self.arguments(address, memory, 1)[0]
         return argument.get()
 
 
