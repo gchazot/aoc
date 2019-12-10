@@ -33,10 +33,21 @@ class TestIntCodeProcessor(unittest.TestCase):
         day_2_assert([1002, 4, 3, 4, 99], [1002, 4, 3, 4, 33])
         day_2_assert([1101, 100, -1, 4, 99], [1101, 100, -1, 4, 0])
 
-    def _assert_result(self, expected_memory, initial_memory, instructions):
-        processor = IntCodeProcessor(initial_memory, instructions)
+    def test_execute_input_instruction(self):
+        day_5_assert = functools.partial(self._assert_result, instructions=instructions_day_05)
+
+        fake_input = 42
+        day_5_assert([fake_input, 0, 4, 0, 99], [3, 0, 4, 0, 99],
+                     input_values=[fake_input], expected_output=[fake_input])
+
+    def _assert_result(
+            self, expected_memory, initial_memory, instructions,
+            input_values=None, expected_output=None):
+        processor = IntCodeProcessor(initial_memory, instructions, input_values)
         processor.execute()
         self.assertListEqual(expected_memory, processor.memory)
+        if expected_output is not None:
+            self.assertListEqual(expected_output, processor.output_values)
 
 
 class EndProgram(Exception):
@@ -80,6 +91,29 @@ class FunctionInstruction(Instruction):
 
     def size(self):
         return self.num_arguments + 1
+
+
+class InputInstruction(Instruction):
+    def __call__(self, address, memory, input_values, **kwargs):
+        operation_code = memory[address]
+        mode = operation_code // 100
+        argument = ArgumentWrapper(memory, address+1, mode)
+        input_value = input_values.pop(0)
+        argument.set(input_value)
+
+    def size(self):
+        return 2
+
+
+class OutputInstruction(Instruction):
+    def __call__(self, address, memory, **kwargs):
+        operation_code = memory[address]
+        mode = operation_code // 100
+        argument = ArgumentWrapper(memory, address+1, mode)
+        return argument.get()
+
+    def size(self):
+        return 2
 
 
 class ArgumentWrapper:
@@ -138,4 +172,10 @@ instructions_day_02 = {
     1: FunctionInstruction(operator.add, 3),
     2: FunctionInstruction(operator.mul, 3),
     99: EndProgramInstruction(),
+}
+
+instructions_day_05 = {
+    **instructions_day_02,
+    3: InputInstruction(),
+    4: OutputInstruction(),
 }
