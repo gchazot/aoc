@@ -66,7 +66,7 @@ class FunctionInstruction(Instruction):
         self.operation = operation
         self.num_arguments = num_arguments
 
-    def __call__(self, address, memory):
+    def __call__(self, address, memory, **kwargs):
         operation_code = memory[address]
         modes = operation_code // 100
         arguments = []
@@ -105,10 +105,12 @@ class ArgumentWrapper:
 
 
 class IntCodeProcessor:
-    def __init__(self, initial_memory, instruction_set):
+    def __init__(self, initial_memory, instruction_set, input_values=None):
         self.memory = initial_memory
         self.instruction_pointer = 0
         self.instructions = instruction_set
+        self.input_values = input_values or []
+        self.output_values = []
 
     @property
     def output(self):
@@ -125,7 +127,9 @@ class IntCodeProcessor:
     def execute_instruction_at(self, address):
         operation_code = self.memory[address] % 100
         instruction = self.instructions[operation_code]
-        instruction(address, self.memory)
+        result = instruction(address=address, memory=self.memory, input_values=self.input_values)
+        if result is not None:
+            self.output_values.append(result)
         return instruction.size()
 
 
