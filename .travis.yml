@@ -7,5 +7,3 @@ python:
   - "3.7"
   - "3.8"
 script: python run_all_tests.py
-install:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip install mock; fi
