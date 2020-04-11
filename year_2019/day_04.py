@@ -7,13 +7,13 @@ class TestCounters(unittest.TestCase):
         digits = list(range(10))
         options = itertools.product(digits, repeat=6)
         options_list = list(options)
-        print(options_list[512331])
+        self.assertTupleEqual((5, 1, 2, 3, 3, 1), options_list[512331])
 
     @unittest.skip("Thit counter is too slow")
     def test_int_to_str(self):
         options_str = ["{0:0>6d}".format(i) for i in range(1000000)]
         options_list = [tuple(int(c) for c in option) for option in options_str]
-        print(options_list[512331])
+        self.assertTupleEqual((5, 1, 2, 3, 3, 1), options_list[512331])
 
 
 class TestPasswordChecker(unittest.TestCase):

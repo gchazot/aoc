@@ -81,7 +81,7 @@ class TestGuardsJournal(unittest.TestCase):
         self._add_simple_entries(journal)
 
         guard_entries = journal._get_guard_entries()
-        self.assertListEqual(["1", "2"], list(guard_entries.keys()))
+        self.assertSetEqual(frozenset(("1", "2")), frozenset(guard_entries.keys()))
         self.assertListEqual([
             (datetime.datetime(1518, 11, 1, 0, 1), False),
             (datetime.datetime(1518, 11, 1, 0, 11), True),

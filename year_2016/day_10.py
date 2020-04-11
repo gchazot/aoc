@@ -53,8 +53,8 @@ class TestZoomingBots(unittest.TestCase):
         self.assertEqual(55637, reduce(mul, outputs))
 
 
-value_pattern = re.compile(r"value (\d+) goes to bot (\d+)")
-transfer_pattern = re.compile(r"bot (\d+) gives low to (bot|output) (\d+) and high to (bot|output) (\d+)")
+value_pattern = re.compile(r"^value (\d+) goes to bot (\d+)$")
+transfer_pattern = re.compile(r"^bot (\d+) gives low to (bot|output) (\d+) and high to (bot|output) (\d+)$")
 
 
 class ZoomingBots:
@@ -67,7 +67,7 @@ class ZoomingBots:
     def parse(self, lines):
         next_input_id = len([None for node in self.nodes.keys() if node[0] == 'input'])
         for line in lines:
-            value_match = value_pattern.fullmatch(line)
+            value_match = value_pattern.match(line)
             if value_match is not None:
                 value = int(value_match.group(1))
                 destination = "bot", int(value_match.group(2))
@@ -75,7 +75,7 @@ class ZoomingBots:
                 next_input_id += 1
                 continue
 
-            transfer_match = transfer_pattern.fullmatch(line)
+            transfer_match = transfer_pattern.match(line)
             if transfer_match is not None:
                 origin = int(transfer_match.group(1))
                 low = transfer_match.group(2), int(transfer_match.group(3))

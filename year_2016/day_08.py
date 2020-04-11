@@ -207,7 +207,7 @@ class TestInstructionRunner(TestCase):
         self.mock_screen.reset_mock()
         self.runner.execute_one("rect 33x42")
         self.assertEqual(1, len(self.mock_screen.method_calls))
-        self.mock_screen.rect.assert_called_once_with(33,42)
+        self.mock_screen.rect.assert_called_once_with(33, 42)
 
     def test_parse_rotate_row_instruction(self):
         self.runner.execute_one("rotate row x=1 by 2")
