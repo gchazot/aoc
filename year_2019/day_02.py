@@ -1,3 +1,4 @@
+import copy
 import itertools
 import unittest
 
@@ -21,7 +22,7 @@ class TestIntCodeProcessor(unittest.TestCase):
     def test_find_noun_and_verb(self):
         base_memory = list(map(int, data_text(2019, "day_02_mine.txt").split(",")))
         for noun, verb in itertools.product(range(100), range(100)):
-            initial_memory = base_memory.copy()
+            initial_memory = copy.copy(base_memory)
             initial_memory[1] = noun
             initial_memory[2] = verb
 

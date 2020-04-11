@@ -238,19 +238,19 @@ instructions_day_02 = {
     99: EndProgramInstruction(),
 }
 
-instructions_day_05_1 = {
-    **instructions_day_02,
+instructions_day_05_1 = instructions_day_02.copy()
+instructions_day_05_1.update({
     3: InputInstruction(),
     4: OutputInstruction(),
-}
+})
 
-instructions_day_05_2 = {
-    **instructions_day_05_1,
+instructions_day_05_2 = instructions_day_05_1.copy()
+instructions_day_05_2.update({
     5: JumpIfTrueInstruction(),
     6: JumpIfFalseInstruction(),
     7: LessThanInstructions(),
     8: EqualsInstructions(),
-}
+})
 
 
 class IntCodeProcessor:
