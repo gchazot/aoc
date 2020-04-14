@@ -546,7 +546,6 @@ def read_code_file(filename):
 
 
 class TestSoundProcessor(unittest.TestCase):
-    
     def test_example_1(self):
         code = read_code_file("day_18_example.txt")
         processor = InstructionProcessor(0, sound_instructions, code)
@@ -668,7 +667,7 @@ class TestCommunicatingProcessors(unittest.TestCase):
             time.sleep(0.01)
             if thread_1.is_waiting() and thread_2.is_waiting():
                 with thread_1.pause_context(), thread_2.pause_context():
-                    if thread_1.is_waiting() and thread_2.is_waiting():
+                    if thread_1.is_waiting() and thread_2.is_waiting() and to_a.empty() and to_b.empty():
                         thread_1.terminate()
                         thread_2.terminate()
                         break
