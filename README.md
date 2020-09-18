@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gchazot/aoc.svg?branch=master)](https://travis-ci.org/gchazot/aoc)
+[![Build Status](https://travis-ci.com/gchazot/aoc.svg?branch=master)](https://travis-ci.com/gchazot/aoc)
 
 # Advent of code solutions
 
