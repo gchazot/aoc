@@ -31,7 +31,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - id: set-matrix
         run: echo "::set-output name=matrix::$(./list_test_combinations.sh ${{ join(fromJSON(needs.changes.outputs.folders), ' ') }})"
 
