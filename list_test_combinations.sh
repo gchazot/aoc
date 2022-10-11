@@ -6,7 +6,7 @@ for folder in "${@}"; do
   if [ -e "${version_file}" ]; then
     python_versions=$(cat "${version_file}")
   else
-    python_versions="2.7 3.7"
+    python_versions="3.10"
   fi
 
   for python_version in ${python_versions}; do
