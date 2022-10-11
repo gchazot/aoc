@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/gchazot/aoc.svg?branch=master)](https://travis-ci.com/gchazot/aoc)
+[![Run tests](https://github.com/gchazot/aoc/actions/workflows/run_tests.yml/badge.svg)](https://github.com/gchazot/aoc/actions/workflows/run_tests.yml)
 
 # Advent of code solutions
 
