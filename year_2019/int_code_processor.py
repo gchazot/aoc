@@ -1,3 +1,4 @@
+from collections import defaultdict
 import functools
 import unittest
 import operator
@@ -7,14 +8,14 @@ class TestIntCodeProcessor(unittest.TestCase):
     def test_initialise(self):
         fake_instructions = {42: 'blah'}
         processor = IntCodeProcessor([1, 2, 3, 4, 0], fake_instructions)
-        self.assertListEqual([1, 2, 3, 4, 0], processor.memory)
+        self.assertEqual([1, 2, 3, 4, 0], processor.memory)
         self.assertEqual(fake_instructions, processor.instructions)
 
     def test_execute_example_instructions(self):
         def check_instruction(expected_memory, address, initial_state):
             processor = IntCodeProcessor(initial_state, instructions_day_02)
             processor.execute_instruction_at(address)
-            self.assertListEqual(expected_memory, processor.memory)
+            self.assertEqual(expected_memory, processor.memory)
 
         check_instruction([2, 0, 0, 0, 99], 0, [1, 0, 0, 0, 99])
         check_instruction([2, 3, 0, 6, 99], 0, [2, 3, 0, 3, 99])
@@ -98,9 +99,9 @@ class TestIntCodeProcessor(unittest.TestCase):
         processor = IntCodeProcessor(initial_memory, instructions, input_values)
         processor.execute()
         if expected_memory is not None:
-            self.assertListEqual(expected_memory, processor.memory)
+            self.assertEqual(expected_memory, processor.memory)
         if expected_output is not None:
-            self.assertListEqual(expected_output, processor.output_values)
+            self.assertEqual(expected_output, processor.output_values)
 
 
 class Instruction:
@@ -200,7 +201,7 @@ class LessThanInstructions(Instruction):
             arguments[2].set(0)
 
 
-class EqualsInstructions(Instruction):
+class EqualsInstruction(Instruction):
     def size(self):
         return 4
 
@@ -252,13 +253,13 @@ instructions_day_05_2.update({
     5: JumpIfTrueInstruction(),
     6: JumpIfFalseInstruction(),
     7: LessThanInstructions(),
-    8: EqualsInstructions(),
+    8: EqualsInstruction(),
 })
 
 
 class IntCodeProcessor:
     def __init__(self, initial_memory, instruction_set, input_values=None):
-        self.memory = initial_memory
+        self.memory = InfiniteMemory(initial_memory)
         self.instruction_pointer = 0
         self.instructions = instruction_set
         self.input_values = input_values or []
@@ -286,6 +287,32 @@ class IntCodeProcessor:
         if result is not None:
             self.output_values.append(result)
         return instruction.size()
+
+
+class InfiniteMemory(defaultdict):
+    def __init__(self, initial_memory):
+        super(InfiniteMemory, self).__init__(int, enumerate(initial_memory))
+
+    def __getitem__(self, index):
+        if index < 0:
+            raise IndexError
+        return super(InfiniteMemory, self).__getitem__(index)
+
+    def __setitem__(self, index, value):
+        if index < 0:
+            raise IndexError
+        super(InfiniteMemory, self).__setitem__(index, value)
+
+    def __eq__(self, other):
+        if isinstance(other, (tuple, list)):
+            return (
+                    len(self) == len(other) and
+                    min(self.keys()) == 0 and
+                    max(self.keys()) == len(self) - 1 and
+                    all(self[i] == other[i] for i in range(len(other)))
+            )
+        else:
+            return super(InfiniteMemory, self).__eq__(other)
 
 
 class EndProgram(Exception):
