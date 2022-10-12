@@ -152,7 +152,10 @@ class InputInstruction(Instruction):
 
     def __call__(self, address, memory, input_values, **kwargs):
         argument = self.arguments(address, memory, 1)[0]
-        input_value = input_values.pop(0)
+        try:
+            input_value = input_values.pop(0)
+        except IndexError:
+            raise InputNeeded()
         argument.set(input_value)
 
 
@@ -286,6 +289,10 @@ class IntCodeProcessor:
 
 
 class EndProgram(Exception):
+    pass
+
+
+class InputNeeded(Exception):
     pass
 
 
