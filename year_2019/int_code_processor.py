@@ -37,6 +37,22 @@ class TestIntCodeProcessor(unittest.TestCase):
         day_2_assert(expected_memory=[1002, 4, 3, 4, 99], initial_memory=[1002, 4, 3, 4, 33])
         day_2_assert(expected_memory=[1101, 100, -1, 4, 99], initial_memory=[1101, 100, -1, 4, 0])
 
+    def test_execute_mode_2(self):
+        day_9_assert = functools.partial(self._assert_result, instructions=instructions_day_09)
+
+        day_9_assert(
+            expected_output=[109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99],
+            initial_memory=[109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99],
+        )
+        day_9_assert(
+            expected_output=[1219070632396864],
+            initial_memory=[1102, 34915192, 34915192, 7, 4, 7, 99, 0],
+        )
+        day_9_assert(
+            expected_output=[1125899906842624],
+            initial_memory=[104, 1125899906842624, 99],
+        )
+
     def test_execute_input_instruction(self):
         day_5_assert = functools.partial(self._assert_result, instructions=instructions_day_05_1)
 
@@ -213,6 +229,15 @@ class EqualsInstruction(Instruction):
             arguments[2].set(0)
 
 
+class AdjustRelativeBaseInstruction(Instruction):
+    def size(self):
+        return 2
+
+    def __call__(self, address, memory, **kwargs):
+        argument = self.arguments(address, memory, 1)[0]
+        memory.relative_base += argument.get()
+
+
 class ArgumentWrapper:
     def __init__(self, memory, address, mode):
         self.memory = memory
@@ -224,6 +249,8 @@ class ArgumentWrapper:
             return self.memory[self.memory[self.address]]
         elif self.mode == 1:
             return self.memory[self.address]
+        elif self.mode == 2:
+            return self.memory[self.memory.relative_base + self.memory[self.address]]
         raise RuntimeError("Unknown mode {0}".format(self.mode))
 
     def set(self, value):
@@ -231,6 +258,8 @@ class ArgumentWrapper:
             self.memory[self.memory[self.address]] = value
         elif self.mode == 1:
             self.memory[self.address] = value
+        elif self.mode == 2:
+            self.memory[self.memory.relative_base + self.memory[self.address]] = value
         else:
             raise RuntimeError("Unknown mode {0}".format(self.mode))
 
@@ -254,6 +283,11 @@ instructions_day_05_2.update({
     6: JumpIfFalseInstruction(),
     7: LessThanInstructions(),
     8: EqualsInstruction(),
+})
+
+instructions_day_09 = instructions_day_05_2.copy()
+instructions_day_09.update({
+    9: AdjustRelativeBaseInstruction(),
 })
 
 
@@ -291,6 +325,7 @@ class IntCodeProcessor:
 
 class InfiniteMemory(defaultdict):
     def __init__(self, initial_memory):
+        self.relative_base = 0
         super(InfiniteMemory, self).__init__(int, enumerate(initial_memory))
 
     def __getitem__(self, index):
