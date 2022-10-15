@@ -292,12 +292,12 @@ instructions_day_09.update({
 
 
 class IntCodeProcessor:
-    def __init__(self, initial_memory, instruction_set, input_values=None):
+    def __init__(self, initial_memory, instruction_set, input_values=None, output_values=None):
         self.memory = InfiniteMemory(initial_memory)
         self.instruction_pointer = 0
         self.instructions = instruction_set
-        self.input_values = input_values or []
-        self.output_values = []
+        self.input_values = input_values if input_values is not None else []
+        self.output_values = output_values if output_values is not None else []
 
     @property
     def output(self):
