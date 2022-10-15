@@ -108,6 +108,21 @@ class TestCharMap(unittest.TestCase):
             ((0, 1), "d"), ((1, 1), "e"), ((2, 1), "f"),
         ], list(cmap.items()))
 
+    def test_search_values(self):
+        cmap = CharMap(input_lines=[
+            "abcd",
+            "efgh",
+            "ijkl",
+            "here",
+        ])
+
+        self.assertEqual([(0, 0)], list(cmap.search("a")))
+        self.assertEqual([(2, 1)], list(cmap.search("g")))
+        self.assertEqual([(1, 2)], list(cmap.search("j")))
+        self.assertEqual([(2, 0)], list(cmap.search("c")))
+        self.assertEqual([], list(cmap.search("z")))
+        self.assertEqual([(0, 1), (1, 3), (3, 3)], list(cmap.search("e")))
+
 
 class CharMap(object):
     def __init__(self, input_lines=None, width_height=None, default_repr=' '):
@@ -175,6 +190,21 @@ class CharMap(object):
         codes = [self._code(value) for value in values]
         return sum(1 for code in self._data if code in codes)
 
+    def search(self, value):
+        code = self._code(value)
+        offset = -1
+        while True:
+            try:
+                start = offset + 1
+                data_to_search = self._data[start:]
+                relative = data_to_search.index(code)
+                offset = start + relative
+            except ValueError:
+                break
+            else:
+                coordinates = self._get_coordinates(offset)
+                yield coordinates
+
     def swap(self, other):
         assert(len(self) == len(other))
         swap = self._data, self._codes
@@ -189,6 +219,9 @@ class CharMap(object):
             raise IndexError("x={} out of range".format(y))
         offset = self.width * y + x
         return offset
+
+    def _get_coordinates(self, offset):
+        return offset % self.width, offset//self.width
 
     def _code(self, value):
         try:
