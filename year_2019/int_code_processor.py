@@ -323,20 +323,26 @@ class IntCodeProcessor:
         return instruction.size()
 
 
-class InfiniteMemory(defaultdict):
+class InfiniteMemory:
     def __init__(self, initial_memory):
         self.relative_base = 0
-        super(InfiniteMemory, self).__init__(int, enumerate(initial_memory))
+        self.store = defaultdict(int, enumerate(initial_memory))
 
     def __getitem__(self, index):
         if index < 0:
             raise IndexError
-        return super(InfiniteMemory, self).__getitem__(index)
+        return self.store.__getitem__(index)
 
     def __setitem__(self, index, value):
         if index < 0:
             raise IndexError
-        super(InfiniteMemory, self).__setitem__(index, value)
+        return self.store.__setitem__(index, value)
+
+    def keys(self):
+        return self.store.keys()
+
+    def __len__(self):
+        return self.store.__len__()
 
     def __eq__(self, other):
         if isinstance(other, (tuple, list)):
@@ -347,7 +353,7 @@ class InfiniteMemory(defaultdict):
                     all(self[i] == other[i] for i in range(len(other)))
             )
         else:
-            return super(InfiniteMemory, self).__eq__(other)
+            return self.store.__eq__(other)
 
 
 class EndProgram(Exception):

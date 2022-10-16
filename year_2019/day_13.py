@@ -1,3 +1,4 @@
+import copy
 import itertools
 import unittest
 try:
@@ -102,7 +103,7 @@ class TestArcade(unittest.TestCase):
         self.assertEqual(173, arcade.display.count_of(2))
         self.assertEqual(0, arcade.display.score)
 
-    @unittest.skip("Way too slow")
+    @unittest.skip("Still a little too slow")
     def test_cabinet_bruteforce(self):
         program = list(map(int, data_text(2019, "day_13_mine.txt").split(",")))
         program[0] = 2
@@ -111,7 +112,7 @@ class TestArcade(unittest.TestCase):
         # inputs = [(0, 3), (-1, 4), (0, 30), (-1, 8), (0, 2), (-1, 6), (0, 8), (1, 8), (0, 2), (1, 8), (0, 40), (-1, 10), (0, 6), (-1, 4), (0, 6), (1, 8), (0, 8), (-1, 10), (0, 42), (1, 16), (0, 114), (1, 14), (0, 166), (-1, 16), (0, 16), (1, 2), (0, 58), (-1, 2), (0, 30), (1, 22), (0, 46), (-1, 12), (0, 158), (-1, 16), (0, 28), (-1, 4), (0, 32), (1, 28), (0, 36), (-1, 32), (0, 18), (1, 32), (0, 28), (-1, 32), (1, 18), (0, 2), (1, 4), (0, 50), (-1, 4), (0, 50), (1, 4), (0, 28), (1, 6), (0, 26), (-1, 16), (0, 30), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 24), (0, 20), (1, 20), (0, 52), (-1, 20), (0, 30), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 26), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 44), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 2), (0, 30), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 42), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 46), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (0, 42), (-1, 32), (1, 26), (0, 6), (-1, 16), (0, 16), (1, 6), (0, 26), (1, 4), (0, 28), (-1, 14), (0, 18), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 48), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 28), (0, 36), (1, 28), (0, 4), (-1, 32), (1, 26), (0, 6), (-1, 16), (0, 16), (1, 6), (0, 26), (1, 4), (0, 28), (-1, 14), (0, 18), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 12), (1, 10), (0, 54), (-1, 10), (0, 22), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 28), (0, 46), (1, 28), (0, 4), (-1, 32), (1, 26), (0, 6), (-1, 16), (0, 16), (1, 6), (0, 26), (1, 4), (0, 28), (-1, 14), (0, 18), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 12), (1, 10), (0, 54), (-1, 10), (0, 22), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 28), (0, 4), (1, 18), (0, 14), (-1, 8), (0, 24), (-1, 2), (0, 30), (1, 12), (0, 20), (-1, 10), (0, 1)]
 
         bruteforcer = ArcadeBruteForcer(program, inputs)
-        arcade = bruteforcer.bruteforce()
+        arcade = bruteforcer.bruteforce(verbose=False)
 
         self.assertEqual(0, arcade.display.count_of(BLOCK))
         self.assertEqual(8942, arcade.display.score)
@@ -224,14 +225,14 @@ class ArcadeBruteForcer:
         self.program = program
         self.committed_inputs = initial_inputs or []
 
-    def bruteforce(self):
+    def bruteforce(self, verbose=False):
+        arcade = ArcadeCabinet(
+            program=self.program,
+            inputs=list(self.decompressed_inputs()),
+        )
+        next_inputs = []
         while True:
-            self.recompress_inputs()
-
-            arcade = ArcadeCabinet(
-                program=self.program,
-                inputs=list(self.decompressed_inputs()),
-            )
+            arcade.processor.input_values.extend(self.decompress(next_inputs))
             try:
                 arcade.run_game(echo=False)
             except GameOver:
@@ -240,27 +241,33 @@ class ArcadeBruteForcer:
                 pass
             else:
                 break
+            finally:
+                if verbose:
+                    print(arcade.display.score, self.committed_inputs)
 
             delta_x, experiment_time = self.run_experiment(arcade)
             next_inputs = self.calculate_next_inputs(delta_x, experiment_time)
             self.committed_inputs.extend(next_inputs)
 
+        self.recompress_inputs()
         return arcade
 
     def run_experiment(self, arcade):
         experiment_time = 0
+
+        test_arcade = copy.deepcopy(arcade)
         while True:
-            arcade.processor.input_values.append(0)
+            test_arcade.processor.input_values.append(0)
             try:
-                arcade.run_game(echo=False)
+                test_arcade.run_game(echo=False)
             except GameOver:
                 break
             except InputNeeded:
                 pass
             finally:
                 experiment_time += 1
-                ball = arcade.display.search(BALL)[0]
-                paddle = arcade.display.search(PADDLE)[0]
+                ball = test_arcade.display.search(BALL)[0]
+                paddle = test_arcade.display.search(PADDLE)[0]
 
             if ball[1] == paddle[1] - 1:
                 break
@@ -268,7 +275,8 @@ class ArcadeBruteForcer:
         delta_x = ball[0] - paddle[0]
         return delta_x, experiment_time
 
-    def calculate_next_inputs(self, delta_x, experiment_time):
+    @staticmethod
+    def calculate_next_inputs(delta_x, experiment_time):
         time_to_bounce = experiment_time + 1
 
         if time_to_bounce < abs(delta_x):
@@ -286,11 +294,14 @@ class ArcadeBruteForcer:
         return next_inputs
 
     def decompressed_inputs(self):
-        decompressed_inputs = itertools.chain.from_iterable(
+        return self.decompress(self.committed_inputs)
+
+    @staticmethod
+    def decompress(compressed_inputs):
+        return itertools.chain.from_iterable(
             itertools.repeat(value, times)
-            for value, times in self.committed_inputs
+            for value, times in compressed_inputs
         )
-        return decompressed_inputs
 
     def recompress_inputs(self):
         self.committed_inputs = [
