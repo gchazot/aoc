@@ -157,8 +157,11 @@ class ArcadeDisplay:
         ))
 
     def search(self, tile_id):
-        rendered = self._render()
-        return list(rendered.search(SPRITES[tile_id]))
+        return [
+            coordinates
+            for coordinates, value in self._tiles.items()
+            if value == tile_id
+        ]
 
     def _render(self):
         if self._render_cache is not None or self._tiles != self._render_cache_key:

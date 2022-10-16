@@ -304,7 +304,7 @@ class IntCodeProcessor:
         return self.memory[0]
 
     def execute(self):
-        while self.instruction_pointer < len(self.memory):
+        while True:
             try:
                 instruction_size = self.execute_instruction_at(self.instruction_pointer)
             except EndProgram:
