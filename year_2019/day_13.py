@@ -1,3 +1,4 @@
+import itertools
 import unittest
 try:
     from mock import MagicMock
@@ -101,6 +102,20 @@ class TestArcade(unittest.TestCase):
         self.assertEqual(173, arcade.display.count_of(2))
         self.assertEqual(0, arcade.display.score)
 
+    @unittest.skip("Way too slow")
+    def test_cabinet_bruteforce(self):
+        program = list(map(int, data_text(2019, "day_13_mine.txt").split(",")))
+        program[0] = 2
+
+        inputs = []
+        # inputs = [(0, 3), (-1, 4), (0, 30), (-1, 8), (0, 2), (-1, 6), (0, 8), (1, 8), (0, 2), (1, 8), (0, 40), (-1, 10), (0, 6), (-1, 4), (0, 6), (1, 8), (0, 8), (-1, 10), (0, 42), (1, 16), (0, 114), (1, 14), (0, 166), (-1, 16), (0, 16), (1, 2), (0, 58), (-1, 2), (0, 30), (1, 22), (0, 46), (-1, 12), (0, 158), (-1, 16), (0, 28), (-1, 4), (0, 32), (1, 28), (0, 36), (-1, 32), (0, 18), (1, 32), (0, 28), (-1, 32), (1, 18), (0, 2), (1, 4), (0, 50), (-1, 4), (0, 50), (1, 4), (0, 28), (1, 6), (0, 26), (-1, 16), (0, 30), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 24), (0, 20), (1, 20), (0, 52), (-1, 20), (0, 30), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 26), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 44), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 2), (0, 30), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 42), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 46), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (0, 42), (-1, 32), (1, 26), (0, 6), (-1, 16), (0, 16), (1, 6), (0, 26), (1, 4), (0, 28), (-1, 14), (0, 18), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 48), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 28), (0, 36), (1, 28), (0, 4), (-1, 32), (1, 26), (0, 6), (-1, 16), (0, 16), (1, 6), (0, 26), (1, 4), (0, 28), (-1, 14), (0, 18), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 12), (1, 10), (0, 54), (-1, 10), (0, 22), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 28), (0, 46), (1, 28), (0, 4), (-1, 32), (1, 26), (0, 6), (-1, 16), (0, 16), (1, 6), (0, 26), (1, 4), (0, 28), (-1, 14), (0, 18), (1, 24), (0, 8), (-1, 32), (1, 30), (0, 2), (-1, 20), (0, 12), (1, 10), (0, 54), (-1, 10), (0, 22), (1, 20), (0, 12), (-1, 30), (0, 2), (1, 32), (-1, 24), (0, 8), (1, 14), (0, 18), (-1, 4), (0, 28), (-1, 6), (0, 26), (1, 16), (0, 16), (-1, 26), (0, 6), (1, 32), (-1, 28), (0, 4), (1, 18), (0, 14), (-1, 8), (0, 24), (-1, 2), (0, 30), (1, 12), (0, 20), (-1, 10), (0, 1)]
+
+        bruteforcer = ArcadeBruteForcer(program, inputs)
+        arcade = bruteforcer.bruteforce()
+
+        self.assertEqual(0, arcade.display.count_of(BLOCK))
+        self.assertEqual(8942, arcade.display.score)
+
 
 class ArcadeDisplay:
     def __init__(self):
@@ -202,3 +217,83 @@ class ArcadeCabinet:
 
 class GameOver(Exception):
     pass
+
+
+class ArcadeBruteForcer:
+    def __init__(self, program, initial_inputs=None):
+        self.program = program
+        self.committed_inputs = initial_inputs or []
+
+    def bruteforce(self):
+        while True:
+            self.recompress_inputs()
+
+            arcade = ArcadeCabinet(
+                program=self.program,
+                inputs=list(self.decompressed_inputs()),
+            )
+            try:
+                arcade.run_game(echo=False)
+            except GameOver:
+                break
+            except InputNeeded:
+                pass
+            else:
+                break
+
+            delta_x, experiment_time = self.run_experiment(arcade)
+            next_inputs = self.calculate_next_inputs(delta_x, experiment_time)
+            self.committed_inputs.extend(next_inputs)
+
+        return arcade
+
+    def run_experiment(self, arcade):
+        experiment_time = 0
+        while True:
+            arcade.processor.input_values.append(0)
+            try:
+                arcade.run_game(echo=False)
+            except GameOver:
+                break
+            except InputNeeded:
+                pass
+            finally:
+                experiment_time += 1
+                ball = arcade.display.search(BALL)[0]
+                paddle = arcade.display.search(PADDLE)[0]
+
+            if ball[1] == paddle[1] - 1:
+                break
+
+        delta_x = ball[0] - paddle[0]
+        return delta_x, experiment_time
+
+    def calculate_next_inputs(self, delta_x, experiment_time):
+        time_to_bounce = experiment_time + 1
+
+        if time_to_bounce < abs(delta_x):
+            raise RuntimeError("impossible")
+
+        if delta_x == 0:
+            next_inputs = [(0, time_to_bounce)]
+        else:
+            direction = delta_x // abs(delta_x)
+            moves = abs(delta_x)
+            next_inputs = [
+                (direction, moves),
+                (0, time_to_bounce - moves),
+            ]
+        return next_inputs
+
+    def decompressed_inputs(self):
+        decompressed_inputs = itertools.chain.from_iterable(
+            itertools.repeat(value, times)
+            for value, times in self.committed_inputs
+        )
+        return decompressed_inputs
+
+    def recompress_inputs(self):
+        self.committed_inputs = [
+            (group[0], sum(1 for _ in (group[1])))
+            for group in itertools.groupby(self.decompressed_inputs())
+        ]
