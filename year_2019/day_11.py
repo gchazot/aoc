@@ -1,9 +1,8 @@
 import unittest
 
 from aoc_utils.char_map import CharMap
-from aoc_utils.data import data_text
 from aoc_utils.geometry import add_coordinates
-from year_2019.int_code_processor import IntCodeProcessor, instructions_day_09, InputNeeded
+from year_2019.int_code_processor import IntCodeProcessor, instructions_day_09, InputNeeded, read_program
 
 
 DIRECTIONS = [
@@ -49,7 +48,7 @@ class TestPaintingRobot(unittest.TestCase):
 
 
 def launch_paint_robot(start_color):
-    program = list(map(int, data_text(2019, "day_11_mine.txt").split(",")))
+    program = read_program("day_11_mine.txt")
     processor = IntCodeProcessor(program, instructions_day_09, input_values=[start_color])
     panels = {}
     robot_position = 0, 0

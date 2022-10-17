@@ -7,9 +7,8 @@ except ImportError:
     from unittest.mock import MagicMock
 
 from aoc_utils.char_map import CharMap
-from aoc_utils.data import data_text
 from aoc_utils.geometry import add_coordinates
-from year_2019.int_code_processor import IntCodeProcessor, instructions_day_09, InputNeeded
+from year_2019.int_code_processor import IntCodeProcessor, instructions_day_09, InputNeeded, read_program
 
 
 EMPTY = 0
@@ -90,7 +89,7 @@ class TestArcade(unittest.TestCase):
         fake_display.receive.assert_called_once_with((6, 5), BALL)
 
     def test_cabinet(self):
-        program = list(map(int, data_text(2019, "day_13_mine.txt").split(",")))
+        program = read_program("day_13_mine.txt")
 
         arcade = ArcadeCabinet(program=program)
 
@@ -105,7 +104,7 @@ class TestArcade(unittest.TestCase):
 
     @unittest.skip("Still a little too slow")
     def test_cabinet_bruteforce(self):
-        program = list(map(int, data_text(2019, "day_13_mine.txt").split(",")))
+        program = read_program("day_13_mine.txt")
         program[0] = 2
 
         inputs = []

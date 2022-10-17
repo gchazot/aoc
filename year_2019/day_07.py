@@ -1,10 +1,10 @@
 from itertools import permutations
 import unittest
-from aoc_utils.data import data_text
 from year_2019.int_code_processor import (
     IntCodeProcessor,
     instructions_day_05_2,
     InputNeeded,
+    read_program,
 )
 
 
@@ -62,7 +62,7 @@ class TestSimpleAmplifier(unittest.TestCase):
         self.assertEqual(65210, value)
 
     def test_optimiser_mine(self):
-        program = list(map(int, data_text(2019, "day_07_mine.txt").split(",")))
+        program = read_program("day_07_mine.txt")
 
         phases, value = optimise_output(program, [0, 1, 2, 3, 4])
 
@@ -111,7 +111,7 @@ class TestLoopbackAmplifier(unittest.TestCase):
         self.assertEqual(18216, value)
 
     def test_optimiser_mine(self):
-        program = list(map(int, data_text(2019, "day_07_mine.txt").split(",")))
+        program = read_program("day_07_mine.txt")
 
         phases, value = optimise_output(program, [5, 6, 7, 8, 9])
 

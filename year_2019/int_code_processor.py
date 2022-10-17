@@ -3,6 +3,12 @@ import functools
 import unittest
 import operator
 
+from aoc_utils.data import data_text
+
+
+def read_program(program_file):
+    return list(map(int, data_text(2019, program_file).split(",")))
+
 
 class TestIntCodeProcessor(unittest.TestCase):
     def test_initialise(self):
