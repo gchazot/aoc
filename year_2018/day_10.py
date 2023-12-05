@@ -1,6 +1,7 @@
 import re
 import unittest
 
+from aoc_utils import test
 from aoc_utils.data import data_lines
 
 
@@ -248,7 +249,7 @@ class TestSolver(unittest.TestCase):
             "#   #  ###",
         ], list(table))
 
-    @unittest.skip("A bit troo slow")
+    @test.pypy_only("Taking too long")
     def test_mine(self):
         sky = SkyMap()
         for point_str in data_lines(2018, "day_10_mine.txt"):
