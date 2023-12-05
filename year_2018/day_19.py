@@ -1,5 +1,6 @@
 from __future__ import print_function
 import unittest
+from aoc_utils import test
 from aoc_utils.data import data_lines
 from year_2018.day_16 import Processor
 
@@ -88,7 +89,7 @@ class TestProgram(unittest.TestCase):
         self.assertListEqual([6, 5, 6, 0, 0, 9], program.processor.registers)
         self.assertEqual(7, program.processor.ip)
 
-    @unittest.skip("Too slow")
+    @test.pypy_only("Too slow")
     def test_mine(self):
         program = Program(
             num_registers=6,
@@ -98,7 +99,7 @@ class TestProgram(unittest.TestCase):
         program.execute(10000000)
         self.assertEqual(2072, program.processor.registers[0])
 
-    @unittest.skip("Wayyyyy toooo slow (would take years)")
+    @unittest.skip("Too slow")
     def test_mine_again(self):
         program = Program(
             num_registers=6,
@@ -106,9 +107,9 @@ class TestProgram(unittest.TestCase):
             initial_registers=[1, 0, 0, 0, 0, 0],
             processor_class=JumpingProcessor,
         )
-        program.execute(34)
+        program.execute(1000000000)
 
-        self.assertEqual(2072, program.processor.registers[0])
+        self.assertEqual(27578880, program.processor.registers[0])
 
     @staticmethod
     def decompiled(F):
@@ -130,7 +131,7 @@ class TestProgram(unittest.TestCase):
     def test_decompiled(self):
         self.assertEqual(2072, self.decompiled(876))
 
-    @unittest.skip("Too slow")
+    @test.pypy_only("Too slow")
     def test_decompiled_again(self):
         self.assertEqual(27578880, self.decompiled(10551276))
 

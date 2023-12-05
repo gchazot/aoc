@@ -1,4 +1,5 @@
 import unittest
+from aoc_utils import test
 from aoc_utils.data import data_lines
 
 
@@ -493,7 +494,7 @@ class ArtPieceTest(unittest.TestCase):
         art.enhance_image_once()
         self.assertListEqual(["##.", "#..", "..."], art.image)
 
-    @unittest.skip("Just a bit too slow")
+    @test.pypy_only("Taking too long")
     def test_mine(self):
         rules_lines = data_lines(2017, "day_21_mine.txt")
 

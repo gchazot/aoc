@@ -1,5 +1,7 @@
 import unittest
 
+from aoc_utils import test
+
 
 class Generator:
     def __init__(self, start, factor, criterion):
@@ -108,12 +110,12 @@ class TestGenerator(unittest.TestCase):
         self.use_example_gens()
         self.assertEqual(1, count_matches(self.genA, self.genB, 5))
 
-    @unittest.skip("Taking too long for now")
+    @test.pypy_only("Taking too long")
     def test_count_comparisons_example_long(self):
         self.use_example_gens()
         self.assertEqual(588, count_matches(self.genA, self.genB, 40000000))
 
-    @unittest.skip("Taking too long for now")
+    @test.pypy_only("Taking too long")
     def test_count_comparisons_mine(self):
         self.use_my_generators()
         self.assertEqual(569, count_matches(self.genA, self.genB, 40000000))
@@ -130,13 +132,13 @@ class TestGenerator(unittest.TestCase):
             (740335192, 412269392),
         ], list(values))
 
-    @unittest.skip("Taking too long for now")
+    @test.pypy_only("Taking too long")
     def test_count_picky_comparisons_example(self):
         self.use_example_gens()
 
         self.assertEqual(309, count_picky_matches(self.genA, self.genB, 5000000))
 
-    @unittest.skip("Taking too long for now")
+    @test.pypy_only("Taking too long")
     def test_count_picky_comparisons_mine(self):
         self.use_my_generators()
 

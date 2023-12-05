@@ -1,6 +1,8 @@
 import unittest
 from array import array
 
+from aoc_utils import test
+
 
 class TestFactory(unittest.TestCase):
     def _check_array(self, factory, recipes, elves):
@@ -40,7 +42,7 @@ class TestFactory(unittest.TestCase):
         self.assertEqual(18, factory.first_occurence_of("92510"))
         self.assertEqual(2018, factory.first_occurence_of("59414"))
 
-    @unittest.skip("Too slow")
+    @test.pypy_only("Taking too long")
     def test_first_occurence_of_mine(self):
         factory = Factory()
         self.assertEqual(20280190, factory.first_occurence_of("293801"))

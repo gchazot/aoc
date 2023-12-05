@@ -1,5 +1,7 @@
 import unittest
 
+from aoc_utils import test
+
 
 class CircularBuffer:
     def __init__(self):
@@ -201,7 +203,7 @@ class TestCheatBufferStorm(unittest.TestCase):
         self.storm.step(3)
         self.assertEqual(9, self.buffer.value_at_one())
 
-    @unittest.skip("Still too long but reasonable")
+    @test.pypy_only("Taking too long")
     def test_angry_steps_mine(self):
         iterations = 50000000
         self.storm.walk(iterations, 304)
