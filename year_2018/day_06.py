@@ -1,6 +1,7 @@
 import collections
 import unittest
 
+from aoc_utils import test
 from aoc_utils.data import data_lines
 
 
@@ -29,7 +30,7 @@ class TestLandingArea(unittest.TestCase):
 
         self.assertEqual(('E', 17), landing.solve())
 
-    @unittest.skip("Too slow")
+    @test.pypy_only("Taking too long")
     def test_solve_widest_mine(self):
         lines = data_lines(2018, 'day_06_mine.txt')
         pairs = [line.split(', ') for line in lines]
@@ -52,7 +53,6 @@ class TestLandingArea(unittest.TestCase):
 
         self.assertEqual(16, landing.solve(max_distance=32))
 
-    @unittest.skip("Too slow")
     def test_solve_closest_mine(self):
         lines = data_lines(2018, 'day_06_mine.txt')
         pairs = [line.split(', ') for line in lines]

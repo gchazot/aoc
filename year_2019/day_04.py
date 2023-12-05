@@ -9,7 +9,6 @@ class TestCounters(unittest.TestCase):
         options_list = list(options)
         self.assertTupleEqual((5, 1, 2, 3, 3, 1), options_list[512331])
 
-    @unittest.skip("Thit counter is too slow")
     def test_int_to_str(self):
         options_str = ["{0:0>6d}".format(i) for i in range(1000000)]
         options_list = [tuple(int(c) for c in option) for option in options_str]
@@ -35,7 +34,6 @@ class TestPasswordChecker(unittest.TestCase):
         self.assertTrue(checker.valid_password(parse(112233), max_repeat=2))
         self.assertFalse(checker.valid_password(parse(123444), max_repeat=2))
         self.assertTrue(checker.valid_password(parse(111122), max_repeat=2))
-
 
     def test_count_valid_passwords(self):
         checker = PasswordChecker(123257, 647015)

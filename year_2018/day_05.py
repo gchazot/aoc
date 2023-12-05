@@ -1,6 +1,7 @@
-from aoc_utils.data import data_text
-
 import unittest
+
+from aoc_utils import test
+from aoc_utils.data import data_text
 
 
 class TestPolymerReduce(unittest.TestCase):
@@ -46,7 +47,7 @@ class TestPolymerReduce(unittest.TestCase):
     def test_find_shortest_with_ignores(self):
         self.assertEqual("daDA", find_shortest_with_ignores("dabAcCaCBAcCcaDA"))
 
-    @unittest.skip("Too slow")
+    @test.pypy_only("Taking too long")
     def test_find_shortest_with_ignores_mine(self):
         polymer = data_text(2018, "day_05_mine.txt")
         best_reduced = find_shortest_with_ignores(polymer)

@@ -34,16 +34,19 @@ def get_door_2_password(door_id, length):
     return "".join(password_chars)
 
 
-@skip("Those take way too long to run")
 class TestDoorPassword(TestCase):
+    @skip("Too slow")
     def test_1_example(self):
         self.assertEqual("18f47a30", get_door_1_password("abc", 8))
 
+    @skip("Too slow")
     def test_1_mine(self):
         self.assertEqual("4543c154", get_door_1_password("ojvtpuvg", 8))
 
+    @skip("Too slow")
     def test_2_example(self):
         self.assertEqual("05ace8e3", get_door_2_password("abc", 8))
 
+    @skip("Too slow")
     def test_2_mine(self):
         self.assertEqual("1050cbbd", get_door_2_password("ojvtpuvg", 8))

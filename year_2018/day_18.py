@@ -80,7 +80,7 @@ class TestLumberJacks(unittest.TestCase):
         seen = {}
         i = 0
         while i < 1000000000:
-            key = woodland._data.tostring()
+            key = woodland._data.tobytes()
             if key in seen:
                 cycle = i - seen[key]
                 i += cycle * ((1000000000 - i) // cycle)

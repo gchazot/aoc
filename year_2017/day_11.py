@@ -76,10 +76,10 @@ class TestHexWalk(TestCase):
         self.addTypeEqualityFunc(Coordinates, assert_coordinates_equal)
 
     def test_final_coordinates(self):
-        self.assertEquals(Coordinates([3, 3, 0]), final_coordinates("ne,ne,ne"))
-        self.assertEquals(Coordinates([0, 0, 0]), final_coordinates("ne,ne,sw,sw"))
-        self.assertEquals(Coordinates([2, 0, -2]), final_coordinates("ne,ne,s,s"))
-        self.assertEquals(Coordinates([-1, -3, -2]), final_coordinates("se,sw,se,sw,sw"))
+        self.assertEqual(Coordinates([3, 3, 0]), final_coordinates("ne,ne,ne"))
+        self.assertEqual(Coordinates([0, 0, 0]), final_coordinates("ne,ne,sw,sw"))
+        self.assertEqual(Coordinates([2, 0, -2]), final_coordinates("ne,ne,s,s"))
+        self.assertEqual(Coordinates([-1, -3, -2]), final_coordinates("se,sw,se,sw,sw"))
 
     def test_hexample(self):
         self.assertEqual(3, shortest_distance("ne,ne,ne"))

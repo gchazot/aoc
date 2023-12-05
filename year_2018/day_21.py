@@ -1,5 +1,6 @@
 import unittest
 from aoc_utils.data import data_lines
+from aoc_utils import test
 from year_2018.day_19 import JumpingProcessor, Program
 
 
@@ -78,7 +79,7 @@ class TestChronalConversion(unittest.TestCase):
     def test_quickest_stop(self):
         decompiled(1024276)
 
-    @unittest.skip("Too slow")
+    @test.pypy_only("Taking too long")
     def test_slowest_stop(self):
         self.assertEqual(5876609, find_first_before_looping_over())
 

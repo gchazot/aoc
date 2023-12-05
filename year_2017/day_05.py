@@ -45,6 +45,5 @@ class TestSolveMaze(unittest.TestCase):
     def test_2_example(self):
         self.assertEqual(10, solve_maze_file(self.example_data_file, alteration_two))
 
-    @unittest.skip("Takes too long")
     def test_2_mine(self):
         self.assertEqual(27720699, solve_maze_file(self.my_data_file, alteration_two))
