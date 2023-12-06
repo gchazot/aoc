@@ -2,13 +2,12 @@ import copy
 import itertools
 import unittest
 
-from aoc_utils.data import data_text
-from year_2019.int_code_processor import IntCodeProcessor, instructions_day_02
+from year_2019.int_code_processor import IntCodeProcessor, instructions_day_02, read_program
 
 
 class TestIntCodeProcessor(unittest.TestCase):
     def test_execute_mine(self):
-        initial_memory = list(map(int, data_text(2019, "day_02_mine.txt").split(",")))
+        initial_memory = read_program("day_02_mine.txt")
         initial_memory[1] = 12
         initial_memory[2] = 2
 
@@ -20,7 +19,7 @@ class TestIntCodeProcessor(unittest.TestCase):
         self.assertEqual(3058646, processor.output)
 
     def test_find_noun_and_verb(self):
-        base_memory = list(map(int, data_text(2019, "day_02_mine.txt").split(",")))
+        base_memory = read_program("day_02_mine.txt")
         for noun, verb in itertools.product(range(100), range(100)):
             initial_memory = copy.copy(base_memory)
             initial_memory[1] = noun

@@ -47,7 +47,7 @@ class FindAllClosestRules(char_map.ProgressRules):
             return False
         return True
 
-    def solve_tie(self, coordinate_options):
+    def solve_tie(self, coordinate_options, start_point, end_point):
         return solve_tie(coordinate_options)
 
 

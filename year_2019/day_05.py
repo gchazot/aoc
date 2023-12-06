@@ -1,14 +1,13 @@
 import unittest
 
-from aoc_utils.data import data_text
 from year_2019.int_code_processor import (
-    IntCodeProcessor, instructions_day_05_1, instructions_day_05_2,
+    IntCodeProcessor, instructions_day_05_1, instructions_day_05_2, read_program,
 )
 
 
 class TestIntCodeProcessor(unittest.TestCase):
     def test_execute_part_1_mine(self):
-        initial_memory = list(map(int, data_text(2019, "day_05_mine.txt").split(",")))
+        initial_memory = read_program("day_05_mine.txt")
         input_values = [1]
 
         processor = IntCodeProcessor(
@@ -39,7 +38,7 @@ class TestIntCodeProcessor(unittest.TestCase):
             self.assertListEqual([expected_output], processor.output_values)
 
     def test_execute_part_2_mine(self):
-        initial_memory = list(map(int, data_text(2019, "day_05_mine.txt").split(",")))
+        initial_memory = read_program("day_05_mine.txt")
         input_values = [5]
 
         processor = IntCodeProcessor(

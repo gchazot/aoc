@@ -108,27 +108,44 @@ class TestCharMap(unittest.TestCase):
             ((0, 1), "d"), ((1, 1), "e"), ((2, 1), "f"),
         ], list(cmap.items()))
 
+    def test_search_values(self):
+        cmap = CharMap(input_lines=[
+            "abcd",
+            "efgh",
+            "ijkl",
+            "here",
+        ])
+
+        self.assertEqual([(0, 0)], list(cmap.search("a")))
+        self.assertEqual([(2, 1)], list(cmap.search("g")))
+        self.assertEqual([(1, 2)], list(cmap.search("j")))
+        self.assertEqual([(2, 0)], list(cmap.search("c")))
+        self.assertEqual([], list(cmap.search("z")))
+        self.assertEqual([(0, 1), (1, 3), (3, 3)], list(cmap.search("e")))
+
 
 class CharMap(object):
-    def __init__(self, input_lines=None, width_height=None, default_repr=' '):
-        self.width = 0
-        self.height = 0
-        self._data = array.array('B')
+    def __init__(self, input_lines=None, width_height=None, default_repr=' ', typecode='B'):
         self._codes = {None: 0}
         self._default_repr = default_repr
 
         if input_lines is not None:
-            self._init_from_lines(input_lines)
+            self._init_from_lines(typecode, input_lines)
         elif width_height is not None:
-            self._init_from_dimensions(*width_height)
+            self._init_from_dimensions(typecode, *width_height)
+        else:
+            self.width = 0
+            self.height = 0
+            self._data = array.array(typecode)
 
-    def _init_from_dimensions(self, width, height):
+    def _init_from_dimensions(self, typecode, width, height):
         self.width = width
         self.height = height
-        self._data = array.array('B', (0 for _ in range(self.width * self.height)))
+        self._data = array.array(typecode, (0 for _ in range(self.width * self.height)))
 
-    def _init_from_lines(self, input_lines):
+    def _init_from_lines(self, typecode, input_lines):
         widths = []
+        self._data = array.array(typecode)
         for line in input_lines:
             widths.append(len(line))
             self._data.extend(self._code(c) for c in line)
@@ -175,6 +192,21 @@ class CharMap(object):
         codes = [self._code(value) for value in values]
         return sum(1 for code in self._data if code in codes)
 
+    def search(self, value):
+        code = self._code(value)
+        offset = -1
+        while True:
+            try:
+                start = offset + 1
+                data_to_search = self._data[start:]
+                relative = data_to_search.index(code)
+                offset = start + relative
+            except ValueError:
+                break
+            else:
+                coordinates = self._get_coordinates(offset)
+                yield coordinates
+
     def swap(self, other):
         assert(len(self) == len(other))
         swap = self._data, self._codes
@@ -189,6 +221,9 @@ class CharMap(object):
             raise IndexError("x={} out of range".format(y))
         offset = self.width * y + x
         return offset
+
+    def _get_coordinates(self, offset):
+        return offset % self.width, offset//self.width
 
     def _code(self, value):
         try:
@@ -373,7 +408,7 @@ class MapExplorer:
             for coordinates in filter(rules.examine, progress_points):
                 self._distances[coordinates] = steps
                 for next_coordinates in rules.next_coordinates(coordinates):
-                    if next_coordinates in new_progress_points:
+                    if next_coordinates in new_progress_points or next_coordinates not in self._map:
                         continue
                     if self._distances[next_coordinates] is None:
                         value = self._map[next_coordinates]
@@ -395,7 +430,7 @@ class MapExplorer:
             next_coordinates = rules.next_coordinates(current)
             next_scores = collections.defaultdict(list)
             for coordinates in next_coordinates:
-                if coordinates in path:
+                if coordinates in path or coordinates not in self._map:
                     continue
                 if coordinates != start_point and not rules.progress_to(coordinates, self._map[coordinates]):
                     continue
@@ -407,10 +442,23 @@ class MapExplorer:
 
             min_scores = min(next_scores.keys())
             next_step_options = next_scores[min_scores]
-            next_step = rules.solve_tie(next_step_options)
+            next_step = rules.solve_tie(next_step_options, start_point, end_point)
 
             path.append(next_step)
         return list(reversed(path))
+
+    def furthest_point(self, start_point, rules):
+        assert self._explored
+        assert self._distances[start_point] == 1
+        assert all(
+            self._distances[point] is not None
+            for point, value in self._map.items()
+            if point != start_point and rules.progress_to(point, value)
+        )
+        return max(
+            self._distances.items(),
+            key=lambda position_distance: position_distance[1],
+        )
 
 
 ADJACENT_COORDINATES_DELTAS = [(0, -1), (-1, 0), (1, 0), (0, 1)]
@@ -453,7 +501,7 @@ class ProgressRules(object):
         """
         return value in self._allowed_values
 
-    def solve_tie(self, coordinate_options):
+    def solve_tie(self, coordinate_options, start_point, end_point):
         if coordinate_options:
             return coordinate_options[0]
 
