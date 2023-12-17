@@ -4,13 +4,17 @@ use crate::utils;
 pub fn execute() {
     let bag_content = CubeHand{red: 12, green: 13, blue: 14};
 
-    let example = utils::read_lines("src/day2/example.txt");
-    assert_eq!(8, sum_possibles(&bag_content, &example));
-    assert_eq!(2286, sum_powers(&example));
-
     let input = utils::read_lines("src/day2/mine.txt");
     assert_eq!(2317, sum_possibles(&bag_content, &input));
     assert_eq!(74804, sum_powers(&input));
+}
+
+#[test]
+fn test_sum_possibles() {
+    let bag_content = CubeHand{red: 12, green: 13, blue: 14};
+
+    let example = utils::read_lines("src/day2/example.txt");
+    assert_eq!(8, sum_possibles(&bag_content, &example));
 }
 
 fn sum_possibles(bag: &CubeHand, games: &Vec<String>) -> u32 {
@@ -22,6 +26,12 @@ fn sum_possibles(bag: &CubeHand, games: &Vec<String>) -> u32 {
         }
     }
     return total;
+}
+
+#[test]
+fn test_sum_powers() {
+    let example = utils::read_lines("src/day2/example.txt");
+    assert_eq!(2286, sum_powers(&example));
 }
 
 fn sum_powers(games: &Vec<String>) -> u32 {

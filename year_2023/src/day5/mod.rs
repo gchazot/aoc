@@ -3,9 +3,14 @@ use std::ops::Index;
 use crate::utils;
 
 pub fn execute() {
-    test_mapping_entry();
-    test_mapping();
+    let almanac = Almanac::from_text("mine.txt");
+    assert_eq!(313045984, almanac.lowest_location_1());
+    // Too slow for now
+    // assert_eq!(313045984, almanac.lowest_location_2());
+}
 
+#[test]
+fn test_almanac_example () {
     let example = Almanac::from_text("example.txt");
     assert_eq!(7, example.mappings.len());
     assert_eq!(4, example.seeds.len());
@@ -23,10 +28,6 @@ pub fn execute() {
 
     assert_eq!(35, example.lowest_location_1());
     assert_eq!(46, example.lowest_location_2());
-
-    let almanac = Almanac::from_text("mine.txt");
-    assert_eq!(313045984, almanac.lowest_location_1());
-    // assert_eq!(313045984, almanac.lowest_location_2());
 }
 
 struct Almanac {
@@ -121,6 +122,7 @@ impl<'a> Iterator for SeedIterator<'a> {
     }
 }
 
+#[test]
 fn test_mapping() {
     let mut text = Vec::new();
     text.push("seed-to-soil map:");
@@ -181,6 +183,7 @@ impl Mapping {
     }
 }
 
+#[test]
 fn test_mapping_entry() {
     let entry = MappingEntry::from_text("0 15 37");
     assert_eq!(0usize, entry.dst);

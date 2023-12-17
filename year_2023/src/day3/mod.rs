@@ -1,24 +1,34 @@
 use std::collections::HashMap;
 use std::ops::Index;
 use crate::utils;
+
 pub fn execute() {
-    let example = utils::read_lines("src/day3/example.txt");
-    let example_map = CharMap::from_text(&example);
-
-    assert_eq!(4361, sum_part_numbers(&example_map));
-    assert_eq!(467835, sum_gear_ratios(&example_map));
-
     let data = utils::read_lines("src/day3/mine.txt");
     let my_map = CharMap::from_text(&data);
 
     assert_eq!(507214, sum_part_numbers(&my_map));
     assert_eq!(72553319, sum_gear_ratios(&my_map));
+}
 
+#[test]
+fn test_sum_part_numbers() {
+    let example = utils::read_lines("src/day3/example.txt");
+    let example_map = CharMap::from_text(&example);
+
+    assert_eq!(4361, sum_part_numbers(&example_map))
 }
 
 fn sum_part_numbers(map: &CharMap) -> u32 {
     let part_numbers = map.find_part_numbers();
     return part_numbers.iter().sum();
+}
+
+#[test]
+fn test_sum_gear_ratios() {
+    let example = utils::read_lines("src/day3/example.txt");
+    let example_map = CharMap::from_text(&example);
+
+    assert_eq!(467835, sum_gear_ratios(&example_map));
 }
 
 fn sum_gear_ratios(map: &CharMap) -> u32 {
@@ -38,12 +48,6 @@ impl CharMap {
     fn from_text(text: &Vec<String>) -> CharMap {
         return CharMap { chars: text.clone() };
     }
-
-    // fn print(&self) {
-    //     for row in self.chars.iter() {
-    //         println!("{}", row);
-    //     }
-    // }
 
     fn find_part_numbers(&self) -> Vec<u32> {
         let mut result = Vec::new();

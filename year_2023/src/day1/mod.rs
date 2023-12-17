@@ -1,14 +1,8 @@
 use crate::utils;
 
 pub fn execute() {
-    let example1 = utils::read_lines("src/day1/example1.txt");
-    let example2 = utils::read_lines("src/day1/example2.txt");
     let input = utils::read_lines("src/day1/mine.txt");
-
-    assert_eq!(Some(142), sum_lines(&example1, false));
     assert_eq!(Some(54927), sum_lines(&input, false));
-
-    assert_eq!(Some(281), sum_lines(&example2, true));
     assert_eq!(Some(54581), sum_lines(&input, true));
 }
 
@@ -30,6 +24,15 @@ const DIGITS: [Digit; 10] = [
     Digit{ value: 9, number: "9", text: "nine"  },
     Digit{ value: 0, number: "0", text: "zero"  },
 ];
+
+#[test]
+fn test_sum_lines() {
+    let example1 = utils::read_lines("src/day1/example1.txt");
+    assert_eq!(Some(142), sum_lines(&example1, false));
+
+    let example2 = utils::read_lines("src/day1/example2.txt");
+    assert_eq!(Some(281), sum_lines(&example2, true));
+}
 
 fn sum_lines<T: AsRef<str>>(input: &[T], with_text: bool) -> Option<u32> {
     let mut total: Option<u32> = None;
