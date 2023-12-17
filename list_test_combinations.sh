@@ -2,14 +2,23 @@
 
 for folder in "${@}"; do
   folder_clean=$(basename "$(realpath "${folder}")")
-  version_file="${folder_clean}/python_versions.txt"
-  if [ ! -e "${version_file}" ]; then
-    version_file="default_python_versions.txt"
+
+  if [ -e "${folder_clean}/__init__.py" ]; then
+    language="python"
+  elif [ -e "${folder_clean}/Cargo.toml" ]; then
+    language="rust"
+  else
+    continue
   fi
 
-  python_versions=$(cat "${version_file}")
+  version_file="${folder_clean}/${language}_versions.txt"
+  if [ ! -e "${version_file}" ]; then
+    version_file="default_${language}_versions.txt"
+  fi
 
-  for python_version in ${python_versions}; do
-    echo "{\"folder\": \"${folder_clean}\", \"python-version\":\"${python_version}\"}"
+  versions=$(cat "${version_file}")
+
+  for version in ${versions}; do
+    echo "{\"folder\": \"${folder_clean}\", \"language\":\"${language}\", \"version\":\"${version}\"}"
   done
 done | jq -s -c
