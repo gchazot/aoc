@@ -44,7 +44,6 @@ fn correct_wins(cards: &Vec<Card>) -> u32 {
 
 #[derive(Debug)]
 struct Card {
-    id: u32,
     winners: HashSet<u32>,
     numbers: HashSet<u32>,
 }
@@ -57,17 +56,13 @@ impl Card {
     }
 
     fn from_text(text: &str) -> Card {
-        let (card_text, lists_text) = text.split_once(": ").unwrap();
-
-        let card_id = card_text[5..].trim();
-        let id = card_id.parse::<u32>().unwrap();
-
+        let (_card_text, lists_text) = text.split_once(": ").unwrap();
         let (winners_text, numbers_text) = lists_text.split_once(" | ").unwrap();
 
         let winners = HashSet::from_iter(winners_text.trim().split_whitespace().map(str::parse::<u32>).map(Result::unwrap));
         let numbers = HashSet::from_iter(numbers_text.trim().split_whitespace().map(str::parse::<u32>).map(Result::unwrap));
 
-        return Card {id, winners, numbers};
+        return Card {winners, numbers};
     }
 
     fn simple_score(&self) -> u32 {
