@@ -23,6 +23,8 @@ jobs:
               - 'year_2018/**'
             year_2019:
               - 'year_2019/**'
+            test_rust:
+              - 'test_rust/**'
 
   list-tests:
     runs-on: ubuntu-latest
@@ -44,17 +46,35 @@ jobs:
         include: ${{ fromJSON(needs.list-tests.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
+        if: ${{ matrix.language == 'python' }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.version }}
       - name: Install dependencies
+        if: ${{ matrix.language == 'python' }}
         run: |
           python -m pip install --upgrade pip virtualenv
           python -m pip install -r requirements.txt
       - name: Run Tests
-        if: ${{ matrix.folder != 'none' }}
+        if: ${{ matrix.language == 'python' && matrix.folder != 'none' }}
         run: python -m unittest discover -t . -s ${{ matrix.folder }} -p "*.py"
+
+      - name: Setup Rust
+        if: ${{ matrix.language == 'rust' }}
+        uses: moonrepo/setup-rust@v1
+        with:
+          channel: ${{ matrix.version }}
+      - name: Build
+        working-directory: ${{ matrix.folder }}
+        run: cargo build
+      - name: Run tests
+        working-directory: ${{ matrix.folder }}
+        run: cargo test
+      - name: Run binary
+        working-directory: ${{ matrix.folder }}
+        run: cargo run
 
   all-tests:
     runs-on: ubuntu-latest
