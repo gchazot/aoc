@@ -87,7 +87,7 @@ impl Almanac {
         let mut value = seed;
         // This makes the assumption that mappings are correctly ordered
         for mapping in &self.mappings {
-            value = mapping.map(value);
+            value = mapping.forward(value);
         }
         return value;
     }
@@ -135,16 +135,16 @@ fn test_mapping() {
     assert_eq!(2, mapping.entries.len());
 
     for i in 0..50-1 {
-        assert_eq!(i, mapping.map(i));
+        assert_eq!(i, mapping.forward(i));
     }
     for i in 50..50+48 {
-        assert_eq!(i-50+52, mapping.map(i));
+        assert_eq!(i-50+52, mapping.forward(i));
     }
     for i in 98..98+2 {
-        assert_eq!(i-98+50, mapping.map(i));
+        assert_eq!(i-98+50, mapping.forward(i));
     }
     for i in 100..200 {
-        assert_eq!(i, mapping.map(i));
+        assert_eq!(i, mapping.forward(i));
     }
 }
 
@@ -172,11 +172,11 @@ impl Mapping {
         return Mapping {from, to, entries};
     }
 
-    fn map(&self, origin: usize) -> usize {
+    fn forward(&self, origin: usize) -> usize {
         for entry in &self.entries {
-            let mapped = entry.map(origin);
-            if mapped != origin {
-                return mapped;
+            let mapped = entry.forward(origin);
+            if mapped.is_some() {
+                return mapped.unwrap();
             }
         }
         return origin;
@@ -189,14 +189,15 @@ fn test_mapping_entry() {
     assert_eq!(0usize, entry.dst);
     assert_eq!(15usize, entry.src);
     assert_eq!(37usize, entry.width);
+
     for i in 0..15-1 {
-        assert_eq!(i, entry.map(i));
+        assert_eq!(None, entry.forward(i));
     }
     for i in 15..15+37 {
-        assert_eq!(i - 15 + 0, entry.map(i));
+        assert_eq!(Some(i - 15 + 0), entry.forward(i));
     }
     for i in 15+37..100 {
-        assert_eq!(i, entry.map(i));
+        assert_eq!(None, entry.forward(i));
     }
 }
 
@@ -215,10 +216,11 @@ impl MappingEntry {
         return MappingEntry {src, dst, width};
     }
 
-    fn map(&self, origin: usize) -> usize {
-        if self.src <= origin && origin <= (self.src + self.width - 1) {
-            return origin - self.src + self.dst;
+    fn forward(&self, origin: usize) -> Option<usize> {
+        let end_src = self.src + self.width - 1;
+        if self.src <= origin && origin <= end_src {
+            return Some(origin - self.src + self.dst);
         }
-        return origin;
+        return None;
     }
 }
