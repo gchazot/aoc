@@ -9,15 +9,27 @@ fn test_mine() {
 pub fn execute() {
     let races = parse_races("mine.txt");
     assert_eq!(633080, optimize_races(&races));
+
+    let race = Race::from_file("mine.txt");
+    let (min, max) = race.optimize();
+    assert_eq!(7430123, min);
+    assert_eq!(27478863, max);
+    assert_eq!(20048741, max-min+1);
 }
 
 #[test]
 fn test_optimize_races() {
     let races = parse_races("example.txt");
     assert_eq!(288, optimize_races(&races));
+
+    let race = Race::from_file("example.txt");
+    let (min, max) = race.optimize();
+    assert_eq!(14, min);
+    assert_eq!(71516, max);
+    assert_eq!(71503, max-min+1);
 }
 
-fn optimize_races(races: &Vec<Race>) -> u32 {
+fn optimize_races(races: &Vec<Race>) -> u64 {
     return races.iter()
         .map(|race|race.optimize())
         .map(|(min, max)|max-min+1)
@@ -50,12 +62,12 @@ fn parse_races(filename: &str) -> Vec<Race> {
     let times = times_str
         .trim()
         .split_whitespace()
-        .map(str::parse::<u32>)
+        .map(str::parse::<u64>)
         .map(Result::unwrap);
     let dists = dists_str
         .trim()
         .split_whitespace()
-        .map(str::parse::<u32>)
+        .map(str::parse::<u64>)
         .map(Result::unwrap);
 
     return Vec::from_iter(
@@ -64,9 +76,17 @@ fn parse_races(filename: &str) -> Vec<Race> {
     )
 }
 
+#[test]
+fn test_parse_race_v2() {
+    let race = Race::from_file("example.txt");
+    assert_eq!(71530, race.time);
+    assert_eq!(940200, race.dist);
+}
+
+
 struct Race {
-    time: u32,
-    dist: u32,
+    time: u64,
+    dist: u64,
 }
 
 #[test]
@@ -77,18 +97,18 @@ fn test_optimize_race() {
 }
 
 impl Race {
-    fn optimize(&self) -> (u32, u32) {
-        let mut min = 1u32;
+    fn optimize(&self) -> (u64, u64) {
+        let mut min = 1u64;
         let mut max = self.time;
 
         for i in 1..self.time/2 {
             min = i;
-            if self.time*i - i*i > self.dist {
+            if race(i, self.time) > self.dist as u64 {
                 break;
             }
         }
         for i in self.time/2..self.time {
-            if self.time*i - i*i <= self.dist {
+            if race(i, self.time) <= self.dist as u64 {
                 break;
             }
             max = i;
@@ -96,4 +116,32 @@ impl Race {
 
         return (min, max);
     }
+
+    fn from_file(filename: &str) -> Race {
+        let path = format!("src/day6/{}", &filename);
+        let lines = utils::read_lines(&path);
+
+        let time_line = lines[0].clone();
+        let dist_line = lines[1].clone();
+
+        let (_time_header, time_str) = time_line.split_once(":").unwrap();
+        let (_dist_header, dist_str) = dist_line.split_once(":").unwrap();
+
+        let time = time_str
+            .replace(" ", "")
+            .parse::<u64>()
+            .unwrap();
+        let dist = dist_str
+            .replace(" ", "")
+            .parse::<u64>()
+            .unwrap();
+
+        return Race{time, dist};
+    }
+}
+
+fn race(charge_time: u64, race_time: u64) -> u64 {
+    let race = race_time as u64;
+    let charge = charge_time as u64;
+    return race * charge - charge * charge;
 }
