@@ -1,5 +1,10 @@
 use crate::utils;
 
+#[test]
+fn test_mine() {
+    execute()
+}
+
 pub fn execute() {
     let input = utils::read_lines("src/day1/mine.txt");
     assert_eq!(Some(54927), sum_lines(&input, false));

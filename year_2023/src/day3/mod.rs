@@ -2,6 +2,11 @@ use std::collections::HashMap;
 use std::ops::Index;
 use crate::utils;
 
+#[test]
+fn test_mine() {
+    execute()
+}
+
 pub fn execute() {
     let data = utils::read_lines("src/day3/mine.txt");
     let my_map = CharMap::from_text(&data);

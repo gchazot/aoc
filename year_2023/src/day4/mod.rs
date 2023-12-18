@@ -1,6 +1,12 @@
 use std::collections::HashSet;
 use crate::utils;
 
+#[test]
+fn test_mine() {
+    execute()
+}
+
+
 pub fn execute() {
     let cards = Card::from_file("mine.txt");
 

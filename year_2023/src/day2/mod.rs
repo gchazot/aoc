@@ -1,6 +1,11 @@
 use std::cmp::max;
 use crate::utils;
 
+#[test]
+fn test_mine() {
+    execute()
+}
+
 pub fn execute() {
     let bag_content = CubeHand{red: 12, green: 13, blue: 14};
 

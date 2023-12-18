@@ -5,6 +5,11 @@ use crate::utils;
 use std::iter::zip;
 
 
+#[test]
+fn test_mine() {
+    execute()
+}
+
 pub fn execute() {
     let almanac = Almanac::from_text("mine.txt");
     assert_eq!(313045984, almanac.lowest_location_1());
