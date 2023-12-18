@@ -1,18 +1,19 @@
 use std::cmp::min;
+use std::collections::HashSet;
 use std::ops::Index;
 use crate::utils;
 use std::iter::zip;
+
 
 pub fn execute() {
     let almanac = Almanac::from_text("mine.txt");
     assert_eq!(313045984, almanac.lowest_location_1());
 
-    for mapping in almanac.mappings {
+    for mapping in &almanac.mappings {
         assert!(mapping.is_bijection());
     }
 
-    // Too slow for now
-    // assert_eq!(313045984, almanac.lowest_location_2());
+    assert_eq!(20283860, almanac.lowest_location_2());
 }
 
 #[test]
@@ -90,19 +91,18 @@ impl Almanac {
     }
 
     fn lowest_location_2(&self) -> usize {
-        let seeds = self.seed_iter();
-        return seeds
-            .map(|seed| self.get_location(seed))
-            .reduce(|acc, location|min(acc, location))
-            .unwrap();
-    }
+        let mut edges = HashSet::new();
 
-    fn seed_iter(&self) -> SeedIterator {
-        return SeedIterator {
-            seeds: &self.seeds,
-            seed_index: 0,
-            progress: 0,
-        };
+        for mapping in &self.mappings {
+            edges.extend(mapping.src_edges());
+            edges = HashSet::from_iter(edges.iter().map(|&edge|mapping.forward(edge)));
+        }
+
+        let &min_location = edges.iter()
+            .filter(|&&loc|self.is_location_for_seed(loc))
+            .min()
+            .unwrap();
+        return min_location;
     }
 
     fn get_location(&self, seed: usize) -> usize {
@@ -122,35 +122,26 @@ impl Almanac {
         }
         return value;
     }
-}
 
-struct SeedIterator<'a> {
-    seeds:&'a Vec<usize>,
-    seed_index: usize,
-    progress: usize,
-}
-
-impl<'a> Iterator for SeedIterator<'a> {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.seed_index + 1 >= self.seeds.len() {
-            return None;
-        }
-
-        let seed_range = self.seeds[self.seed_index+1];
-        if self.progress >= seed_range {
-            self.progress = 0;
-            self.seed_index += 2;
-
-            if self.seed_index >= self.seeds.len() {
-                return None;
-            }
-        }
-        let result = self.seeds[self.seed_index] + self.progress;
-        self.progress += 1;
-        return Some(result);
+    fn is_location_for_seed(&self, location: usize) -> bool {
+        return self.is_seed(self.get_seed(location))
     }
+
+    fn is_seed(&self, seed: usize) -> bool {
+        let mut index = 0;
+        while index + 1 < self.seeds.len() {
+            let start = self.seeds[index];
+            let width = self.seeds[index + 1];
+            let end = start + width - 1;
+
+            if start <= seed && seed <= end {
+                return true;
+            }
+            index += 2;
+        }
+        return false;
+    }
+
 }
 
 #[test]
@@ -201,6 +192,15 @@ impl Mapping {
         };
 
         return Mapping {from, to, entries};
+    }
+
+    fn src_edges(&self) -> HashSet<usize> {
+        let mut result = HashSet::new();
+        for entry in &self.entries {
+            result.insert(entry.src);
+            result.insert(entry.src + entry.width - 1);
+        }
+        return result;
     }
 
     fn forward(&self, origin: usize) -> usize {
