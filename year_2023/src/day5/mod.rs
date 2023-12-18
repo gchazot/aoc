@@ -1,10 +1,16 @@
 use std::cmp::min;
 use std::ops::Index;
 use crate::utils;
+use std::iter::zip;
 
 pub fn execute() {
     let almanac = Almanac::from_text("mine.txt");
     assert_eq!(313045984, almanac.lowest_location_1());
+
+    for mapping in almanac.mappings {
+        assert!(mapping.is_bijection());
+    }
+
     // Too slow for now
     // assert_eq!(313045984, almanac.lowest_location_2());
 }
@@ -28,6 +34,22 @@ fn test_almanac_example () {
 
     assert_eq!(35, example.lowest_location_1());
     assert_eq!(46, example.lowest_location_2());
+
+    for mapping in &example.mappings {
+        assert!(mapping.is_bijection());
+    }
+
+    let mut sum_origin = 0;
+    let mut sum_forward = 0;
+    let mut sum_backward = 0;
+
+    for i in 0..100 {
+        sum_origin += i;
+        sum_forward += example.get_location(i);
+        sum_backward += example.get_seed(i);
+    }
+    assert_eq!(sum_origin, sum_forward);
+    assert_eq!(sum_origin, sum_backward);
 }
 
 struct Almanac {
@@ -88,6 +110,15 @@ impl Almanac {
         // This makes the assumption that mappings are correctly ordered
         for mapping in &self.mappings {
             value = mapping.forward(value);
+        }
+        return value;
+    }
+
+    fn get_seed(&self, location: usize) -> usize {
+        let mut value = location;
+        // This makes the assumption that mappings are correctly ordered
+        for mapping in self.mappings.iter().rev() {
+            value = mapping.backward(value);
         }
         return value;
     }
@@ -181,6 +212,76 @@ impl Mapping {
         }
         return origin;
     }
+    fn backward(&self, origin: usize) -> usize {
+        for entry in &self.entries {
+            let mapped = entry.backward(origin);
+            if mapped.is_some() {
+                return mapped.unwrap();
+            }
+        }
+        return origin;
+    }
+
+    fn is_bijection(&self) -> bool {
+        let sources = Vec::from_iter(
+            self.entries.iter().map(|entry|(entry.src, entry.width))
+        );
+        let sources_compressed = compress(sources);
+
+        let dests = Vec::from_iter(
+            self.entries.iter().map(|entry|(entry.dst, entry.width))
+        );
+        let dests_compressed = compress(dests);
+
+        for pair in zip(sources_compressed.iter(), dests_compressed.iter()) {
+            if pair.0 != pair.1 {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+#[test]
+fn test_compress() {
+    type Range = Vec<(usize, usize)>;
+
+    assert_eq!( Range::from([]), compress(Range::from([])));
+    assert_eq!( Range::from([(0, 1)]), compress(Range::from([(0, 1)])));
+    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(0, 2), (2, 3)])));
+    assert_eq!( Range::from([(0, 2), (3, 3)]), compress(Range::from([(0, 2), (3, 3)])));
+    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(0, 2), (2, 1), (3, 2)])));
+    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(0, 2), (3, 2), (2, 1)])));
+    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(3, 2), (0, 2), (2, 1)])));
+}
+
+fn compress(entries: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
+    if entries.len() < 2 {
+        return entries;
+    }
+
+    let mut sorted = entries.clone();
+    sorted.sort();
+
+    let mut sorted_iter = sorted.iter().peekable();
+    let (mut start, mut width) = sorted_iter.next().unwrap();
+
+    let mut result = Vec::new();
+    while let Some(entry) = sorted_iter.next() {
+        if entry.0 == start + width {
+            width += entry.1;
+        } else {
+            result.push((start, width));
+            start = entry.0;
+            width = entry.1;
+        }
+        if sorted_iter.peek().is_none() {
+            result.push((start, width));
+        }
+    }
+
+    return result;
 }
 
 #[test]
@@ -198,6 +299,13 @@ fn test_mapping_entry() {
     }
     for i in 15+37..100 {
         assert_eq!(None, entry.forward(i));
+    }
+
+    for i in 0..37-1 {
+        assert_eq!(Some(i + 15 - 0), entry.backward(i));
+    }
+    for i in 37..100 {
+        assert_eq!(None, entry.backward(i));
     }
 }
 
@@ -221,6 +329,15 @@ impl MappingEntry {
         if self.src <= origin && origin <= end_src {
             return Some(origin - self.src + self.dst);
         }
+        return None;
+    }
+
+    fn backward(&self, origin: usize) -> Option<usize> {
+        let end_dst = self.dst + self.width - 1;
+        if self.dst <= origin && origin <= end_dst {
+            return Some(origin - self.dst + self.src);
+        }
+
         return None;
     }
 }
