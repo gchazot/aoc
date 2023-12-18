@@ -2,21 +2,28 @@ use std::collections::HashSet;
 use crate::utils;
 
 pub fn execute() {
-    let example = utils::read_lines("src/day4/example.txt");
-    let example_cards = Vec::from_iter(example.iter().map(|line|Card::from_text(&line)));
-
-    assert_eq!(13, simple_wins(&example_cards));
-    assert_eq!(30, correct_wins(&example_cards));
-
-    let data = utils::read_lines("src/day4/mine.txt");
-    let cards = Vec::from_iter(data.iter().map(|line|Card::from_text(&line)));
+    let cards = Card::from_file("mine.txt");
 
     assert_eq!(21959, simple_wins(&cards));
     assert_eq!(5132675, correct_wins(&cards));
 }
 
+#[test]
+fn test_simple_wins() {
+    let example_cards = Card::from_file("example.txt");
+
+    assert_eq!(13, simple_wins(&example_cards));
+    assert_eq!(30, correct_wins(&example_cards));
+}
+
 fn simple_wins(cards: &Vec<Card>) -> u32 {
-    cards.iter().map(Card::simple_score).sum::<u32>()
+    return cards.iter().map(Card::simple_score).sum::<u32>()
+}
+
+#[test]
+fn test_correct_wins() {
+    let example_cards = Card::from_file("example.txt");
+    assert_eq!(30, correct_wins(&example_cards));
 }
 
 fn correct_wins(cards: &Vec<Card>) -> u32 {
@@ -37,24 +44,25 @@ fn correct_wins(cards: &Vec<Card>) -> u32 {
 
 #[derive(Debug)]
 struct Card {
-    id: u32,
     winners: HashSet<u32>,
     numbers: HashSet<u32>,
 }
 
 impl Card {
+    fn from_file(filename: &str) -> Vec<Card> {
+        let path = format!("src/day4/{}", &filename);
+        let lines = utils::read_lines(&path);
+        return Vec::from_iter(lines.iter().map(|line|Card::from_text(&line)));
+    }
+
     fn from_text(text: &str) -> Card {
-        let (card_text, lists_text) = text.split_once(": ").unwrap();
-
-        let card_id = card_text[5..].trim();
-        let id = card_id.parse::<u32>().unwrap();
-
+        let (_card_text, lists_text) = text.split_once(": ").unwrap();
         let (winners_text, numbers_text) = lists_text.split_once(" | ").unwrap();
 
         let winners = HashSet::from_iter(winners_text.trim().split_whitespace().map(str::parse::<u32>).map(Result::unwrap));
         let numbers = HashSet::from_iter(numbers_text.trim().split_whitespace().map(str::parse::<u32>).map(Result::unwrap));
 
-        return Card {id, winners, numbers};
+        return Card {winners, numbers};
     }
 
     fn simple_score(&self) -> u32 {
