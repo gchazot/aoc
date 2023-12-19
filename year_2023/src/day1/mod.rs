@@ -18,16 +18,56 @@ struct Digit<'a> {
 }
 
 const DIGITS: [Digit; 10] = [
-    Digit{ value: 1, number: "1", text: "one"  },
-    Digit{ value: 2, number: "2", text: "two"  },
-    Digit{ value: 3, number: "3", text: "three"  },
-    Digit{ value: 4, number: "4", text: "four"  },
-    Digit{ value: 5, number: "5", text: "five"  },
-    Digit{ value: 6, number: "6", text: "six"  },
-    Digit{ value: 7, number: "7", text: "seven"  },
-    Digit{ value: 8, number: "8", text: "eight"  },
-    Digit{ value: 9, number: "9", text: "nine"  },
-    Digit{ value: 0, number: "0", text: "zero"  },
+    Digit {
+        value: 1,
+        number: "1",
+        text: "one",
+    },
+    Digit {
+        value: 2,
+        number: "2",
+        text: "two",
+    },
+    Digit {
+        value: 3,
+        number: "3",
+        text: "three",
+    },
+    Digit {
+        value: 4,
+        number: "4",
+        text: "four",
+    },
+    Digit {
+        value: 5,
+        number: "5",
+        text: "five",
+    },
+    Digit {
+        value: 6,
+        number: "6",
+        text: "six",
+    },
+    Digit {
+        value: 7,
+        number: "7",
+        text: "seven",
+    },
+    Digit {
+        value: 8,
+        number: "8",
+        text: "eight",
+    },
+    Digit {
+        value: 9,
+        number: "9",
+        text: "nine",
+    },
+    Digit {
+        value: 0,
+        number: "0",
+        text: "zero",
+    },
 ];
 
 #[test]
@@ -46,9 +86,8 @@ fn sum_lines<T: AsRef<str>>(input: &[T], with_text: bool) -> Option<u32> {
 
         if num.is_some() {
             if total.is_none() {
-                 total = num
-            }
-            else {
+                total = num
+            } else {
                 total = Some(total.unwrap() + num.unwrap());
             }
         }

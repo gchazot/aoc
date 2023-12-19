@@ -1,5 +1,5 @@
-use std::iter::zip;
 use crate::utils;
+use std::iter::zip;
 
 #[test]
 fn test_mine() {
@@ -14,7 +14,7 @@ pub fn execute() {
     let (min, max) = race.optimize();
     assert_eq!(7430123, min);
     assert_eq!(27478863, max);
-    assert_eq!(20048741, max-min+1);
+    assert_eq!(20048741, max - min + 1);
 }
 
 #[test]
@@ -26,13 +26,14 @@ fn test_optimize_races() {
     let (min, max) = race.optimize();
     assert_eq!(14, min);
     assert_eq!(71516, max);
-    assert_eq!(71503, max-min+1);
+    assert_eq!(71503, max - min + 1);
 }
 
 fn optimize_races(races: &Vec<Race>) -> u64 {
-    return races.iter()
-        .map(|race|race.optimize())
-        .map(|(min, max)|max-min+1)
+    return races
+        .iter()
+        .map(|race| race.optimize())
+        .map(|(min, max)| max - min + 1)
         .product();
 }
 
@@ -70,10 +71,7 @@ fn parse_races(filename: &str) -> Vec<Race> {
         .map(str::parse::<u64>)
         .map(Result::unwrap);
 
-    return Vec::from_iter(
-        zip(times, dists)
-            .map(|(time, dist)| Race{time, dist})
-    )
+    return Vec::from_iter(zip(times, dists).map(|(time, dist)| Race { time, dist }));
 }
 
 #[test]
@@ -83,7 +81,6 @@ fn test_parse_race_v2() {
     assert_eq!(940200, race.dist);
 }
 
-
 struct Race {
     time: u64,
     dist: u64,
@@ -91,9 +88,16 @@ struct Race {
 
 #[test]
 fn test_optimize_race() {
-    assert_eq!((2, 5), Race{time:7, dist:9}.optimize());
-    assert_eq!((4, 11), Race{time:15, dist:40}.optimize());
-    assert_eq!((11, 19), Race{time:30, dist:200}.optimize());
+    assert_eq!((2, 5), Race { time: 7, dist: 9 }.optimize());
+    assert_eq!((4, 11), Race { time: 15, dist: 40 }.optimize());
+    assert_eq!(
+        (11, 19),
+        Race {
+            time: 30,
+            dist: 200
+        }
+        .optimize()
+    );
 }
 
 impl Race {
@@ -101,13 +105,13 @@ impl Race {
         let mut min = 1u64;
         let mut max = self.time;
 
-        for i in 1..self.time/2 {
+        for i in 1..self.time / 2 {
             min = i;
             if race(i, self.time) > self.dist as u64 {
                 break;
             }
         }
-        for i in self.time/2..self.time {
+        for i in self.time / 2..self.time {
             if race(i, self.time) <= self.dist as u64 {
                 break;
             }
@@ -127,16 +131,10 @@ impl Race {
         let (_time_header, time_str) = time_line.split_once(":").unwrap();
         let (_dist_header, dist_str) = dist_line.split_once(":").unwrap();
 
-        let time = time_str
-            .replace(" ", "")
-            .parse::<u64>()
-            .unwrap();
-        let dist = dist_str
-            .replace(" ", "")
-            .parse::<u64>()
-            .unwrap();
+        let time = time_str.replace(" ", "").parse::<u64>().unwrap();
+        let dist = dist_str.replace(" ", "").parse::<u64>().unwrap();
 
-        return Race{time, dist};
+        return Race { time, dist };
     }
 }
 

@@ -1,8 +1,8 @@
+use crate::utils;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops::Index;
 use std::slice::Iter;
-use crate::utils;
 
 #[test]
 fn test_mine() {
@@ -16,7 +16,6 @@ pub fn execute() {
     let hands_with_jokers = Hand::from_file("mine.txt", true);
     assert_eq!(254083736, score(hands_with_jokers));
 }
-
 
 #[test]
 fn test_score() {
@@ -32,7 +31,8 @@ type Score = u64;
 fn score(mut hands: Vec<Hand>) -> Score {
     hands.sort();
 
-    hands.iter()
+    hands
+        .iter()
         .enumerate()
         .map(|(i, hand)| (i as Score + 1) * hand.bid)
         .sum()
@@ -53,12 +53,11 @@ fn test_hands() {
             2 => "KK677 ",
             3 => "T55J5",
             4 => "QQQJA",
-            _ => "Fail"
+            _ => "Fail",
         };
         assert_eq!(hand, &Hand::from_text(hand_text, false));
     }
 }
-
 
 #[test]
 fn test_hand() {
@@ -172,15 +171,16 @@ impl Hand {
         let path = format!("src/day7/{}", &filename);
         utils::read_lines(&path)
             .iter()
-            .map(|line|Hand::from_text(line, jokers))
+            .map(|line| Hand::from_text(line, jokers))
             .collect()
     }
 
     fn from_text(hand: &str, jokers: bool) -> Self {
-        let cards_text= &hand[0..5];
+        let cards_text = &hand[0..5];
         let cards = cards_text
             .chars()
-            .map(|card|card_from_text(card, jokers)).collect();
+            .map(|card| card_from_text(card, jokers))
+            .collect();
 
         let bid_text = &hand[5..].trim();
         let bid = bid_text.parse::<Score>().unwrap_or(0);
@@ -191,13 +191,14 @@ impl Hand {
     fn get_type(&self) -> HandType {
         let mut counts = HashMap::<Card, usize>::new();
         for &card_type in all_cards(self.jokers) {
-            let count = self.cards.iter().filter(|&&card|card == card_type).count();
+            let count = self.cards.iter().filter(|&&card| card == card_type).count();
             counts.insert(card_type, count);
         }
 
         let joker = card_from_text('J', self.jokers);
 
-        let mut counts_of_counts : Vec<usize> = counts.iter()
+        let mut counts_of_counts: Vec<usize> = counts
+            .iter()
             .filter(|(&card, &count)| card != joker && count > 0)
             .map(|(_card, &count)| count)
             .collect();
@@ -239,7 +240,14 @@ impl Hand {
 
     fn get_ord_value(&self) -> (u8, u8, u8, u8, u8, u8) {
         let hand_type = hand_type_value(self.get_type());
-        (hand_type, self.cards[0], self.cards[1], self.cards[2], self.cards[3], self.cards[4])
+        (
+            hand_type,
+            self.cards[0],
+            self.cards[1],
+            self.cards[2],
+            self.cards[3],
+            self.cards[4],
+        )
     }
 }
 
@@ -296,7 +304,11 @@ fn all_cards(jokers: bool) -> Iter<'static, Card> {
     static CARDS: [u8; 13] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
     static CARDS_WITH_JOKER: [u8; 13] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 12, 13, 14];
 
-    if jokers { CARDS_WITH_JOKER.iter() } else { CARDS.iter() }
+    if jokers {
+        CARDS_WITH_JOKER.iter()
+    } else {
+        CARDS.iter()
+    }
 }
 
 fn card_from_text(card: char, jokers: bool) -> Card {
@@ -310,10 +322,18 @@ fn card_from_text(card: char, jokers: bool) -> Card {
         '8' => 8,
         '9' => 9,
         'T' => 10,
-        'J' => if jokers {1} else {11},
+        'J' => {
+            if jokers {
+                1
+            } else {
+                11
+            }
+        }
         'Q' => 12,
         'K' => 13,
         'A' => 14,
-        _ => {panic!("Not a card: {card}")}
+        _ => {
+            panic!("Not a card: {card}")
+        }
     }
 }

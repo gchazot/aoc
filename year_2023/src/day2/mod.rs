@@ -1,5 +1,5 @@
-use std::cmp::max;
 use crate::utils;
+use std::cmp::max;
 
 #[test]
 fn test_mine() {
@@ -7,7 +7,11 @@ fn test_mine() {
 }
 
 pub fn execute() {
-    let bag_content = CubeHand{red: 12, green: 13, blue: 14};
+    let bag_content = CubeHand {
+        red: 12,
+        green: 13,
+        blue: 14,
+    };
 
     let input = utils::read_lines("src/day2/mine.txt");
     assert_eq!(2317, sum_possibles(&bag_content, &input));
@@ -16,7 +20,11 @@ pub fn execute() {
 
 #[test]
 fn test_sum_possibles() {
-    let bag_content = CubeHand{red: 12, green: 13, blue: 14};
+    let bag_content = CubeHand {
+        red: 12,
+        green: 13,
+        blue: 14,
+    };
 
     let example = utils::read_lines("src/day2/example.txt");
     assert_eq!(8, sum_possibles(&bag_content, &example));
@@ -55,7 +63,7 @@ struct Game {
 
 impl Game {
     fn from_text(text: &str) -> Game {
-        let (game_id,  hands_text) = text.split_once(": ").unwrap();
+        let (game_id, hands_text) = text.split_once(": ").unwrap();
         assert!(game_id.starts_with("Game "));
 
         let id = game_id[5..].parse::<u32>().unwrap();
@@ -85,7 +93,7 @@ impl Game {
             green = max(green, hand.green);
             blue = max(blue, hand.blue);
         }
-        return CubeHand {red, green, blue};
+        return CubeHand { red, green, blue };
     }
 }
 
@@ -111,16 +119,14 @@ impl CubeHand {
                 _ => println!("Couldn't parse hand '{}'", color),
             }
         }
-        return CubeHand {red, green, blue};
+        return CubeHand { red, green, blue };
     }
 
-    fn contains(&self, other: &CubeHand) -> bool{
+    fn contains(&self, other: &CubeHand) -> bool {
         return self.red >= other.red && self.green >= other.green && self.blue >= other.blue;
     }
 
     fn power(&self) -> u32 {
-        return self.red * self.green * self.blue
+        return self.red * self.green * self.blue;
     }
 }
-
-

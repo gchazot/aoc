@@ -1,6 +1,6 @@
+use crate::utils;
 use std::collections::HashMap;
 use std::ops::Index;
-use crate::utils;
 
 #[test]
 fn test_mine() {
@@ -38,7 +38,8 @@ fn test_sum_gear_ratios() {
 
 fn sum_gear_ratios(map: &CharMap) -> u32 {
     let possible_gears: HashMap<(usize, usize), Vec<u32>> = map.find_possible_gears();
-    return possible_gears.iter()
+    return possible_gears
+        .iter()
         .map(|(_gear, numbers)| numbers)
         .filter(|numbers| numbers.len() == 2)
         .map(|numbers| numbers.iter().product::<u32>())
@@ -51,7 +52,9 @@ struct CharMap {
 
 impl CharMap {
     fn from_text(text: &Vec<String>) -> CharMap {
-        return CharMap { chars: text.clone() };
+        return CharMap {
+            chars: text.clone(),
+        };
     }
 
     fn find_part_numbers(&self) -> Vec<u32> {
@@ -181,6 +184,6 @@ impl Index<(usize, usize)> for CharMap {
     type Output = str;
 
     fn index(&self, (x, y): (usize, usize)) -> &Self::Output {
-        return &self.chars[y][x..x+1];
+        return &self.chars[y][x..x + 1];
     }
 }
