@@ -63,7 +63,7 @@ fn test_hands() {
 #[test]
 fn test_hand() {
     let hand1 = Hand::from_text("32T3K", false);
-    assert_eq!(5, hand1.len());
+    assert_eq!(5, hand1.cards.len());
     assert_eq!(hand1[0], 3);
     assert_eq!(hand1[1], 2);
     assert_eq!(hand1[2], 10);
@@ -185,11 +185,7 @@ impl Hand {
         let bid_text = &hand[5..].trim();
         let bid = bid_text.parse::<Score>().unwrap_or(0);
 
-        Hand{cards, bid, jokers}
-    }
-
-    fn len(&self) -> usize {
-        self.cards.len()
+        Hand { cards, bid, jokers }
     }
 
     fn get_type(&self) -> HandType {
