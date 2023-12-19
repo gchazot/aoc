@@ -1,9 +1,13 @@
+use crate::utils;
 use std::cmp::min;
 use std::collections::HashSet;
-use std::ops::Index;
-use crate::utils;
 use std::iter::zip;
+use std::ops::Index;
 
+#[test]
+fn test_mine() {
+    execute()
+}
 
 pub fn execute() {
     let almanac = Almanac::from_text("mine.txt");
@@ -17,7 +21,7 @@ pub fn execute() {
 }
 
 #[test]
-fn test_almanac_example () {
+fn test_almanac_example() {
     let example = Almanac::from_text("example.txt");
     assert_eq!(7, example.mappings.len());
     assert_eq!(4, example.seeds.len());
@@ -62,7 +66,7 @@ impl Almanac {
     fn from_text(filename: &str) -> Almanac {
         let path = format!("src/day5/{}", &filename);
         let data = utils::read_lines(&path);
-        let mut blocks = data.split(|line|line.trim().is_empty());
+        let mut blocks = data.split(|line| line.trim().is_empty());
 
         let seeds_block = blocks.next().unwrap();
         debug_assert_eq!(1, seeds_block.len());
@@ -80,13 +84,15 @@ impl Almanac {
             let mapping = Mapping::from_text(block);
             mappings.push(mapping);
         }
-        return Almanac {seeds, mappings};
+        return Almanac { seeds, mappings };
     }
 
     fn lowest_location_1(&self) -> usize {
-        return self.seeds.iter()
+        return self
+            .seeds
+            .iter()
             .map(|&seed| self.get_location(seed))
-            .reduce(|acc, location|min(acc, location))
+            .reduce(|acc, location| min(acc, location))
             .unwrap();
     }
 
@@ -95,11 +101,12 @@ impl Almanac {
 
         for mapping in &self.mappings {
             edges.extend(mapping.src_edges());
-            edges = HashSet::from_iter(edges.iter().map(|&edge|mapping.forward(edge)));
+            edges = HashSet::from_iter(edges.iter().map(|&edge| mapping.forward(edge)));
         }
 
-        let &min_location = edges.iter()
-            .filter(|&&loc|self.is_location_for_seed(loc))
+        let &min_location = edges
+            .iter()
+            .filter(|&&loc| self.is_location_for_seed(loc))
             .min()
             .unwrap();
         return min_location;
@@ -124,7 +131,7 @@ impl Almanac {
     }
 
     fn is_location_for_seed(&self, location: usize) -> bool {
-        return self.is_seed(self.get_seed(location))
+        return self.is_seed(self.get_seed(location));
     }
 
     fn is_seed(&self, seed: usize) -> bool {
@@ -141,7 +148,6 @@ impl Almanac {
         }
         return false;
     }
-
 }
 
 #[test]
@@ -156,14 +162,14 @@ fn test_mapping() {
     assert_eq!("soil", mapping.to);
     assert_eq!(2, mapping.entries.len());
 
-    for i in 0..50-1 {
+    for i in 0..50 - 1 {
         assert_eq!(i, mapping.forward(i));
     }
-    for i in 50..50+48 {
-        assert_eq!(i-50+52, mapping.forward(i));
+    for i in 50..50 + 48 {
+        assert_eq!(i - 50 + 52, mapping.forward(i));
     }
-    for i in 98..98+2 {
-        assert_eq!(i-98+50, mapping.forward(i));
+    for i in 98..98 + 2 {
+        assert_eq!(i - 98 + 50, mapping.forward(i));
     }
     for i in 100..200 {
         assert_eq!(i, mapping.forward(i));
@@ -189,9 +195,9 @@ impl Mapping {
         let mut entries = Vec::new();
         for line in lines {
             entries.push(MappingEntry::from_text(line.as_ref()));
-        };
+        }
 
-        return Mapping {from, to, entries};
+        return Mapping { from, to, entries };
     }
 
     fn src_edges(&self) -> HashSet<usize> {
@@ -223,14 +229,10 @@ impl Mapping {
     }
 
     fn is_bijection(&self) -> bool {
-        let sources = Vec::from_iter(
-            self.entries.iter().map(|entry|(entry.src, entry.width))
-        );
+        let sources = Vec::from_iter(self.entries.iter().map(|entry| (entry.src, entry.width)));
         let sources_compressed = compress(sources);
 
-        let dests = Vec::from_iter(
-            self.entries.iter().map(|entry|(entry.dst, entry.width))
-        );
+        let dests = Vec::from_iter(self.entries.iter().map(|entry| (entry.dst, entry.width)));
         let dests_compressed = compress(dests);
 
         for pair in zip(sources_compressed.iter(), dests_compressed.iter()) {
@@ -247,13 +249,28 @@ impl Mapping {
 fn test_compress() {
     type Range = Vec<(usize, usize)>;
 
-    assert_eq!( Range::from([]), compress(Range::from([])));
-    assert_eq!( Range::from([(0, 1)]), compress(Range::from([(0, 1)])));
-    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(0, 2), (2, 3)])));
-    assert_eq!( Range::from([(0, 2), (3, 3)]), compress(Range::from([(0, 2), (3, 3)])));
-    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(0, 2), (2, 1), (3, 2)])));
-    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(0, 2), (3, 2), (2, 1)])));
-    assert_eq!( Range::from([(0, 5)]), compress(Range::from([(3, 2), (0, 2), (2, 1)])));
+    assert_eq!(Range::from([]), compress(Range::from([])));
+    assert_eq!(Range::from([(0, 1)]), compress(Range::from([(0, 1)])));
+    assert_eq!(
+        Range::from([(0, 5)]),
+        compress(Range::from([(0, 2), (2, 3)]))
+    );
+    assert_eq!(
+        Range::from([(0, 2), (3, 3)]),
+        compress(Range::from([(0, 2), (3, 3)]))
+    );
+    assert_eq!(
+        Range::from([(0, 5)]),
+        compress(Range::from([(0, 2), (2, 1), (3, 2)]))
+    );
+    assert_eq!(
+        Range::from([(0, 5)]),
+        compress(Range::from([(0, 2), (3, 2), (2, 1)]))
+    );
+    assert_eq!(
+        Range::from([(0, 5)]),
+        compress(Range::from([(3, 2), (0, 2), (2, 1)]))
+    );
 }
 
 fn compress(entries: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
@@ -291,17 +308,17 @@ fn test_mapping_entry() {
     assert_eq!(15usize, entry.src);
     assert_eq!(37usize, entry.width);
 
-    for i in 0..15-1 {
+    for i in 0..15 - 1 {
         assert_eq!(None, entry.forward(i));
     }
-    for i in 15..15+37 {
+    for i in 15..15 + 37 {
         assert_eq!(Some(i - 15 + 0), entry.forward(i));
     }
-    for i in 15+37..100 {
+    for i in 15 + 37..100 {
         assert_eq!(None, entry.forward(i));
     }
 
-    for i in 0..37-1 {
+    for i in 0..37 - 1 {
         assert_eq!(Some(i + 15 - 0), entry.backward(i));
     }
     for i in 37..100 {
@@ -316,12 +333,12 @@ struct MappingEntry {
 }
 
 impl MappingEntry {
-    fn from_text(text: &str) -> MappingEntry{
+    fn from_text(text: &str) -> MappingEntry {
         let mut parts = text.splitn(3, " ");
-        let dst= parts.next().unwrap().parse::<usize>().unwrap();
-        let src= parts.next().unwrap().parse::<usize>().unwrap();
-        let width= parts.next().unwrap().parse::<usize>().unwrap();
-        return MappingEntry {src, dst, width};
+        let dst = parts.next().unwrap().parse::<usize>().unwrap();
+        let src = parts.next().unwrap().parse::<usize>().unwrap();
+        let width = parts.next().unwrap().parse::<usize>().unwrap();
+        return MappingEntry { src, dst, width };
     }
 
     fn forward(&self, origin: usize) -> Option<usize> {
