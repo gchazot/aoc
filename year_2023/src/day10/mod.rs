@@ -28,6 +28,17 @@ fn test_pipe_length() {
 }
 
 #[test]
+fn test_clean() {
+    let map2 = PipeMap::from_file("example2.txt");
+    let net2 = map2.to_network();
+    let map3 = PipeMap::from_file("example3.txt");
+    let net3 = map3.to_network();
+    let clean3 = net3.clean(map3.start().unwrap());
+
+    assert_eq!(net2.connections, clean3.connections);
+}
+
+#[test]
 fn test_map_to_network() {
     let net1 = PipeMap::from_file("example1.txt").to_network();
 
@@ -89,23 +100,38 @@ impl Network {
         self.connections.len()
     }
 
+    fn clean(&self, start: &Position) -> Self {
+        let mut clean = Self::new();
+        for position in self.reachable_from(start) {
+            for neighbour in self.get(&position) {
+                clean.add(position.clone(), neighbour);
+            }
+        }
+        clean
+    }
+
     fn pipe_length(&self, start: &Position) -> usize {
-        let mut all_positions = HashSet::new();
+        let pipe_positions = self.reachable_from(start);
+        pipe_positions.len()
+    }
+
+    fn reachable_from(&self, start: &Position) -> HashSet<Position> {
+        let mut reachable = HashSet::new();
         let mut next_positions = VecDeque::from([start.clone()]);
 
         while !next_positions.is_empty() {
             let next = next_positions.pop_front().unwrap();
             let neighbours = self.get(&next);
 
-            all_positions.insert(next);
+            reachable.insert(next);
 
             for neighbour in neighbours {
-                if !all_positions.contains(&neighbour) {
+                if !reachable.contains(&neighbour) {
                     next_positions.push_back(neighbour.clone());
                 }
             }
         }
-        all_positions.len()
+        reachable
     }
 }
 
