@@ -37,8 +37,8 @@ fn pipe_length(network: &Network, start: &Position) -> usize {
 
         all_positions.insert(next);
 
-        for neighbour in neighbours.unwrap_or(&HashSet::new()) {
-            if !all_positions.contains(neighbour) {
+        for neighbour in neighbours {
+            if !all_positions.contains(&neighbour) {
                 next_positions.push_back(neighbour.clone());
             }
         }
@@ -55,41 +55,97 @@ fn test_map_to_network() {
 
     assert_eq!(
         HashSet::from([Position(1, 2), Position(2, 1)]),
-        net1[&Position(1, 1)],
+        net1.get(&Position(1, 1)),
     );
     assert_eq!(
         HashSet::from([Position(3, 1), Position(3, 3)]),
-        net1[&Position(3, 2)],
+        net1.get(&Position(3, 2)),
     );
     assert_eq!(
         HashSet::from([Position(1, 2), Position(2, 3)]),
-        net1[&Position(1, 3)],
+        net1.get(&Position(1, 3)),
     );
 
     let map2 = PipeMap::from_file("example2.txt");
     let net2 = map2.to_network();
     assert_eq!(net1.len(), net2.len());
-    assert_eq!(net1, net2);
+    assert_eq!(net1.connections, net2.connections);
 
     let map3 = PipeMap::from_file("example3.txt");
     let net3 = map3.to_network();
 
     assert!(net3.len() >= net1.len());
-    for (pos, neighbours) in net1.iter() {
-        assert_eq!(&net3[pos], neighbours);
+    for (pos, neighbours) in net1.connections.iter() {
+        assert_eq!(&net3.get(pos), neighbours);
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-enum Direction {
-    North,
-    South,
-    East,
-    West,
+struct Network {
+    connections: HashMap<Position, HashSet<Position>>,
+}
+
+impl Network {
+    fn new() -> Self {
+        Self {
+            connections: HashMap::new(),
+        }
+    }
+
+    fn add(&mut self, from: Position, to: Position) {
+        self.connections
+            .entry(from)
+            .or_insert(HashSet::new())
+            .insert(to);
+    }
+
+    fn get(&self, pos: &Position) -> HashSet<Position> {
+        let neighbours = self.connections.get(pos);
+        if neighbours.is_some() {
+            neighbours.unwrap().clone()
+        } else {
+            HashSet::new()
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.connections.len()
+    }
 }
 
 #[test]
-fn test_parse_maze() {
+fn test_get_direction() {
+    use Direction::*;
+
+    fn check(expected: Result<Direction, &'static str>, a: Position, b: Position) {
+        assert_eq!(expected, get_direction(&a, &b));
+    }
+
+    check(Ok(North), Position(1, 2), Position(1, 1));
+    check(Ok(South), Position(1, 1), Position(1, 2));
+    check(Ok(East), Position(1, 1), Position(2, 1));
+    check(Ok(West), Position(2, 1), Position(1, 1));
+    check(Err("Not a valid step"), Position(1, 1), Position(1, 1));
+    check(Err("Not a valid step"), Position(1, 1), Position(1, 3));
+    check(Err("Not a valid step"), Position(1, 3), Position(1, 1));
+    check(Err("Not a valid step"), Position(3, 1), Position(1, 1));
+    check(Err("Not a valid step"), Position(1, 1), Position(3, 1));
+    check(Err("Not a valid step"), Position(1, 1), Position(3, 3));
+    check(Err("Not a valid step"), Position(3, 3), Position(1, 1));
+}
+
+fn get_direction(a: &Position, b: &Position) -> Result<Direction, &'static str> {
+    let delta = (b.0 as i64 - a.0 as i64, b.1 as i64 - a.1 as i64);
+    match delta {
+        (0, -1) => Ok(Direction::North),
+        (0, 1) => Ok(Direction::South),
+        (1, 0) => Ok(Direction::East),
+        (-1, 0) => Ok(Direction::West),
+        _ => Err("Not a valid step"),
+    }
+}
+
+#[test]
+fn test_parse_pipe_map() {
     let map1 = PipeMap::from_file("example1.txt");
     assert_eq!(5 * 5, map1.nodes.len());
     assert!(matches!(map1.start(), None));
@@ -123,43 +179,9 @@ fn test_parse_maze() {
     assert!(matches!(map3.nodes[&Position(4, 4)], Pipe::SouthEast));
 }
 
-#[test]
-fn test_direction() {
-    use Direction::*;
-
-    fn check(expected: Result<Direction, &'static str>, a: Position, b: Position) {
-        assert_eq!(expected, direction(&a, &b));
-    }
-
-    check(Ok(North), Position(1, 2), Position(1, 1));
-    check(Ok(South), Position(1, 1), Position(1, 2));
-    check(Ok(East), Position(1, 1), Position(2, 1));
-    check(Ok(West), Position(2, 1), Position(1, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(1, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(1, 3));
-    check(Err("Not a valid step"), Position(1, 3), Position(1, 1));
-    check(Err("Not a valid step"), Position(3, 1), Position(1, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(3, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(3, 3));
-    check(Err("Not a valid step"), Position(3, 3), Position(1, 1));
-}
-
-fn direction(a: &Position, b: &Position) -> Result<Direction, &'static str> {
-    let delta = (b.0 as i64 - a.0 as i64, b.1 as i64 - a.1 as i64);
-    match delta {
-        (0, -1) => Ok(Direction::North),
-        (0, 1) => Ok(Direction::South),
-        (1, 0) => Ok(Direction::East),
-        (-1, 0) => Ok(Direction::West),
-        _ => Err("Not a valid step"),
-    }
-}
-
 struct PipeMap {
     nodes: HashMap<Position, Pipe>,
 }
-
-type Network = HashMap<Position, HashSet<Position>>;
 
 impl PipeMap {
     fn from_file(filename: &str) -> PipeMap {
@@ -194,7 +216,7 @@ impl PipeMap {
                 }
                 let dest = position.to(&forward).unwrap();
 
-                let backward = direction(&dest, position).unwrap();
+                let backward = get_direction(&dest, position).unwrap();
                 let dest_pipe = self.nodes.get(&dest);
                 if !dest_pipe.is_some() {
                     continue;
@@ -202,10 +224,7 @@ impl PipeMap {
 
                 let dest_directions = pipe_to_directions(dest_pipe.unwrap());
                 if dest_directions.contains(&backward) {
-                    network
-                        .entry(position.clone())
-                        .or_insert(HashSet::new())
-                        .insert(dest);
+                    network.add(position.clone(), dest);
                 }
             }
         }
@@ -283,6 +302,15 @@ fn test_position_can_step() {
     assert!(Position(1, 1).can_step(&East));
     assert!(Position(1, 1).can_step(&West));
 }
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+enum Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 struct Position(usize, usize);
 
