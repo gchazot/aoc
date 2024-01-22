@@ -10,7 +10,7 @@ fn test_mine() {
 pub fn execute() {
     let map = PipeMap::from_file("mine.txt");
     let net = map.to_network();
-    let length = pipe_length(&net, map.start().unwrap());
+    let length = net.pipe_length(map.start().unwrap());
 
     assert_eq!(13884, length);
     assert_eq!(6942, length / 2);
@@ -20,36 +20,16 @@ pub fn execute() {
 fn test_pipe_length() {
     let map3 = PipeMap::from_file("example3.txt");
     let net3 = map3.to_network();
-    let length = pipe_length(&net3, map3.start().unwrap());
+    let length = net3.pipe_length(map3.start().unwrap());
     assert_eq!(8, length);
 
     // This is the furthest point away
     assert_eq!(4, length / 2);
 }
 
-fn pipe_length(network: &Network, start: &Position) -> usize {
-    let mut all_positions = HashSet::new();
-    let mut next_positions = VecDeque::from([start.clone()]);
-
-    while !next_positions.is_empty() {
-        let next = next_positions.pop_front().unwrap();
-        let neighbours = network.get(&next);
-
-        all_positions.insert(next);
-
-        for neighbour in neighbours {
-            if !all_positions.contains(&neighbour) {
-                next_positions.push_back(neighbour.clone());
-            }
-        }
-    }
-    all_positions.len()
-}
-
 #[test]
 fn test_map_to_network() {
-    let map1 = PipeMap::from_file("example1.txt");
-    let net1 = map1.to_network();
+    let net1 = PipeMap::from_file("example1.txt").to_network();
 
     assert_eq!(8, net1.len());
 
@@ -66,13 +46,11 @@ fn test_map_to_network() {
         net1.get(&Position(1, 3)),
     );
 
-    let map2 = PipeMap::from_file("example2.txt");
-    let net2 = map2.to_network();
+    let net2 = PipeMap::from_file("example2.txt").to_network();
     assert_eq!(net1.len(), net2.len());
     assert_eq!(net1.connections, net2.connections);
 
-    let map3 = PipeMap::from_file("example3.txt");
-    let net3 = map3.to_network();
+    let net3 = PipeMap::from_file("example3.txt").to_network();
 
     assert!(net3.len() >= net1.len());
     for (pos, neighbours) in net1.connections.iter() {
@@ -109,6 +87,25 @@ impl Network {
 
     fn len(&self) -> usize {
         self.connections.len()
+    }
+
+    fn pipe_length(&self, start: &Position) -> usize {
+        let mut all_positions = HashSet::new();
+        let mut next_positions = VecDeque::from([start.clone()]);
+
+        while !next_positions.is_empty() {
+            let next = next_positions.pop_front().unwrap();
+            let neighbours = self.get(&next);
+
+            all_positions.insert(next);
+
+            for neighbour in neighbours {
+                if !all_positions.contains(&neighbour) {
+                    next_positions.push_back(neighbour.clone());
+                }
+            }
+        }
+        all_positions.len()
     }
 }
 
