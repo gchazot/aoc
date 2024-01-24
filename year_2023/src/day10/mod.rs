@@ -14,6 +14,46 @@ pub fn execute() {
 
     assert_eq!(13884, length);
     assert_eq!(6942, length / 2);
+
+    let inner = map.inner_size();
+    assert_eq!(297, inner);
+}
+
+#[test]
+fn test_inner_size() {
+    let map2 = PipeMap::from_file("example2.txt");
+    assert_eq!(map2.inner_size(), 1);
+    let map3 = PipeMap::from_file("example3.txt");
+    assert_eq!(map3.inner_size(), 1);
+    let map4 = PipeMap::from_file("example4.txt");
+    assert_eq!(map4.inner_size(), 4);
+    let map5 = PipeMap::from_file("example5.txt");
+    assert_eq!(map5.inner_size(), 4);
+    let map6 = PipeMap::from_file("example6.txt");
+    assert_eq!(map6.inner_size(), 8);
+    let map7 = PipeMap::from_file("example7.txt");
+    assert_eq!(map7.inner_size(), 10);
+}
+
+#[test]
+fn test_inner_region() {
+    let map2 = PipeMap::from_file("example2.txt");
+    let net2 = map2.to_network();
+
+    let inner = net2.inner_region(map2.start().unwrap());
+
+    assert_eq!(inner.len(), 1);
+    assert!(inner.contains(&Position(3, 3)));
+}
+
+#[test]
+fn test_expand_network() {
+    let map3 = PipeMap::from_file("example3.txt");
+    let net3 = map3.to_network().clean(map3.start().unwrap());
+    assert_eq!(8, net3.len());
+    let exp3 = net3.expand();
+    assert_eq!(8, net3.len());
+    assert_eq!(16, exp3.len());
 }
 
 #[test]
@@ -132,6 +172,85 @@ impl Network {
             }
         }
         reachable
+    }
+
+    fn inner_region(&self, start: &Position) -> HashSet<Position> {
+        let expanded = self.clean(start).expand();
+        let inner_expanded = expanded._inner_region_core();
+
+        let positions = inner_expanded
+            .iter()
+            .filter(|&pos| pos.0 % 2 == 0 && pos.1 % 2 == 0)
+            .map(|pos| Position(pos.0 / 2, pos.1 / 2));
+
+        HashSet::from_iter(positions)
+    }
+    fn _inner_region_core(&self) -> HashSet<Position> {
+        let max_x = self.connections.keys().map(|pos| pos.0).max().unwrap() + 1;
+        let max_y = self.connections.keys().map(|pos| pos.1).max().unwrap() + 1;
+
+        let outer = self._outer_region(max_x, max_y);
+
+        let mut inner = HashSet::<Position>::new();
+        for i in 0..max_x {
+            for j in 0..max_y {
+                let current = Position(i, j);
+                if self.connections.contains_key(&current) || outer.contains(&current) {
+                    continue;
+                }
+                inner.insert(Position(i, j));
+            }
+        }
+        inner
+    }
+
+    fn _outer_region(&self, max_x: usize, max_y: usize) -> HashSet<Position> {
+        let mut outer = HashSet::new();
+        let mut to_visit = VecDeque::from([Position(0, 0), Position(max_x, max_y)]);
+
+        while !to_visit.is_empty() {
+            use Direction::*;
+
+            let current = to_visit.pop_front().unwrap();
+
+            if self.connections.contains_key(&current) {
+                continue;
+            }
+
+            for direction in [North, South, East, West] {
+                if !current.can_step(&direction) {
+                    continue;
+                }
+                let next = current.to(&direction).unwrap();
+                if next.0 > max_x
+                    || next.1 > max_y
+                    || outer.contains(&next)
+                    || to_visit.contains(&next)
+                {
+                    continue;
+                }
+                to_visit.push_back(next);
+            }
+
+            outer.insert(current);
+        }
+        outer
+    }
+
+    fn expand(&self) -> Self {
+        let mut expanded = Self::new();
+        for (pos, neighbours) in self.connections.iter() {
+            let exp_pos = Position(pos.0 * 2, pos.1 * 2);
+            for neigh in neighbours {
+                let exp_neigh = Position(neigh.0 * 2, neigh.1 * 2);
+                let exp_betwn =
+                    Position((exp_pos.0 + exp_neigh.0) / 2, (exp_pos.1 + exp_neigh.1) / 2);
+
+                expanded.add(exp_pos.clone(), exp_betwn.clone());
+                expanded.add(exp_betwn, exp_neigh);
+            }
+        }
+        expanded
     }
 }
 
@@ -253,6 +372,13 @@ impl PipeMap {
         }
         network
     }
+
+    fn inner_size(&self) -> usize {
+        let net = self.to_network();
+        let start = self.start().unwrap();
+        let inner = net.inner_region(start);
+        inner.len()
+    }
 }
 
 #[test]
@@ -334,7 +460,7 @@ enum Direction {
     West,
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug, PartialOrd, Ord)]
 struct Position(usize, usize);
 
 impl Position {
