@@ -45,16 +45,16 @@ fn test_map_to_network() {
     assert_eq!(8, net1.len());
 
     assert_eq!(
-        HashSet::from([Position(1, 2), Position(2, 1)]),
-        net1.get(&Position(1, 1)),
+        HashSet::from([Position(2, 3), Position(3, 2)]),
+        net1.get(&Position(2, 2)),
     );
     assert_eq!(
-        HashSet::from([Position(3, 1), Position(3, 3)]),
-        net1.get(&Position(3, 2)),
+        HashSet::from([Position(4, 2), Position(4, 4)]),
+        net1.get(&Position(4, 3)),
     );
     assert_eq!(
-        HashSet::from([Position(1, 2), Position(2, 3)]),
-        net1.get(&Position(1, 3)),
+        HashSet::from([Position(2, 3), Position(3, 4)]),
+        net1.get(&Position(2, 4)),
     );
 
     let net2 = PipeMap::from_file("example2.txt").to_network();
@@ -172,34 +172,34 @@ fn test_parse_pipe_map() {
     let map1 = PipeMap::from_file("example1.txt");
     assert_eq!(5 * 5, map1.nodes.len());
     assert!(matches!(map1.start(), None));
-    assert!(matches!(map1.nodes[&Position(0, 0)], Pipe::None));
-    assert!(matches!(map1.nodes[&Position(1, 1)], Pipe::SouthEast));
-    assert!(matches!(map1.nodes[&Position(2, 1)], Pipe::EastWest));
-    assert!(matches!(map1.nodes[&Position(3, 1)], Pipe::SouthWest));
-    assert!(matches!(map1.nodes[&Position(1, 2)], Pipe::NorthSouth));
-    assert!(matches!(map1.nodes[&Position(3, 2)], Pipe::NorthSouth));
-    assert!(matches!(map1.nodes[&Position(1, 3)], Pipe::NorthEast));
-    assert!(matches!(map1.nodes[&Position(2, 3)], Pipe::EastWest));
-    assert!(matches!(map1.nodes[&Position(3, 3)], Pipe::NorthWest));
-    assert!(matches!(map1.nodes[&Position(0, 4)], Pipe::None));
-    assert!(matches!(map1.nodes[&Position(4, 4)], Pipe::None));
+    assert!(matches!(map1.nodes[&Position(1, 1)], Pipe::None));
+    assert!(matches!(map1.nodes[&Position(2, 2)], Pipe::SouthEast));
+    assert!(matches!(map1.nodes[&Position(3, 2)], Pipe::EastWest));
+    assert!(matches!(map1.nodes[&Position(4, 2)], Pipe::SouthWest));
+    assert!(matches!(map1.nodes[&Position(2, 3)], Pipe::NorthSouth));
+    assert!(matches!(map1.nodes[&Position(4, 3)], Pipe::NorthSouth));
+    assert!(matches!(map1.nodes[&Position(2, 4)], Pipe::NorthEast));
+    assert!(matches!(map1.nodes[&Position(3, 4)], Pipe::EastWest));
+    assert!(matches!(map1.nodes[&Position(4, 4)], Pipe::NorthWest));
+    assert!(matches!(map1.nodes[&Position(1, 5)], Pipe::None));
+    assert!(matches!(map1.nodes[&Position(5, 5)], Pipe::None));
 
     let map2 = PipeMap::from_file("example2.txt");
     assert_eq!(5 * 5, map2.nodes.len());
-    assert!(matches!(map2.start(), Some(Position(1, 1))));
-    assert!(matches!(map2.nodes[&Position(0, 0)], Pipe::None));
-    assert!(matches!(map2.nodes[&Position(1, 1)], Pipe::Start));
-    assert!(matches!(map2.nodes[&Position(3, 1)], Pipe::SouthWest));
-    assert!(matches!(map2.nodes[&Position(1, 3)], Pipe::NorthEast));
+    assert!(matches!(map2.start(), Some(Position(2, 2))));
+    assert!(matches!(map2.nodes[&Position(1, 1)], Pipe::None));
+    assert!(matches!(map2.nodes[&Position(2, 2)], Pipe::Start));
+    assert!(matches!(map2.nodes[&Position(4, 2)], Pipe::SouthWest));
+    assert!(matches!(map2.nodes[&Position(2, 4)], Pipe::NorthEast));
 
     let map3 = PipeMap::from_file("example3.txt");
     assert_eq!(5 * 5, map3.nodes.len());
-    assert!(matches!(map3.start(), Some(Position(1, 1))));
-    assert!(matches!(map3.nodes[&Position(0, 0)], Pipe::EastWest));
-    assert!(matches!(map3.nodes[&Position(1, 1)], Pipe::Start));
-    assert!(matches!(map3.nodes[&Position(4, 0)], Pipe::SouthWest));
-    assert!(matches!(map3.nodes[&Position(0, 4)], Pipe::NorthEast));
-    assert!(matches!(map3.nodes[&Position(4, 4)], Pipe::SouthEast));
+    assert!(matches!(map3.start(), Some(Position(2, 2))));
+    assert!(matches!(map3.nodes[&Position(1, 1)], Pipe::EastWest));
+    assert!(matches!(map3.nodes[&Position(2, 2)], Pipe::Start));
+    assert!(matches!(map3.nodes[&Position(5, 1)], Pipe::SouthWest));
+    assert!(matches!(map3.nodes[&Position(1, 5)], Pipe::NorthEast));
+    assert!(matches!(map3.nodes[&Position(5, 5)], Pipe::SouthEast));
 }
 
 struct PipeMap {
@@ -214,7 +214,7 @@ impl PipeMap {
         let mut nodes = HashMap::<Position, Pipe>::new();
         for (i, line) in lines.iter().enumerate() {
             for (j, char) in line.chars().enumerate() {
-                let pos = Position(j, i);
+                let pos = Position(j + 1, i + 1);
                 nodes.insert(pos, pipe_from_char(char));
             }
         }
