@@ -14,9 +14,17 @@ pub fn execute() {
             .map(|row| row.count_valid_arrangements())
             .sum::<usize>()
     );
+    // // Too slow for now
+    // assert_eq!(
+    //     123456789,
+    //     mine.iter()
+    //         .map(|line| SpringRow::from_line(line.clone()).unfold(5))
+    //         .map(|row| row.count_valid_arrangements())
+    //         .sum::<usize>()
+    // );
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 enum Condition {
     Damaged,
     Operational,
@@ -134,6 +142,20 @@ impl SpringRow {
             0
         }
     }
+
+    fn unfold(&self, folds: usize) -> SpringRow {
+        let sep = Option::<Condition>::None;
+        let mut new_condition = Vec::<Option<Condition>>::new();
+        for _ in 1..folds {
+            new_condition.extend(self.condition.clone());
+            new_condition.push(sep);
+        }
+        new_condition.extend(self.condition.clone());
+        SpringRow {
+            condition: new_condition,
+            checksum: self.checksum.repeat(folds),
+        }
+    }
 }
 
 #[test]
@@ -242,6 +264,31 @@ fn test_example_valid_arrangements() {
         example
             .iter()
             .map(|line| SpringRow::from_line(line.clone()))
+            .map(|row| row.count_valid_arrangements())
+            .sum::<usize>()
+    );
+}
+
+#[test]
+fn test_unfold() {
+    let row1 = SpringRow::from_line("# 1".to_string()).unfold(5);
+    assert_eq!(9, row1.condition.len());
+    assert_eq!(5, row1.checksum.len());
+
+    let row2 = SpringRow::from_line("#?# 1,1".to_string()).unfold(5);
+    assert_eq!(19, row2.condition.len());
+    assert_eq!(10, row2.checksum.len());
+}
+
+#[test]
+#[ignore] // Too slow for now
+fn test_example_unfolded_valid_arrangements() {
+    let example = utils::read_lines("src/day12/example.txt");
+    assert_eq!(
+        525152,
+        example
+            .iter()
+            .map(|line| SpringRow::from_line(line.clone()).unfold(5))
             .map(|row| row.count_valid_arrangements())
             .sum::<usize>()
     );
