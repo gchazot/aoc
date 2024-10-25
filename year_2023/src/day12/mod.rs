@@ -60,42 +60,64 @@ impl SpringRow {
     }
 
     fn is_consistent(&self) -> bool {
-        for (index, condition) in self.condition.iter().enumerate() {
-            if condition.is_none() {
-                let mut row_damaged = self.clone();
-                row_damaged.condition[index] = Some(Condition::Damaged);
-
-                let mut row_operational = self.clone();
-                row_operational.condition[index] = Some(Condition::Operational);
-
-                return row_damaged.is_consistent() || row_operational.is_consistent();
-            }
-        }
-
-        self.test_consistent_no_unknown()
+        self.count_valid_arrangements() > 0
     }
 
-    fn test_consistent_no_unknown(&self) -> bool {
-        let mut condition_index = 0;
-        let mut checksum_index = 0;
+    fn count_valid_arrangements(&self) -> usize {
+        let mut condition = self.condition.clone();
+        self._count_valid_arrangements(&mut condition, 0, 0, 0)
+    }
 
-        let mut current_count = 0;
-
-        while condition_index < self.condition.len() {
-            let condition = self.condition[condition_index].as_ref().unwrap();
+    fn _count_valid_arrangements(
+        &self,
+        conditions: &mut Vec<Option<Condition>>,
+        _condition_index: usize,
+        _checksum_index: usize,
+        _current_count: usize,
+    ) -> usize {
+        let mut current_count = _current_count;
+        let mut condition_index = _condition_index;
+        let mut checksum_index = _checksum_index;
+        while condition_index < conditions.len() {
+            let condition = conditions[condition_index].as_ref();
             match condition {
-                Condition::Damaged => {
+                None => {
+                    let mut count = 0;
+
+                    conditions[condition_index] = Some(Condition::Damaged);
+
+                    count += self._count_valid_arrangements(
+                        conditions,
+                        condition_index,
+                        checksum_index,
+                        current_count,
+                    );
+
+                    conditions[condition_index] = Some(Condition::Operational);
+
+                    count += self._count_valid_arrangements(
+                        conditions,
+                        condition_index,
+                        checksum_index,
+                        current_count,
+                    );
+
+                    conditions[condition_index] = None;
+
+                    return count;
+                }
+                Some(Condition::Damaged) => {
                     current_count += 1;
                     if checksum_index >= self.checksum.len()
                         || current_count > self.checksum[checksum_index]
                     {
-                        return false;
+                        return 0;
                     }
                 }
-                Condition::Operational => {
+                Some(Condition::Operational) => {
                     if current_count > 0 {
                         if current_count != self.checksum[checksum_index] {
-                            return false;
+                            return 0;
                         } else {
                             checksum_index += 1
                         }
@@ -109,34 +131,13 @@ impl SpringRow {
 
         if current_count > 0 {
             if current_count != self.checksum[checksum_index] {
-                return false;
+                return 0;
             } else {
                 checksum_index += 1
             }
         }
 
-        checksum_index == self.checksum.len()
-    }
-
-    fn count_valid_arrangements(&self) -> usize {
-        for (index, condition) in self.condition.iter().enumerate() {
-            let mut count = 0;
-            if condition.is_none() {
-                let mut row_damaged = self.clone();
-                row_damaged.condition[index] = Some(Condition::Damaged);
-
-                count += row_damaged.count_valid_arrangements();
-
-                let mut row_operational = self.clone();
-                row_operational.condition[index] = Some(Condition::Operational);
-
-                count += row_operational.count_valid_arrangements();
-
-                return count;
-            }
-        }
-
-        if self.test_consistent_no_unknown() {
+        if checksum_index == self.checksum.len() {
             1
         } else {
             0
@@ -281,7 +282,6 @@ fn test_unfold() {
 }
 
 #[test]
-#[ignore] // Too slow for now
 fn test_example_unfolded_valid_arrangements() {
     let example = utils::read_lines("src/day12/example.txt");
     assert_eq!(
