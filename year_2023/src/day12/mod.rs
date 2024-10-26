@@ -1,4 +1,5 @@
 use crate::utils;
+use std::collections::HashMap;
 
 #[test]
 fn test_mine() {
@@ -14,14 +15,14 @@ pub fn execute() {
             .map(|row| row.count_valid_arrangements())
             .sum::<usize>()
     );
-    // // Too slow for now
-    // assert_eq!(
-    //     123456789,
-    //     mine.iter()
-    //         .map(|line| SpringRow::from_line(line.clone()).unfold(5))
-    //         .map(|row| row.count_valid_arrangements())
-    //         .sum::<usize>()
-    // );
+    // Too slow for now
+    assert_eq!(
+        1672318386674,
+        mine.iter()
+            .map(|line| SpringRow::from_line(line.clone()).unfold(5))
+            .map(|row| row.count_valid_arrangements())
+            .sum::<usize>()
+    );
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -64,7 +65,8 @@ impl SpringRow {
     }
 
     fn count_valid_arrangements(&self) -> usize {
-        self._count_valid_arrangements(0, 0, 0)
+        let mut cache = HashMap::new();
+        self._count_valid_arrangements(0, 0, 0, &mut cache)
     }
 
     fn _count_valid_arrangements(
@@ -72,10 +74,16 @@ impl SpringRow {
         _condition_index: usize,
         _checksum_index: usize,
         _current_count: usize,
+        _cache: &mut HashMap<(usize, usize, usize), usize>,
     ) -> usize {
         let mut current_count = _current_count;
         let mut condition_index = _condition_index;
         let mut checksum_index = _checksum_index;
+
+        let cache_key = (_condition_index, _checksum_index, _current_count);
+        if _cache.contains_key(&cache_key) {
+            return _cache[&cache_key];
+        }
 
         while condition_index < self.condition.len() {
             let condition = self.condition[condition_index].as_ref();
@@ -90,12 +98,17 @@ impl SpringRow {
                             condition_index + 1,
                             checksum_index,
                             current_count + 1,
+                            _cache,
                         );
                     }
 
                     if current_count == 0 {
-                        count +=
-                            self._count_valid_arrangements(condition_index + 1, checksum_index, 0);
+                        count += self._count_valid_arrangements(
+                            condition_index + 1,
+                            checksum_index,
+                            0,
+                            _cache,
+                        );
                     }
 
                     if checksum_index < self.checksum.len()
@@ -105,9 +118,11 @@ impl SpringRow {
                             condition_index + 1,
                             checksum_index + 1,
                             0,
+                            _cache,
                         );
                     }
 
+                    _cache.insert(cache_key, count);
                     return count;
                 }
                 Some(Condition::Damaged) => {
@@ -115,12 +130,14 @@ impl SpringRow {
                     if checksum_index >= self.checksum.len()
                         || current_count > self.checksum[checksum_index]
                     {
+                        _cache.insert(cache_key, 0);
                         return 0;
                     }
                 }
                 Some(Condition::Operational) => {
                     if current_count > 0 {
                         if current_count != self.checksum[checksum_index] {
+                            _cache.insert(cache_key, 0);
                             return 0;
                         } else {
                             checksum_index += 1
@@ -135,6 +152,7 @@ impl SpringRow {
 
         if current_count > 0 {
             if current_count != self.checksum[checksum_index] {
+                _cache.insert(cache_key, 0);
                 return 0;
             } else {
                 checksum_index += 1
@@ -142,8 +160,10 @@ impl SpringRow {
         }
 
         if checksum_index == self.checksum.len() {
+            _cache.insert(cache_key, 1);
             1
         } else {
+            _cache.insert(cache_key, 0);
             0
         }
     }
