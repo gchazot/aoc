@@ -64,13 +64,11 @@ impl SpringRow {
     }
 
     fn count_valid_arrangements(&self) -> usize {
-        let mut condition = self.condition.clone();
-        self._count_valid_arrangements(&mut condition, 0, 0, 0)
+        self._count_valid_arrangements(0, 0, 0)
     }
 
     fn _count_valid_arrangements(
         &self,
-        conditions: &mut Vec<Option<Condition>>,
         _condition_index: usize,
         _checksum_index: usize,
         _current_count: usize,
@@ -78,31 +76,37 @@ impl SpringRow {
         let mut current_count = _current_count;
         let mut condition_index = _condition_index;
         let mut checksum_index = _checksum_index;
-        while condition_index < conditions.len() {
-            let condition = conditions[condition_index].as_ref();
+
+        while condition_index < self.condition.len() {
+            let condition = self.condition[condition_index].as_ref();
             match condition {
                 None => {
                     let mut count = 0;
 
-                    conditions[condition_index] = Some(Condition::Damaged);
+                    if checksum_index < self.checksum.len()
+                        && current_count < self.checksum[checksum_index]
+                    {
+                        count += self._count_valid_arrangements(
+                            condition_index + 1,
+                            checksum_index,
+                            current_count + 1,
+                        );
+                    }
 
-                    count += self._count_valid_arrangements(
-                        conditions,
-                        condition_index,
-                        checksum_index,
-                        current_count,
-                    );
+                    if current_count == 0 {
+                        count +=
+                            self._count_valid_arrangements(condition_index + 1, checksum_index, 0);
+                    }
 
-                    conditions[condition_index] = Some(Condition::Operational);
-
-                    count += self._count_valid_arrangements(
-                        conditions,
-                        condition_index,
-                        checksum_index,
-                        current_count,
-                    );
-
-                    conditions[condition_index] = None;
+                    if checksum_index < self.checksum.len()
+                        && current_count == self.checksum[checksum_index]
+                    {
+                        count += self._count_valid_arrangements(
+                            condition_index + 1,
+                            checksum_index + 1,
+                            0,
+                        );
+                    }
 
                     return count;
                 }
