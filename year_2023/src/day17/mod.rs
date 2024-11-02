@@ -9,9 +9,12 @@ fn test_mine() {
 
 pub fn execute() {
     let example_city = City::from_lines(utils::read_lines("src/day17/mine.txt"));
-    let mut nav = Navigator::new();
 
-    assert_eq!(698, nav.solve(&example_city))
+    let mut nav1 = Navigator::new(1, 3);
+    assert_eq!(698, nav1.solve(&example_city));
+
+    let mut nav2 = Navigator::new(4, 10);
+    assert_eq!(825, nav2.solve(&example_city))
 }
 
 #[derive(Hash, Eq, PartialEq, Clone, Debug)]
@@ -115,10 +118,12 @@ struct NavPoint {
 struct Navigator {
     nav_points: Vec<NavPoint>,
     costs: HashMap<NavPoint, u32>,
+    crucible_min_steps: u32,
+    crucible_max_steps: u32,
 }
 
 impl Navigator {
-    fn new() -> Navigator {
+    fn new(crucible_min_steps: u32, crucible_max_steps: u32) -> Navigator {
         let mut nav_points = Vec::new();
         let mut costs = HashMap::new();
 
@@ -138,7 +143,12 @@ impl Navigator {
         nav_points.push(start_south.clone());
         costs.insert(start_south, 0);
 
-        Navigator { nav_points, costs }
+        Navigator {
+            nav_points,
+            costs,
+            crucible_min_steps,
+            crucible_max_steps,
+        }
     }
 
     fn solve(&mut self, city: &City) -> u32 {
@@ -149,7 +159,7 @@ impl Navigator {
         self.costs
             .iter()
             .filter_map(|(&ref nav, &cost)| {
-                if (nav.coord == city.factory) {
+                if nav.coord == city.factory {
                     Some(cost)
                 } else {
                     None
@@ -179,6 +189,7 @@ impl Navigator {
         }
         self.nav_points = new_nav_points;
     }
+
     fn progress(&self, city: &City, point: &NavPoint) -> Vec<(NavPoint, u32)> {
         use Direction::*;
         let mut results = vec![];
@@ -190,17 +201,17 @@ impl Navigator {
 
         let max_steps = match next_direction {
             Vertical => [
-                min(3, point.coord.y),
-                min(3, city.height - 1 - point.coord.y),
+                min(self.crucible_max_steps, point.coord.y),
+                min(self.crucible_max_steps, city.height - 1 - point.coord.y),
             ],
             Horizontal => [
-                min(3, point.coord.x),
-                min(3, city.width - 1 - point.coord.x),
+                min(self.crucible_max_steps, point.coord.x),
+                min(self.crucible_max_steps, city.width - 1 - point.coord.x),
             ],
         };
 
         for (increase, index) in [(false, 0), (true, 1)] {
-            for steps in 1..(max_steps[index] + 1) {
+            for steps in self.crucible_min_steps..(max_steps[index] + 1) {
                 let mut coord = point.coord.clone();
                 let mut cost = 0;
                 for _ in 0..steps {
@@ -242,7 +253,7 @@ fn test_progress() {
     use Direction::*;
 
     let example_city = City::from_lines(_example());
-    let nav = Navigator::new();
+    let nav = Navigator::new(1, 3);
 
     let p1 = NavPoint {
         coord: Coord { x: 0, y: 0 },
@@ -283,10 +294,8 @@ fn test_progress() {
 
 #[test]
 fn test_progress_all() {
-    use Direction::*;
-
     let example_city = City::from_lines(_example());
-    let mut nav = Navigator::new();
+    let mut nav = Navigator::new(1, 3);
 
     nav.progress_all(&example_city);
 
@@ -312,7 +321,10 @@ fn test_progress_all() {
 #[test]
 fn test_solve() {
     let example_city = City::from_lines(_example());
-    let mut nav = Navigator::new();
 
-    assert_eq!(102, nav.solve(&example_city))
+    let mut nav1 = Navigator::new(1, 3);
+    assert_eq!(102, nav1.solve(&example_city));
+
+    let mut nav2 = Navigator::new(4, 10);
+    assert_eq!(94, nav2.solve(&example_city));
 }
