@@ -77,10 +77,6 @@ impl Platform {
             let cache_key = self.to_lines().join("\n");
             if cache.contains_key(&cache_key) {
                 let first_seen = cache.get(&cache_key).unwrap();
-                println!(
-                    "Cycle from {} to {}, remains {}",
-                    first_seen, i, loops_remaining
-                );
                 let loop_size = i - first_seen;
                 loops_remaining = loops_remaining % loop_size;
                 break;
