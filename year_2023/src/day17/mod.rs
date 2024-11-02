@@ -102,10 +102,8 @@ fn _example() -> Vec<String> {
 
 #[derive(Hash, Eq, PartialEq, Clone)]
 enum Direction {
-    North,
-    South,
-    West,
-    East,
+    Vertical,
+    Horizontal,
 }
 
 #[derive(Hash, Eq, PartialEq, Clone)]
@@ -128,14 +126,14 @@ impl Navigator {
 
         let start_east = NavPoint {
             coord: Coord { x: 0, y: 0 },
-            direction: East,
+            direction: Horizontal,
         };
         nav_points.push(start_east.clone());
         costs.insert(start_east, 0);
 
         let start_south = NavPoint {
             coord: Coord { x: 0, y: 0 },
-            direction: South,
+            direction: Vertical,
         };
         nav_points.push(start_south.clone());
         costs.insert(start_south, 0);
@@ -185,28 +183,42 @@ impl Navigator {
         use Direction::*;
         let mut results = vec![];
 
-        let next_directions = match point.direction {
-            North | South => vec![East, West],
-            East | West => vec![North, South],
+        let next_direction = match point.direction {
+            Vertical => Horizontal,
+            Horizontal => Vertical,
         };
 
-        for direction in next_directions {
-            let max_steps = match direction {
-                North => min(3, point.coord.y),
-                South => min(3, city.height - 1 - point.coord.y),
-                West => min(3, point.coord.x),
-                East => min(3, city.width - 1 - point.coord.x),
-            };
+        let max_steps = match next_direction {
+            Vertical => [
+                min(3, point.coord.y),
+                min(3, city.height - 1 - point.coord.y),
+            ],
+            Horizontal => [
+                min(3, point.coord.x),
+                min(3, city.width - 1 - point.coord.x),
+            ],
+        };
 
-            for steps in 1..max_steps + 1 {
+        for (increase, index) in [(false, 0), (true, 1)] {
+            for steps in 1..(max_steps[index] + 1) {
                 let mut coord = point.coord.clone();
                 let mut cost = 0;
                 for _ in 0..steps {
-                    match direction {
-                        North => coord.y -= 1,
-                        South => coord.y += 1,
-                        West => coord.x -= 1,
-                        East => coord.x += 1,
+                    match next_direction {
+                        Vertical => {
+                            if increase {
+                                coord.y += 1
+                            } else {
+                                coord.y -= 1
+                            }
+                        }
+                        Horizontal => {
+                            if increase {
+                                coord.x += 1
+                            } else {
+                                coord.x -= 1
+                            }
+                        }
                     };
                     cost += city.heat_loss[&coord];
                 }
@@ -214,7 +226,7 @@ impl Navigator {
                 results.push((
                     NavPoint {
                         coord,
-                        direction: direction.clone(),
+                        direction: next_direction.clone(),
                     },
                     cost as u32,
                 ))
@@ -234,7 +246,7 @@ fn test_progress() {
 
     let p1 = NavPoint {
         coord: Coord { x: 0, y: 0 },
-        direction: East,
+        direction: Horizontal,
     };
     let p1_next = nav.progress(&example_city, &p1);
     assert_eq!(p1_next.len(), 3);
@@ -252,7 +264,7 @@ fn test_progress() {
 
     let p2 = NavPoint {
         coord: Coord { x: 0, y: 0 },
-        direction: South,
+        direction: Vertical,
     };
     let p2_next = nav.progress(&example_city, &p2);
     assert_eq!(p2_next.len(), 3);
@@ -263,42 +275,6 @@ fn test_progress() {
             (Coord { x: 3, y: 0 }, 8),
         ]),
         p2_next
-            .iter()
-            .map(|(point, cost)| (point.coord.clone(), *cost))
-            .collect::<HashMap<_, _>>(),
-    );
-
-    let p3 = NavPoint {
-        coord: Coord { x: 0, y: 0 },
-        direction: West,
-    };
-    let p3_next = nav.progress(&example_city, &p3);
-    assert_eq!(p3_next.len(), 3);
-    assert_eq!(
-        HashMap::from([
-            (Coord { x: 0, y: 1 }, 3),
-            (Coord { x: 0, y: 2 }, 6),
-            (Coord { x: 0, y: 3 }, 9),
-        ]),
-        p3_next
-            .iter()
-            .map(|(point, cost)| (point.coord.clone(), *cost))
-            .collect::<HashMap<_, _>>(),
-    );
-
-    let p4 = NavPoint {
-        coord: Coord { x: 0, y: 0 },
-        direction: South,
-    };
-    let p4_next = nav.progress(&example_city, &p4);
-    assert_eq!(p4_next.len(), 3);
-    assert_eq!(
-        HashMap::from([
-            (Coord { x: 1, y: 0 }, 4),
-            (Coord { x: 2, y: 0 }, 5),
-            (Coord { x: 3, y: 0 }, 8),
-        ]),
-        p4_next
             .iter()
             .map(|(point, cost)| (point.coord.clone(), *cost))
             .collect::<HashMap<_, _>>(),
