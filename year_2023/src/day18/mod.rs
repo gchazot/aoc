@@ -1,5 +1,6 @@
 use crate::utils;
 use std::collections::{HashMap, HashSet};
+use std::ops::Index;
 
 #[test]
 fn test_mine() {
@@ -7,21 +8,24 @@ fn test_mine() {
 }
 
 pub fn execute() {
-    let mine = Canvas::from_lines(utils::read_lines("src/day18/mine.txt"));
+    let part1 = Canvas::from_lines_part1(utils::read_lines("src/day18/mine.txt"));
 
-    let pixels = mine.to_pixels_filled();
-
+    let pixels = part1.to_pixels_filled();
     assert_eq!(62573, pixels.len());
+    assert_eq!(62573, part1.to_area());
 
-    // for line in mine.to_lines() {
+    // for line in part1.to_lines() {
     //     println!(
     //         "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"{}\" stroke-width=\"1\" stroke-linecap=\"square\"/>",
     //         line.start.x, line.start.y, line.end.x, line.end.y, line.color,
     //     );
     // }
+
+    let part2 = Canvas::from_lines_part2(utils::read_lines("src/day18/mine.txt"));
+    assert_eq!(54662804037719, part2.to_area());
 }
 
-#[derive(Debug)]
+#[derive(Eq, PartialEq, Debug)]
 enum Direction {
     Up,
     Down,
@@ -31,14 +35,14 @@ enum Direction {
 
 struct Instruction {
     direction: Direction,
-    distance: i32,
+    distance: i64,
     color: String,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 struct Coord {
-    x: i32,
-    y: i32,
+    x: i64,
+    y: i64,
 }
 
 struct Line {
@@ -52,7 +56,7 @@ struct Canvas {
 }
 
 impl Canvas {
-    fn from_lines(lines: Vec<String>) -> Canvas {
+    fn from_lines_part1(lines: Vec<String>) -> Canvas {
         let instructions = lines
             .iter()
             .map(|line| {
@@ -66,13 +70,41 @@ impl Canvas {
                     "R" => Direction::Right,
                     _ => unreachable!(),
                 };
-                let distance = distance_str.parse::<i32>().unwrap();
+                let distance = distance_str.parse::<i64>().unwrap();
                 let color = color_str
                     .strip_prefix("(")
                     .unwrap()
                     .strip_suffix(")")
                     .unwrap()
                     .to_string();
+
+                Instruction {
+                    direction,
+                    distance,
+                    color,
+                }
+            })
+            .collect();
+        Canvas { instructions }
+    }
+
+    fn from_lines_part2(lines: Vec<String>) -> Canvas {
+        let instructions = lines
+            .iter()
+            .map(|line| {
+                let (_, instruction_str) = line.rsplit_once(" ").unwrap();
+                let distance_str = &instruction_str[2..7];
+                let dir_str = &instruction_str[7..8];
+
+                let direction = match dir_str {
+                    "0" => Direction::Right,
+                    "1" => Direction::Down,
+                    "2" => Direction::Left,
+                    "3" => Direction::Up,
+                    _ => unreachable!(),
+                };
+                let distance = i64::from_str_radix(distance_str, 16).unwrap();
+                let color = "#ffffff".to_string();
 
                 Instruction {
                     direction,
@@ -131,11 +163,11 @@ impl Canvas {
 
     fn to_pixels_filled(&self) -> HashSet<Coord> {
         let mut result = self.to_pixels_outline().into_keys().collect::<HashSet<_>>();
-        let mut min = Coord {
+        let min = Coord {
             x: result.iter().min_by_key(|&coord| coord.x).unwrap().x,
             y: result.iter().min_by_key(|&coord| coord.y).unwrap().y,
         };
-        let mut max = Coord {
+        let max = Coord {
             x: result.iter().max_by_key(|&coord| coord.x).unwrap().x,
             y: result.iter().max_by_key(|&coord| coord.y).unwrap().y,
         };
@@ -169,7 +201,12 @@ impl Canvas {
                         y: current.y - 1,
                     },
                 ] {
-                    if result.insert(next.clone()) {
+                    if next.x >= min.x
+                        && next.x <= max.x
+                        && next.y >= min.y
+                        && next.y <= max.y
+                        && result.insert(next.clone())
+                    {
                         new_frontline.push(next);
                     }
                 }
@@ -179,13 +216,60 @@ impl Canvas {
 
         result
     }
+
+    fn to_area(&self) -> i64 {
+        let abs = |x: i64| if x < 0 { -x } else { x };
+
+        let lines = self.to_lines();
+
+        // Uses the trapezoids formula, but only covers the area drawn by the MIDDLE of the trench
+        let trapezoids = lines.iter().fold(0, |acc, line| {
+            acc + (line.start.x - line.end.x) * (line.start.y + line.end.y)
+        }) / 2;
+        // So we need to add the other half of the trench
+        let missing_edges = lines.iter().fold(0, |acc, line| {
+            acc + abs(line.start.x - line.end.x) + abs(line.start.y - line.end.y)
+        }) / 2;
+        // And the outside corners
+        let missing_corners = self.dominant_turns().1 as i64 / 4;
+
+        trapezoids + missing_edges + missing_corners
+    }
+
+    fn dominant_turns(&self) -> (Direction, u32) {
+        use Direction::*;
+
+        let mut left = 0;
+        let mut right = 0;
+
+        for (i, instruction) in self.instructions.iter().enumerate() {
+            let prev_index = if i > 0 {
+                i - 1
+            } else {
+                self.instructions.len() - 1
+            };
+            let prev = self.instructions.index(prev_index);
+
+            match (&prev.direction, &instruction.direction) {
+                (Left, Up) | (Right, Down) | (Up, Right) | (Down, Left) => right += 1,
+                (Left, Down) | (Right, Up) | (Up, Left) | (Down, Right) => left += 1,
+                _ => unreachable!(),
+            };
+        }
+
+        if left > right {
+            (Left, left - right)
+        } else {
+            (Right, right - left)
+        }
+    }
 }
 
 #[test]
 fn test_from_lines() {
     use Direction::*;
 
-    let example = _example();
+    let example = Canvas::from_lines_part1(_example());
 
     assert_eq!(example.instructions.len(), 14);
 
@@ -205,8 +289,8 @@ fn test_from_lines() {
     assert_eq!(example.instructions[13].color, "#7a21e3".to_string());
 }
 
-fn _example() -> Canvas {
-    Canvas::from_lines(vec![
+fn _example() -> Vec<String> {
+    vec![
         "R 6 (#70c710)".to_string(),
         "D 5 (#0dc571)".to_string(),
         "L 2 (#5713f0)".to_string(),
@@ -221,12 +305,12 @@ fn _example() -> Canvas {
         "U 3 (#a77fa3)".to_string(),
         "L 2 (#015232)".to_string(),
         "U 2 (#7a21e3)".to_string(),
-    ])
+    ]
 }
 
 #[test]
 fn test_to_lines() {
-    let example = _example();
+    let example = Canvas::from_lines_part1(_example());
     let lines = example.to_lines();
 
     assert_eq!(lines.len(), 14);
@@ -249,10 +333,10 @@ fn test_to_lines() {
 #[test]
 #[ignore]
 fn test_make_svg() {
-    let example = _example();
+    let example = Canvas::from_lines_part2(_example());
     for line in example.to_lines() {
         println!(
-            "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"{}\" stroke-width=\"1\" stroke-linecap=\"square\"/>",
+            "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"{}\" stroke-width=\"100\" stroke-linecap=\"square\"/>",
             line.start.x, line.start.y, line.end.x, line.end.y, line.color,
         );
     }
@@ -260,7 +344,7 @@ fn test_make_svg() {
 
 #[test]
 fn test_to_pixels_outline() {
-    let example = _example();
+    let example = Canvas::from_lines_part1(_example());
     let pixels = example.to_pixels_outline();
 
     assert_eq!(38, pixels.len())
@@ -268,8 +352,23 @@ fn test_to_pixels_outline() {
 
 #[test]
 fn test_to_pixels_filled() {
-    let example = _example();
-    let pixels = example.to_pixels_filled();
+    let part1 = Canvas::from_lines_part1(_example());
+    let pixels_part1 = part1.to_pixels_filled();
+    assert_eq!(62, pixels_part1.len());
+}
 
-    assert_eq!(62, pixels.len())
+#[test]
+fn test_to_area() {
+    let part1 = Canvas::from_lines_part1(_example());
+    assert_eq!(62, part1.to_area());
+
+    let part2 = Canvas::from_lines_part2(_example());
+    assert_eq!(952408144115, part2.to_area());
+}
+
+#[test]
+fn test_dominant_turns() {
+    let part1 = Canvas::from_lines_part1(_example());
+
+    assert_eq!((Direction::Right, 4), part1.dominant_turns())
 }
