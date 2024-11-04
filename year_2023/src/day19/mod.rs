@@ -18,7 +18,7 @@ fn test_example() {
 
 struct TriageCenter {
     parts: Vec<Part>,
-    workflows: Vec<Workflow>,
+    workflows: HashMap<String, Workflow>,
 }
 
 impl TriageCenter {
@@ -69,7 +69,7 @@ impl TriageCenter {
     }
 
     fn get_workflow(&self, name: &String) -> &Workflow {
-        self.workflows.iter().find(|&w| w.name == *name).unwrap()
+        self.workflows.get(name).unwrap()
     }
 }
 
@@ -125,12 +125,11 @@ impl Part {
 }
 
 struct Workflow {
-    name: String,
     rules: Vec<Rule>,
 }
 
 impl Workflow {
-    fn from_line(line: &String) -> Workflow {
+    fn from_line(line: &String) -> (String, Workflow) {
         let (name, rest) = line.split_once("{").unwrap();
         let rules = rest
             .strip_suffix("}")
@@ -139,10 +138,7 @@ impl Workflow {
             .map(Rule::from_string)
             .collect();
 
-        Workflow {
-            name: name.to_string(),
-            rules,
-        }
+        (name.to_string(), Workflow { rules })
     }
 
     fn decide(&self, part: &Part) -> Decision {
@@ -160,7 +156,7 @@ impl Workflow {
 
 #[test]
 fn test_workflow_decide() {
-    let wf = Workflow::from_line(&"px{a<2006:qkq,m>2090:A,rfg}".to_string());
+    let wf = Workflow::from_line(&"px{a<2006:qkq,m>2090:A,rfg}".to_string()).1;
 
     assert!(matches!(
         wf.decide(&_test_part(0, 0, 1000, 0)),
@@ -384,8 +380,7 @@ fn test_from_lines() {
 
     assert_eq!(11, example.workflows.len());
 
-    let wf1 = &example.workflows[0];
-    assert_eq!("px", wf1.name);
+    let wf1 = &example.get_workflow(&"px".to_string());
     assert_eq!(3, wf1.rules.len());
     let wf1r1 = &wf1.rules[0];
     assert!(matches!(&wf1r1.decision, Decision::Redirect(to) if to == "qkq"));
