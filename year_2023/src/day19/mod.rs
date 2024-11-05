@@ -1,5 +1,6 @@
 use crate::utils;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[test]
 fn test_mine() {
@@ -8,12 +9,16 @@ fn test_mine() {
 pub fn execute() {
     let mine = TriageCenter::from_lines(utils::read_lines("src/day19/mine.txt"));
     assert_eq!(376008, mine.process());
+
+    assert_eq!(124078207789312, mine.count_combinations());
 }
 
 #[test]
 fn test_example() {
     let example = TriageCenter::from_lines(_example());
     assert_eq!(19114, example.process());
+
+    assert_eq!(167409079868000, example.count_combinations());
 }
 
 struct TriageCenter {
@@ -71,6 +76,106 @@ impl TriageCenter {
     fn get_workflow(&self, name: &String) -> &Workflow {
         self.workflows.get(name).unwrap()
     }
+
+    fn count_combinations(&self) -> i64 {
+        use Category::*;
+
+        let all_routes = self._explore_one(self.get_workflow(&"in".to_string()));
+
+        all_routes
+            .iter()
+            .map(|route| {
+                let mut mins = HashMap::from([(X, 0), (M, 0), (A, 0), (S, 0)]);
+                let mut maxs = HashMap::from([(X, 4000), (M, 4000), (A, 4000), (S, 4000)]);
+
+                fn setmin(mins: &mut HashMap<Category, i64>, cat: &Category, val: i64) {
+                    if mins[&cat] < val {
+                        mins.insert(cat.clone(), val);
+                    }
+                }
+                fn setmax(maxs: &mut HashMap<Category, i64>, cat: &Category, val: i64) {
+                    if maxs[&cat] > val {
+                        maxs.insert(cat.clone(), val);
+                    }
+                }
+
+                for branch in route {
+                    match branch {
+                        Branch::True(condition) => match condition.test {
+                            Test::MoreThan => {
+                                setmin(&mut mins, &condition.category, condition.threshold as i64)
+                            }
+                            Test::LessThan => setmax(
+                                &mut maxs,
+                                &condition.category,
+                                condition.threshold as i64 - 1,
+                            ),
+                        },
+                        Branch::False(condition) => match condition.test {
+                            Test::MoreThan => {
+                                setmax(&mut maxs, &condition.category, condition.threshold as i64)
+                            }
+                            Test::LessThan => setmin(
+                                &mut mins,
+                                &condition.category,
+                                condition.threshold as i64 - 1,
+                            ),
+                        },
+                    }
+                }
+
+                vec![X, M, A, S]
+                    .iter()
+                    .map(|cat| maxs[&cat] - mins[&cat])
+                    .product::<i64>()
+            })
+            .sum()
+    }
+
+    fn _explore_one(&self, workflow: &Workflow) -> Vec<Vec<Branch>> {
+        use Branch::*;
+
+        let mut result = vec![];
+
+        let mut current = vec![];
+
+        for rule in workflow.rules.iter() {
+            match &rule.decision {
+                Decision::Accept => {
+                    let mut child_result = current.clone();
+                    if rule.condition.is_some() {
+                        child_result.push(True(rule.condition.clone().unwrap()));
+                    }
+                    result.push(child_result);
+                }
+                Decision::Reject => {}
+                Decision::Redirect(next) => {
+                    let mut children = self._explore_one(self.get_workflow(&next));
+                    for child in children.iter_mut() {
+                        let mut child_result = current.clone();
+                        if rule.condition.is_some() {
+                            child_result.push(True(rule.condition.clone().unwrap()))
+                        }
+                        child_result.append(child);
+                        result.push(child_result);
+                    }
+                }
+            }
+            if rule.condition.is_none() {
+                break;
+            } else {
+                current.push(False(rule.condition.clone().unwrap()));
+            }
+        }
+
+        result
+    }
+}
+
+#[derive(Clone, Debug)]
+enum Branch {
+    True(Condition),
+    False(Condition),
 }
 
 #[test]
@@ -246,7 +351,7 @@ fn test_rule_decide() {
     ));
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Clone)]
 struct Condition {
     category: Category,
     test: Test,
@@ -272,6 +377,18 @@ impl Condition {
             Test::MoreThan => value > self.threshold,
             Test::LessThan => value < self.threshold,
         }
+    }
+}
+
+impl Debug for Condition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}{}{}",
+            self.category.to_string(),
+            self.test.to_string(),
+            self.threshold
+        )
     }
 }
 
@@ -321,7 +438,7 @@ fn _test_part(x: i32, m: i32, a: i32, s: i32) -> Part {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Clone, Debug)]
 enum Category {
     X,
     M,
@@ -339,9 +456,18 @@ impl Category {
             _ => unreachable!(),
         }
     }
+
+    fn to_string(&self) -> String {
+        match self {
+            Category::X => "x".to_string(),
+            Category::M => "m".to_string(),
+            Category::A => "a".to_string(),
+            Category::S => "s".to_string(),
+        }
+    }
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug)]
 enum Test {
     MoreThan,
     LessThan,
@@ -353,6 +479,13 @@ impl Test {
             ">" => Test::MoreThan,
             "<" => Test::LessThan,
             _ => unreachable!(),
+        }
+    }
+
+    fn to_string(&self) -> String {
+        match self {
+            Test::MoreThan => ">".to_string(),
+            Test::LessThan => "<".to_string(),
         }
     }
 }
