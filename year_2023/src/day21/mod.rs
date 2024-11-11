@@ -9,7 +9,7 @@ fn test_mine() {
 pub fn execute() {
     let garden = GardenPatch::from_lines(utils::read_lines("src/day21/mine.txt"));
 
-    assert_eq!(3847, garden.navigate(64));
+    assert_eq!(3847, garden.count_part_1(64));
 }
 
 struct GardenPatch {
@@ -54,43 +54,26 @@ impl GardenPatch {
         }
     }
 
-    fn navigate(&self, max_steps: i64) -> usize {
-        let mut distances = HashMap::new();
-        let mut frontline = HashSet::from([self.start.clone()]);
-        let mut distance: i64 = 0;
+    fn count_part_1(&self, max_steps: i64) -> usize {
+        let distances = self.navigate(&self.start, max_steps);
 
-        while !frontline.is_empty() && distance <= max_steps {
-            let mut new_frontline = HashSet::new();
-
-            for position in frontline.into_iter() {
-                if !distances.contains_key(&position) {
-                    distances.insert(position.clone(), distance);
-                } else if distance < *distances.get(&position).unwrap() {
-                    distances.insert(position.clone(), distance);
-                } else {
-                    continue;
-                }
-
-                for next_pos in [
-                    Coordinates(position.0 + 1, position.1),
-                    Coordinates(position.0 - 1, position.1),
-                    Coordinates(position.0, position.1 + 1),
-                    Coordinates(position.0, position.1 - 1),
-                ] {
-                    if self.plots.contains(&next_pos) {
-                        new_frontline.insert(next_pos);
-                    }
-                }
-            }
-
-            frontline = new_frontline;
-            distance += 1;
-        }
-
-        distances
+        let even = distances
             .iter()
-            .filter(|(_coord, &dist)| dist % 2 == max_steps % 2)
-            .count()
+            .filter(|(_coord, &dist)| dist % 2 == 0)
+            .count();
+        let odd = distances.len() - even;
+
+        if max_steps % 2 == 0 {
+            even
+        } else {
+            odd
+        }
+    }
+
+    fn navigate(&self, from: &Coordinates, max_steps: i64) -> HashMap<Coordinates, i64> {
+        let mut navigator = PatchNavigator::new(self, from.clone());
+        navigator.navigate(Some(max_steps));
+        navigator.distances
     }
 }
 
@@ -124,5 +107,74 @@ fn _example() -> Vec<String> {
 fn test_example() {
     let garden = GardenPatch::from_lines(_example());
 
-    assert_eq!(16, garden.navigate(6));
+    assert_eq!(16, garden.count_part_1(6));
+
+struct PatchNavigator<'a> {
+    garden: &'a GardenPatch,
+    distances: HashMap<Coordinates, i64>,
+    frontline: HashSet<Coordinates>,
+}
+impl PatchNavigator<'_> {
+    fn new<'a>(garden: &'a GardenPatch, start: Coordinates) -> PatchNavigator<'a> {
+        PatchNavigator {
+            garden,
+            distances: HashMap::from([(start.clone(), 0)]),
+            frontline: HashSet::from([start]),
+        }
+    }
+
+    fn navigate(&mut self, max_steps: Option<i64>) {
+        while !self.frontline.is_empty() {
+            let mut new_frontline = HashSet::new();
+
+            for position in self.frontline.iter() {
+                let distance = *self.distances.get(&position).unwrap() + 1;
+                if max_steps.is_some_and(|max_steps| distance > max_steps) {
+                    continue;
+                }
+
+                for next_pos in [
+                    Coordinates(position.0 + 1, position.1),
+                    Coordinates(position.0 - 1, position.1),
+                    Coordinates(position.0, position.1 + 1),
+                    Coordinates(position.0, position.1 - 1),
+                ] {
+                    if self.garden.plots.contains(&next_pos) {
+                        if !self.distances.contains_key(&next_pos) {
+                            self.distances.insert(next_pos.clone(), distance);
+                        } else if distance < *self.distances.get(&next_pos).unwrap() {
+                            self.distances.insert(next_pos.clone(), distance);
+                        } else {
+                            continue;
+                        }
+
+                        new_frontline.insert(next_pos);
+                    }
+                }
+            }
+
+            self.frontline = new_frontline;
+        }
+    }
+
+    fn print(&self, width: usize) {
+        for y in 0..self.garden.height {
+            let line = (0..self.garden.width)
+                .map(|x| {
+                    let coordinates = Coordinates(x, y);
+                    let distance = self.distances.get(&coordinates);
+
+                    if distance.is_some() {
+                        format!("{:^width$}", distance.unwrap())
+                    } else if self.garden.plots.contains(&coordinates) {
+                        format!("{:^width$}", ".")
+                    } else {
+                        format!("{:^width$}", "#")
+                    }
+                })
+                .collect::<Vec<String>>()
+                .join(" ");
+            println!("{}", line);
+        }
+    }
 }
