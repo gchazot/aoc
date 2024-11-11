@@ -13,7 +13,7 @@ pub fn execute() {
 }
 
 struct GardenPatch {
-    plots: Vec<Coordinates>,
+    plots: HashSet<Coordinates>,
     start: Coordinates,
     width: i64,
     height: i64,
@@ -24,7 +24,7 @@ struct Coordinates(i64, i64);
 
 impl GardenPatch {
     fn from_lines(lines: Vec<String>) -> GardenPatch {
-        let mut plots = Vec::new();
+        let mut plots = HashSet::new();
         let mut start = Coordinates(0, 0);
         let height = lines.len() as i64;
         let width = lines[0].len() as i64;
@@ -34,11 +34,11 @@ impl GardenPatch {
                 let coords = Coordinates(x as i64, y as i64);
                 match c {
                     '.' => {
-                        plots.push(coords);
+                        plots.insert(coords);
                     }
                     'S' => {
                         start = coords.clone();
-                        plots.push(coords);
+                        plots.insert(coords);
                     }
                     '#' => {}
                     _ => unreachable!(),
