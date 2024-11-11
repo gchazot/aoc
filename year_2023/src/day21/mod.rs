@@ -1,5 +1,5 @@
 use crate::utils;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[test]
 fn test_mine() {
@@ -7,33 +7,31 @@ fn test_mine() {
 }
 
 pub fn execute() {
-    let garden = Garden::from_lines(utils::read_lines("src/day21/mine.txt"));
-    let mut gardener = Gardener::new(garden);
+    let garden = GardenPatch::from_lines(utils::read_lines("src/day21/mine.txt"));
 
-    for _ in 0..64 {
-        gardener.step();
-    }
-    assert_eq!(3847, gardener.positions.len());
+    assert_eq!(3847, garden.navigate(64));
 }
 
-struct Garden {
+struct GardenPatch {
     plots: Vec<Coordinates>,
     start: Coordinates,
+    width: i64,
+    height: i64,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
-struct Coordinates {
-    x: usize,
-    y: usize,
-}
+struct Coordinates(i64, i64);
 
-impl Garden {
-    fn from_lines(lines: Vec<String>) -> Garden {
+impl GardenPatch {
+    fn from_lines(lines: Vec<String>) -> GardenPatch {
         let mut plots = Vec::new();
-        let mut start = Coordinates { x: 0, y: 0 };
+        let mut start = Coordinates(0, 0);
+        let height = lines.len() as i64;
+        let width = lines[0].len() as i64;
         for (y, line) in lines.iter().enumerate() {
+            assert_eq!(line.len(), width as usize);
             for (x, c) in line.chars().enumerate() {
-                let coords = Coordinates { x, y };
+                let coords = Coordinates(x as i64, y as i64);
                 match c {
                     '.' => {
                         plots.push(coords);
@@ -47,7 +45,52 @@ impl Garden {
                 }
             }
         }
-        Garden { plots, start }
+        assert_eq!(width, height);
+        GardenPatch {
+            plots,
+            start,
+            width,
+            height,
+        }
+    }
+
+    fn navigate(&self, max_steps: i64) -> usize {
+        let mut distances = HashMap::new();
+        let mut frontline = HashSet::from([self.start.clone()]);
+        let mut distance: i64 = 0;
+
+        while !frontline.is_empty() && distance <= max_steps {
+            let mut new_frontline = HashSet::new();
+
+            for position in frontline.into_iter() {
+                if !distances.contains_key(&position) {
+                    distances.insert(position.clone(), distance);
+                } else if distance < *distances.get(&position).unwrap() {
+                    distances.insert(position.clone(), distance);
+                } else {
+                    continue;
+                }
+
+                for next_pos in [
+                    Coordinates(position.0 + 1, position.1),
+                    Coordinates(position.0 - 1, position.1),
+                    Coordinates(position.0, position.1 + 1),
+                    Coordinates(position.0, position.1 - 1),
+                ] {
+                    if self.plots.contains(&next_pos) {
+                        new_frontline.insert(next_pos);
+                    }
+                }
+            }
+
+            frontline = new_frontline;
+            distance += 1;
+        }
+
+        distances
+            .iter()
+            .filter(|(_coord, &dist)| dist % 2 == max_steps % 2)
+            .count()
     }
 }
 
@@ -55,10 +98,10 @@ impl Garden {
 fn test_from_lines() {
     let lines = _example();
 
-    let example = Garden::from_lines(lines);
+    let example = GardenPatch::from_lines(lines);
 
     assert_eq!(81, example.plots.len());
-    assert_eq!(Coordinates { x: 5, y: 5 }, example.start);
+    assert_eq!(Coordinates(5, 5), example.start);
 }
 
 fn _example() -> Vec<String> {
@@ -77,96 +120,9 @@ fn _example() -> Vec<String> {
     ]
 }
 
-struct Gardener {
-    garden: Garden,
-    positions: HashSet<Coordinates>,
-    steps: usize,
-}
-
-impl Gardener {
-    fn new(garden: Garden) -> Gardener {
-        let positions = HashSet::from([garden.start.clone()]);
-        Gardener {
-            garden,
-            positions,
-            steps: 0,
-        }
-    }
-
-    fn step(&mut self) {
-        let mut new_positions = HashSet::new();
-        for position in self.positions.iter() {
-            for next_pos in [
-                Coordinates {
-                    x: position.x + 1,
-                    y: position.y,
-                },
-                Coordinates {
-                    x: position.x - 1,
-                    y: position.y,
-                },
-                Coordinates {
-                    x: position.x,
-                    y: position.y + 1,
-                },
-                Coordinates {
-                    x: position.x,
-                    y: position.y - 1,
-                },
-            ] {
-                if self.garden.plots.contains(&next_pos) {
-                    new_positions.insert(next_pos);
-                }
-            }
-        }
-        self.positions = new_positions;
-        self.steps += 1;
-    }
-}
-
 #[test]
-fn test_gardener() {
-    let garden = Garden::from_lines(_example());
-    let gardener = Gardener::new(garden);
-
-    assert_eq!(
-        HashSet::from([Coordinates { x: 5, y: 5 }]),
-        gardener.positions
-    );
-    assert_eq!(0, gardener.steps);
-}
-
-#[test]
-fn test_step() {
-    let garden = Garden::from_lines(_example());
-    let mut gardener = Gardener::new(garden);
-
-    gardener.step();
-    assert_eq!(1, gardener.steps);
-    assert_eq!(
-        HashSet::from([Coordinates { x: 5, y: 4 }, Coordinates { x: 4, y: 5 }]),
-        gardener.positions
-    );
-
-    gardener.step();
-    assert_eq!(2, gardener.steps);
-    assert_eq!(
-        HashSet::from([
-            Coordinates { x: 5, y: 3 },
-            Coordinates { x: 5, y: 5 },
-            Coordinates { x: 3, y: 5 },
-            Coordinates { x: 4, y: 6 }
-        ]),
-        gardener.positions
-    );
-}
-
 fn test_example() {
-    let garden = Garden::from_lines(_example());
-    let mut gardener = Gardener::new(garden);
+    let garden = GardenPatch::from_lines(_example());
 
-    for _ in 0..6 {
-        gardener.step();
-    }
-    assert_eq!(16, gardener.positions.len());
+    assert_eq!(16, garden.navigate(6));
 }
