@@ -226,8 +226,10 @@ impl BrickYard {
 
     fn chain_reactions(&self) -> HashMap<BrickID, usize> {
         let mut supports = HashMap::<BrickID, Vec<BrickID>>::new();
+        let mut supported_by = HashMap::<BrickID, HashSet<BrickID>>::new();
 
         for brick in self.bricks.iter() {
+            supported_by.entry(brick.id).or_insert(HashSet::new());
             for other_brick in self.bricks.iter() {
                 supports.entry(other_brick.id).or_insert(vec![]);
                 if brick.id != other_brick.id {
@@ -240,6 +242,10 @@ impl BrickYard {
                             supports.entry(other_brick.id).and_modify(|v| {
                                 v.push(brick.id);
                             });
+                            supported_by
+                                .get_mut(&brick.id)
+                                .unwrap()
+                                .insert(other_brick.id);
                             break;
                         }
                     }
@@ -250,6 +256,7 @@ impl BrickYard {
         let mut reactions = HashMap::new();
         for brick in self.bricks.iter() {
             let mut still_supports = supports.clone();
+            let mut still_supported_by = supported_by.clone();
 
             let mut to_remove = VecDeque::from([brick.id]);
             while to_remove.len() > 0 {
@@ -257,31 +264,24 @@ impl BrickYard {
                 let all_supported = still_supports.remove(&id);
                 if all_supported.is_some() {
                     for supported in all_supported.unwrap() {
-                        if still_supports
-                            .values()
-                            .find(|still_supported| still_supported.contains(&supported))
-                            .is_none()
-                        {
+                        still_supported_by.get_mut(&supported).unwrap().remove(&id);
+                        if still_supported_by.get(&supported).unwrap().is_empty() {
                             to_remove.push_back(supported);
                         }
                     }
                 }
             }
 
-            let mut still_there =
-                still_supports
-                    .iter()
-                    .fold(HashSet::new(), |mut acc, (&id, supported)| {
-                        if id != brick.id {
-                            acc.insert(id);
-                        }
-                        for &id in supported {
-                            if id != brick.id {
-                                acc.insert(id);
-                            }
-                        }
-                        acc
-                    });
+            let mut still_there = Vec::new();
+            for (id, supported) in still_supports {
+                still_there.push(id);
+                for id in supported {
+                    still_there.push(id);
+                }
+            }
+
+            let mut still_there: HashSet<BrickID> = HashSet::from_iter(still_there.into_iter());
+            still_there.remove(&brick.id);
 
             let unsupported = self.bricks.len() - 1 - still_there.len();
 
