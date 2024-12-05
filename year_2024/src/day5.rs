@@ -1,8 +1,10 @@
+use std::cmp::Ordering;
+
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day5.txt");
     let po = PrintOrder::from_lines(data);
     let part1 = po.part1();
-    let part2 = 456;
+    let part2 = po.part2();
 
     format!("{} {}", part1, part2)
 }
@@ -70,6 +72,29 @@ impl PrintOrder {
             })
             .sum()
     }
+
+    fn order(&self, update: &Vec<u8>) -> Vec<u8> {
+        let mut result = update.clone();
+        result.sort_by(|&a, &b| {
+            if self.rules.contains(&(a, b)) {
+                Ordering::Less
+            } else if self.rules.contains(&(b, a)) {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        });
+        result
+    }
+
+    fn part2(&self) -> u32 {
+        self.updates
+            .iter()
+            .filter_map(|update| {
+                (!self.is_ordered(update)).then(|| Self::middle_page(&self.order(update)) as u32)
+            })
+            .sum()
+    }
 }
 
 #[cfg(test)]
@@ -78,7 +103,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "6267 456");
+        assert_eq!(execute(), "6267 5184");
     }
 
     #[test]
@@ -123,6 +148,27 @@ mod tests {
         let po = PrintOrder::from_lines(_example());
 
         assert_eq!(po.part1(), 143);
+    }
+
+    #[test]
+    fn test_order() {
+        let po = PrintOrder::from_lines(_example());
+        assert_eq!(
+            po.order(&Vec::<u8>::from([75, 97, 47, 61, 53])),
+            vec![97, 75, 47, 61, 53]
+        );
+        assert_eq!(po.order(&Vec::<u8>::from([61, 13, 29])), vec![61, 29, 13]);
+        assert_eq!(
+            po.order(&Vec::<u8>::from([97, 13, 75, 29, 47])),
+            vec![97, 75, 47, 29, 13]
+        );
+    }
+
+    #[test]
+    fn test_part_2() {
+        let po = PrintOrder::from_lines(_example());
+
+        assert_eq!(po.part2(), 123);
     }
 
     fn _example() -> Vec<String> {
