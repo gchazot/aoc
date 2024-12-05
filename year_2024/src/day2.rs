@@ -1,27 +1,48 @@
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day2.txt");
     let reports = read_reports(data);
-    let part1 = count_safe(reports);
-    let part2 = 456;
+    let part1 = count_safe(&reports, 0);
+    let part2 = count_safe(&reports, 1);
 
     format!("{} {}", part1, part2)
 }
 
-fn count_safe(reports: Vec<Vec<i32>>) -> usize {
+fn count_safe(reports: &Vec<Vec<i32>>, max_problems: u32) -> usize {
     reports
         .iter()
-        .filter(|&report| is_safe(report.as_slice()))
+        .filter(|&report| is_safe(report.as_slice(), max_problems))
         .count()
 }
 
-fn is_safe(list: &[i32]) -> bool {
+fn is_safe(list: &[i32], max_problems: u32) -> bool {
     assert!(list.len() >= 2);
-    let direction = list[0] - list[1] > 0;
+
+    let mut increases = 0;
+    let mut decreases = 0;
 
     for i in 1..list.len() {
-        let diff = list[i - 1] - list[i];
+        let diff = list[i] - list[i - 1];
+        if diff > 0 {
+            increases += 1;
+        } else if diff < 0 {
+            decreases += 1;
+        }
+    }
+
+    let direction = increases > decreases;
+
+    for i in 1..list.len() {
+        let diff = list[i] - list[i - 1];
         if diff == 0 || ((diff > 0) != direction) || diff.abs() > 3 {
-            return false;
+            if max_problems > 0 {
+                let mut try1 = Vec::from(list);
+                try1.remove(i - 1);
+                let mut try2 = Vec::from(list);
+                try2.remove(i);
+                return is_safe(&try1, max_problems - 1) || is_safe(&try2, max_problems - 1);
+            } else {
+                return false;
+            }
         }
     }
     true
@@ -45,7 +66,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "282 456");
+        assert_eq!(execute(), "282 349");
     }
 
     #[test]
@@ -64,32 +85,46 @@ mod tests {
     }
     #[test]
     fn test_is_safe() {
-        assert!(is_safe(&[1, 2]));
-        assert!(is_safe(&[1, 3]));
-        assert!(is_safe(&[1, 4]));
-        assert!(!is_safe(&[1, 5]));
+        assert!(is_safe(&[1, 2], 0));
+        assert!(is_safe(&[1, 3], 0));
+        assert!(is_safe(&[1, 4], 0));
+        assert!(!is_safe(&[1, 5], 0));
 
-        assert!(is_safe(&[2, 1]));
-        assert!(is_safe(&[3, 1]));
-        assert!(is_safe(&[4, 1]));
-        assert!(!is_safe(&[5, 1]));
+        assert!(is_safe(&[2, 1], 0));
+        assert!(is_safe(&[3, 1], 0));
+        assert!(is_safe(&[4, 1], 0));
+        assert!(!is_safe(&[5, 1], 0));
 
-        assert!(!is_safe(&[1, 1]));
-        assert!(!is_safe(&[5, 5]));
+        assert!(!is_safe(&[1, 1], 0));
+        assert!(!is_safe(&[5, 5], 0));
 
-        assert!(is_safe(&[1, 2, 5]));
-        assert!(!is_safe(&[1, 2, 6]));
-        assert!(!is_safe(&[1, 2, 1]));
+        assert!(is_safe(&[1, 2, 5], 0));
+        assert!(!is_safe(&[1, 2, 6], 0));
+        assert!(!is_safe(&[1, 2, 1], 0));
 
-        assert!(is_safe(&[6, 5, 2]));
-        assert!(!is_safe(&[6, 5, 1]));
-        assert!(!is_safe(&[6, 5, 6]));
+        assert!(is_safe(&[6, 5, 2], 0));
+        assert!(!is_safe(&[6, 5, 1], 0));
+        assert!(!is_safe(&[6, 5, 6], 0));
+
+        assert!(is_safe(&[1, 2, 5], 1));
+        assert!(is_safe(&[1, 2, 6], 1));
+        assert!(is_safe(&[1, 2, 1], 1));
+
+        assert!(is_safe(&[6, 5, 2], 1));
+        assert!(is_safe(&[6, 5, 1], 1));
+        assert!(is_safe(&[6, 5, 6], 1));
+
+        assert!(is_safe(&[5, 5, 6], 1));
+        assert!(is_safe(&[5, 5, 4], 1));
+        assert!(is_safe(&[1, 5, 4, 3], 1));
+        assert!(is_safe(&[8, 5, 6, 7], 1));
     }
 
     #[test]
     fn test_count_safe() {
         let examples = read_reports(_example());
-        assert_eq!(count_safe(examples), 2);
+        assert_eq!(count_safe(&examples, 0), 2);
+        assert_eq!(count_safe(&examples, 1), 4);
     }
 
     fn _example() -> Vec<String> {
