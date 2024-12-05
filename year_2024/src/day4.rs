@@ -4,7 +4,7 @@ pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day4.txt");
     let mine = Puzzle::from_lines(data);
     let part1 = mine.count_all();
-    let part2 = 456;
+    let part2 = mine.count_x();
 
     format!("{} {}", part1, part2)
 }
@@ -103,6 +103,26 @@ impl Puzzle {
 
         total
     }
+
+    fn count_x(&self) -> usize {
+        let mut count = 0;
+        for i in 1..self.size - 1 {
+            for j in 1..self.size - 1 {
+                if self.rows[i][j] == 'A' {
+                    if (self.rows[i - 1][j - 1] == 'M' && self.rows[i + 1][j + 1] == 'S')
+                        || (self.rows[i - 1][j - 1] == 'S' && self.rows[i + 1][j + 1] == 'M')
+                    {
+                        if (self.rows[i - 1][j + 1] == 'M' && self.rows[i + 1][j - 1] == 'S')
+                            || (self.rows[i - 1][j + 1] == 'S' && self.rows[i + 1][j - 1] == 'M')
+                        {
+                            count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        count
+    }
 }
 
 impl Display for Puzzle {
@@ -119,10 +139,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        // 2416 too low
-        // 2425 too low
-        // 2455 too low
-        assert_eq!(execute(), "2562 456");
+        assert_eq!(execute(), "2562 1902");
     }
 
     #[test]
@@ -182,6 +199,12 @@ mod tests {
     fn test_count_all() {
         let example = Puzzle::from_lines(_example());
         assert_eq!(example.count_all(), 18);
+    }
+
+    #[test]
+    fn test_count_x() {
+        let example = Puzzle::from_lines(_example());
+        assert_eq!(example.count_x(), 9);
     }
 
     fn _example() -> Vec<String> {
