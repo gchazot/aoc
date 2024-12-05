@@ -2,11 +2,11 @@ use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
 
 pub fn read_lines(filename: &str) -> Vec<String> {
-    return read_to_string(filename)
+    read_to_string(filename)
         .unwrap()
         .lines()
         .map(String::from)
-        .collect();
+        .collect()
 }
 
 #[test]
@@ -46,7 +46,7 @@ pub fn prime_factors(number: &u32) -> HashMap<u32, u32> {
             *count += 1;
         }
     }
-    return result;
+    result
 }
 
 pub fn primes(number: &u32) -> impl Iterator<Item = u32> {
