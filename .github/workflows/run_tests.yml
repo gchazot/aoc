@@ -25,7 +25,7 @@ jobs:
               - 'year_2019/**'
             year_2023:
               - 'year_2023/**'
-            year_2023:
+            year_2024:
               - 'year_2024/**'
       - id: set-matrix
         run: echo "::set-output name=matrix::$(./list_test_combinations.sh ${{ join(fromJSON(steps.filter.outputs.changes), ' ') }})"
@@ -51,7 +51,7 @@ jobs:
           python -m pip install --upgrade pip virtualenv
           python -m pip install -r requirements.txt
       - name: Run Tests
-        if: ${{ matrix.language == 'python' && matrix.folder != 'none' }}
+        if: ${{ matrix.language == 'python'}}
         run: python -m unittest discover -t . -s ${{ matrix.folder }} -p "*.py"
 
       - name: Setup Rust
@@ -60,12 +60,15 @@ jobs:
         with:
           channel: ${{ matrix.version }}
       - name: Build
+        if: ${{ matrix.language == 'rust' }}
         working-directory: ${{ matrix.folder }}
         run: cargo build
       - name: Run tests
+        if: ${{ matrix.language == 'rust' }}
         working-directory: ${{ matrix.folder }}
         run: cargo test
       - name: Run binary
+        if: ${{ matrix.language == 'rust' && matrix.folder != 'aoc_utils' }}
         working-directory: ${{ matrix.folder }}
         run: cargo run
 
