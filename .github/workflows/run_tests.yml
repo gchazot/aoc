@@ -1,6 +1,6 @@
 name: Run tests
 
-on: [push]
+on: [ push ]
 
 jobs:
   list-tests:
@@ -25,12 +25,14 @@ jobs:
               - 'year_2019/**'
             year_2023:
               - 'year_2023/**'
+            year_2023:
+              - 'year_2024/**'
       - id: set-matrix
         run: echo "::set-output name=matrix::$(./list_test_combinations.sh ${{ join(fromJSON(steps.filter.outputs.changes), ' ') }})"
 
   test:
     runs-on: ubuntu-latest
-    needs: [list-tests]
+    needs: [ list-tests ]
     if: ${{ needs.list-tests.outputs.matrix != '[]' && needs.list-tests.outputs.matrix != '' }}
     strategy:
       matrix:
@@ -69,7 +71,7 @@ jobs:
 
   all-tests:
     runs-on: ubuntu-latest
-    needs: [list-tests, test]
+    needs: [ list-tests, test ]
     if: always()
     steps:
       - name: Failed tests
