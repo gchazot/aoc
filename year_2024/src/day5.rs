@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::HashSet;
 
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day5.txt");
@@ -10,7 +11,7 @@ pub fn execute() -> String {
 }
 
 struct PrintOrder {
-    rules: Vec<(u8, u8)>,
+    rules: HashSet<(u8, u8)>,
     updates: Vec<Vec<u8>>,
 }
 
@@ -112,8 +113,8 @@ mod tests {
         assert_eq!(po.rules.len(), 21);
         assert_eq!(po.updates.len(), 6);
 
-        assert_eq!(po.rules[0], (47, 53));
-        assert_eq!(po.rules[20], (53, 13));
+        assert!(po.rules.contains(&(47, 53)));
+        assert!(po.rules.contains(&(53, 13)));
 
         assert_eq!(po.updates[0], vec![75, 47, 61, 53, 29]);
         assert_eq!(po.updates[4], vec![61, 13, 29]);
