@@ -12,10 +12,6 @@ pub fn execute() -> String {
     format!("{} {}", part1, part2)
 }
 type Coordinates = (i16, i16);
-const UP: Coordinates = (0, -1);
-const DOWN: Coordinates = (0, 1);
-const LEFT: Coordinates = (-1, 0);
-const RIGHT: Coordinates = (1, 0);
 
 fn from_lines(lines: Vec<String>) -> (Coordinates, Coordinates, HashSet<Coordinates>, i16) {
     let direction = (0, -1);
@@ -83,28 +79,91 @@ fn guard_route(
     (result, false)
 }
 
+fn guard_route_has_loop(
+    guard: Coordinates,
+    direction: Coordinates,
+    obstacles: &HashSet<Coordinates>,
+    size: i16,
+    already_seen: &HashSet<(Coordinates, Coordinates)>,
+) -> bool {
+    let mut seen = already_seen.clone();
+
+    let mut cur_guard = guard;
+    let mut cur_direction = direction;
+
+    while let Some((next, direction)) = step(cur_guard, cur_direction, obstacles, size) {
+        cur_guard = next;
+        cur_direction = direction;
+        if !seen.insert((cur_guard, cur_direction)) {
+            return true;
+        }
+    }
+    false
+}
+
+fn guard_route2(
+    guard: Coordinates,
+    direction: Coordinates,
+    obstacles: &HashSet<Coordinates>,
+    size: i16,
+) -> (Vec<Coordinates>, bool) {
+    let mut result = vec![guard];
+    let mut seen = HashSet::from([(guard, direction)]);
+
+    let mut cur_guard = guard;
+    let mut cur_direction = direction;
+
+    while let Some((next, direction)) = step(cur_guard, cur_direction, obstacles, size) {
+        result.push(next);
+        cur_guard = next;
+        cur_direction = direction;
+        if !seen.insert((cur_guard, cur_direction)) {
+            return (result, true);
+        }
+    }
+    (result, false)
+}
+
 fn obstacle_opportunities(
     guard: Coordinates,
     direction: Coordinates,
     obstacles: &HashSet<Coordinates>,
     size: i16,
 ) -> HashSet<Coordinates> {
-    let (initial_route, has_loop) = guard_route(guard, direction, &obstacles, size);
+    let (initial_route, has_loop) = guard_route2(guard, direction, &obstacles, size);
     assert!(!has_loop);
 
     let mut options = initial_route.clone();
-    options.remove(&guard);
+    options.remove(0);
 
+    let mut already_seen = HashSet::new();
+
+    let mut previous_guard = guard;
+
+    let mut already_tried = HashSet::new();
     let mut option_obstacles = obstacles.clone();
     let mut result = HashSet::new();
     for option in options {
-        assert!(option_obstacles.insert(option));
-        let (_route, has_loop) = guard_route(guard, direction, &option_obstacles, size);
-        assert!(option_obstacles.remove(&option));
+        let previous_direction = (option.0 - previous_guard.0, option.1 - previous_guard.1);
+        already_seen.insert((previous_guard, previous_direction));
 
-        if has_loop {
-            result.insert(option);
+        if already_tried.insert(option) {
+            assert!(option_obstacles.insert(option.clone()));
+            let has_loop = guard_route_has_loop(
+                previous_guard,
+                previous_direction,
+                &option_obstacles,
+                size,
+                &already_seen,
+            );
+            assert!(option_obstacles.remove(&option));
+
+            if has_loop {
+                result.insert(option);
+            }
         }
+
+        previous_guard = option;
     }
 
     result
@@ -113,6 +172,11 @@ fn obstacle_opportunities(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const UP: Coordinates = (0, -1);
+    const DOWN: Coordinates = (0, 1);
+    const LEFT: Coordinates = (-1, 0);
+    const RIGHT: Coordinates = (1, 0);
 
     #[test]
     fn test_mine() {
