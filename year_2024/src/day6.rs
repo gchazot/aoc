@@ -3,10 +3,11 @@ use std::collections::HashSet;
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day6.txt");
     let (guard, direction, obstacles, size) = from_lines(data);
-    let route = guard_route(guard, direction, &obstacles, size);
+    let (route, _has_loop) = guard_route(guard, direction, &obstacles, size);
+    let opportunities = obstacle_opportunities(guard, direction, &obstacles, size);
 
     let part1 = route.len();
-    let part2 = 456;
+    let part2 = opportunities.len();
 
     format!("{} {}", part1, part2)
 }
@@ -64,8 +65,9 @@ fn guard_route(
     direction: Coordinates,
     obstacles: &HashSet<Coordinates>,
     size: i16,
-) -> HashSet<Coordinates> {
+) -> (HashSet<Coordinates>, bool) {
     let mut result = HashSet::from([guard]);
+    let mut seen = HashSet::from([(guard, direction)]);
 
     let mut cur_guard = guard;
     let mut cur_direction = direction;
@@ -74,7 +76,37 @@ fn guard_route(
         result.insert(next);
         cur_guard = next;
         cur_direction = direction;
+        if !seen.insert((cur_guard, cur_direction)) {
+            return (result, true);
+        }
     }
+    (result, false)
+}
+
+fn obstacle_opportunities(
+    guard: Coordinates,
+    direction: Coordinates,
+    obstacles: &HashSet<Coordinates>,
+    size: i16,
+) -> HashSet<Coordinates> {
+    let (initial_route, has_loop) = guard_route(guard, direction, &obstacles, size);
+    assert!(!has_loop);
+
+    let mut options = initial_route.clone();
+    options.remove(&guard);
+
+    let mut option_obstacles = obstacles.clone();
+    let mut result = HashSet::new();
+    for option in options {
+        assert!(option_obstacles.insert(option));
+        let (_route, has_loop) = guard_route(guard, direction, &option_obstacles, size);
+        assert!(option_obstacles.remove(&option));
+
+        if has_loop {
+            result.insert(option);
+        }
+    }
+
     result
 }
 
@@ -84,7 +116,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "5153 456");
+        assert_eq!(execute(), "5153 1711");
     }
 
     #[test]
@@ -139,9 +171,33 @@ mod tests {
     #[test]
     fn test_guard_route() {
         let (guard, direction, obstacles, size) = from_lines(_example());
-        let route = guard_route(guard, direction, &obstacles, size);
+        let (route, has_loop) = guard_route(guard, direction, &obstacles, size);
 
         assert_eq!(route.len(), 41);
+        assert!(!has_loop);
+    }
+
+    #[test]
+    fn test_guard_route_with_loop() {
+        let (guard, direction, mut obstacles, size) = from_lines(_example());
+        obstacles.insert((3, 6));
+        let (route, has_loop) = guard_route(guard, direction, &obstacles, size);
+
+        assert_eq!(route.len(), 18);
+        assert!(has_loop);
+    }
+
+    #[test]
+    fn test_obstacle_opportunities() {
+        let (guard, direction, obstacles, size) = from_lines(_example());
+        let opportunities = obstacle_opportunities(guard, direction, &obstacles, size);
+        assert_eq!(opportunities.len(), 6);
+        assert!(opportunities.contains(&(3, 6)));
+        assert!(opportunities.contains(&(6, 7)));
+        assert!(opportunities.contains(&(7, 7)));
+        assert!(opportunities.contains(&(1, 8)));
+        assert!(opportunities.contains(&(3, 8)));
+        assert!(opportunities.contains(&(7, 9)));
     }
 
     fn _example() -> Vec<String> {
