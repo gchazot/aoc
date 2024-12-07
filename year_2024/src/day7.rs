@@ -39,34 +39,86 @@ impl Calculation {
         Calculation { result, operand }
     }
 
-    fn find_valid_operation(&self) -> Option<usize> {
-        let max = 2usize.pow(self.operand.len() as u32);
+    fn find_valid_operation(&self) -> Option<Operation> {
+        let mut operation = Operation::new(self.operand.len());
 
-        for i in 0..max {
-            if self.operate(i) == self.result {
-                return Some(i);
+        loop {
+            if self.operate(&operation) == self.result {
+                return Some(operation);
+            }
+            if !operation.next() {
+                break;
             }
         }
         None
     }
 
-    fn operate(&self, operation: usize) -> i64 {
+    fn operate(&self, operation: &Operation) -> i64 {
         let mut result = self.operand[0];
         for i in 1..self.operand.len() {
-            let operation_bit = operation & 1 << (self.operand.len() - i - 1);
-            if operation_bit == 0 {
-                result += self.operand[i];
-            } else {
-                result *= self.operand[i];
-            }
+            let operator = operation.operators[i - 1];
+            result = operator.execute(result, self.operand[i]);
         }
         result
+    }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+enum Operator {
+    Add,
+    Mul,
+}
+
+impl Operator {
+    fn new() -> Operator {
+        Operator::Add
+    }
+
+    fn next(&self) -> Option<Operator> {
+        match self {
+            Operator::Add => Some(Operator::Mul),
+            Operator::Mul => None,
+        }
+    }
+
+    fn execute(&self, lhs: i64, rhs: i64) -> i64 {
+        match self {
+            Operator::Add => lhs + rhs,
+            Operator::Mul => lhs * rhs,
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+struct Operation {
+    operators: Vec<Operator>,
+}
+
+impl Operation {
+    fn new(num_operands: usize) -> Self {
+        Operation {
+            operators: vec![Operator::new(); num_operands - 1],
+        }
+    }
+
+    fn next(&mut self) -> bool {
+        for i in (0..self.operators.len()).rev() {
+            let op = self.operators[i].next();
+            if op.is_some() {
+                self.operators[i] = op.unwrap();
+                return true;
+            } else {
+                self.operators[i] = Operator::new();
+            }
+        }
+        false
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use Operator::*;
 
     #[test]
     fn test_mine() {
@@ -82,31 +134,36 @@ mod tests {
         assert_eq!(calc.operand[2], 27);
     }
 
+    #[macro_export]
+    macro_rules! ope {
+        ( $( $op:ident ),* ) => {
+            Operation { operators: vec![$( $op ),*] }
+        };
+    }
+
     #[test]
     fn test_operate() {
         let calc = Calculation::from_line("0: 10 19".to_string());
-        assert_eq!(calc.operate(0b00), 29);
-        assert_eq!(calc.operate(0b01), 190);
-        assert_eq!(calc.operate(0b10), 29);
-        assert_eq!(calc.operate(0b11), 190);
+        assert_eq!(calc.operate(&ope![Add]), 29);
+        assert_eq!(calc.operate(&ope![Mul]), 190);
 
         let calc = Calculation::from_line("0: 1 5 11".to_string());
-        assert_eq!(calc.operate(0b00), 17);
-        assert_eq!(calc.operate(0b01), 66);
-        assert_eq!(calc.operate(0b10), 16);
-        assert_eq!(calc.operate(0b11), 55);
+        assert_eq!(calc.operate(&ope![Add, Add]), 17);
+        assert_eq!(calc.operate(&ope![Add, Mul]), 66);
+        assert_eq!(calc.operate(&ope![Mul, Add]), 16);
+        assert_eq!(calc.operate(&ope![Mul, Mul]), 55);
     }
 
     #[test]
     fn test_find_operations() {
         let calc = Calculation::from_line("190: 10 19".to_string());
-        assert_eq!(calc.find_valid_operation(), Some(0b1));
+        assert_eq!(calc.find_valid_operation(), Some(ope![Mul]));
 
         let calc = Calculation::from_line("3267: 81 40 27".to_string());
-        assert_eq!(calc.find_valid_operation(), Some(0b01));
+        assert_eq!(calc.find_valid_operation(), Some(ope![Add, Mul]));
 
         let calc = Calculation::from_line("292: 11 6 16 20".to_string());
-        assert_eq!(calc.find_valid_operation(), Some(0b010));
+        assert_eq!(calc.find_valid_operation(), Some(ope![Add, Mul, Add]));
     }
 
     #[test]
