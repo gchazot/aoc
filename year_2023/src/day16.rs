@@ -1,4 +1,3 @@
-use aoc_utils as utils;
 use std::collections::HashSet;
 
 #[test]
@@ -6,10 +5,15 @@ fn test_mine() {
     execute();
 }
 
-pub fn execute() {
-    let mine = Contraption::from_lines(utils::read_lines("input/day16.txt"));
-    assert_eq!(7111, mine.energized_count());
-    assert_eq!(((55, 0, Direction::Down), 7831), mine.optimize_energizing());
+pub fn execute() -> String {
+    let mine = Contraption::from_lines(aoc_utils::read_lines("input/day16.txt"));
+
+    let part1 = mine.energized_count();
+
+    let (_optimal_laser, optimal_count) = mine.optimize_energizing();
+    let part2 = optimal_count;
+
+    format!("{} {}", part1, part2)
 }
 
 enum Apparatus {
@@ -19,6 +23,7 @@ enum Apparatus {
     MirrorTopLeftBottomRight,
     MirrorTopRightBottomLeft,
 }
+
 impl Apparatus {
     fn from_char(c: char) -> Apparatus {
         use Apparatus::*;
@@ -31,18 +36,7 @@ impl Apparatus {
             _ => unreachable!(),
         }
     }
-    // fn to_char(&self) -> char {
-    //     use Apparatus::*;
-    //     match self {
-    //         None => '.',
-    //         SplitterHorizontal => '-',
-    //         SplitterVertical => '|',
-    //         MirrorTopLeftBottomRight => '\\',
-    //         MirrorTopRightBottomLeft => '/',
-    //     }
-    // }
 }
-
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
 enum Direction {
     Down,
@@ -168,51 +162,61 @@ impl Contraption {
     }
 }
 
-#[test]
-fn test_laser_progress() {
-    use Direction::*;
-    let contraption = Contraption::from_lines(vec![
-        r".\..".to_string(),
-        r"..|.".to_string(),
-        r"/-/.".to_string(),
-        r"\.-.".to_string(),
-    ]);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    assert_eq!(contraption.progress(&(0, 0, Right)), vec![(1, 0, Right)]);
-    assert_eq!(contraption.progress(&(1, 0, Right)), vec![(1, 1, Down)]);
-    assert_eq!(contraption.progress(&(1, 1, Down)), vec![(1, 2, Down)]);
-    assert_eq!(
-        contraption.progress(&(1, 2, Down)),
-        vec![(0, 2, Left), (2, 2, Right)]
-    );
-    assert_eq!(contraption.progress(&(0, 2, Left)), vec![(0, 3, Down)]);
-    assert_eq!(contraption.progress(&(2, 2, Right)), vec![(2, 1, Up)]);
-    assert_eq!(contraption.progress(&(0, 3, Down)), vec![(1, 3, Right)]);
-    assert_eq!(contraption.progress(&(2, 1, Up)), vec![(2, 0, Up)]);
-    assert_eq!(contraption.progress(&(1, 3, Right)), vec![(2, 3, Right)]);
-    assert_eq!(contraption.progress(&(2, 0, Up)), vec![]);
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "7111 7831");
+    }
 
-    assert_eq!(contraption.progress(&(3, 1, Right)), vec![]);
-    assert_eq!(contraption.progress(&(1, 3, Down)), vec![]);
-    assert_eq!(contraption.progress(&(0, 1, Left)), vec![]);
-    assert_eq!(contraption.progress(&(2, 0, Up)), vec![]);
-}
+    #[test]
+    fn test_laser_progress() {
+        use Direction::*;
+        let contraption = Contraption::from_lines(vec![
+            r".\..".to_string(),
+            r"..|.".to_string(),
+            r"/-/.".to_string(),
+            r"\.-.".to_string(),
+        ]);
 
-#[test]
-fn test_example() {
-    let example = Contraption::from_lines(vec![
-        r".|...\....".to_string(),
-        r"|.-.\.....".to_string(),
-        r".....|-...".to_string(),
-        r"........|.".to_string(),
-        r"..........".to_string(),
-        r".........\".to_string(),
-        r"..../.\\..".to_string(),
-        r".-.-/..|..".to_string(),
-        r".|....-|.\".to_string(),
-        r"..//.|....".to_string(),
-    ]);
-    assert_eq!(46, example.energized_count());
+        assert_eq!(contraption.progress(&(0, 0, Right)), vec![(1, 0, Right)]);
+        assert_eq!(contraption.progress(&(1, 0, Right)), vec![(1, 1, Down)]);
+        assert_eq!(contraption.progress(&(1, 1, Down)), vec![(1, 2, Down)]);
+        assert_eq!(
+            contraption.progress(&(1, 2, Down)),
+            vec![(0, 2, Left), (2, 2, Right)]
+        );
+        assert_eq!(contraption.progress(&(0, 2, Left)), vec![(0, 3, Down)]);
+        assert_eq!(contraption.progress(&(2, 2, Right)), vec![(2, 1, Up)]);
+        assert_eq!(contraption.progress(&(0, 3, Down)), vec![(1, 3, Right)]);
+        assert_eq!(contraption.progress(&(2, 1, Up)), vec![(2, 0, Up)]);
+        assert_eq!(contraption.progress(&(1, 3, Right)), vec![(2, 3, Right)]);
+        assert_eq!(contraption.progress(&(2, 0, Up)), vec![]);
 
-    assert_eq!(((3, 0, Direction::Down), 51), example.optimize_energizing());
+        assert_eq!(contraption.progress(&(3, 1, Right)), vec![]);
+        assert_eq!(contraption.progress(&(1, 3, Down)), vec![]);
+        assert_eq!(contraption.progress(&(0, 1, Left)), vec![]);
+        assert_eq!(contraption.progress(&(2, 0, Up)), vec![]);
+    }
+
+    #[test]
+    fn test_example() {
+        let example = Contraption::from_lines(vec![
+            r".|...\....".to_string(),
+            r"|.-.\.....".to_string(),
+            r".....|-...".to_string(),
+            r"........|.".to_string(),
+            r"..........".to_string(),
+            r".........\".to_string(),
+            r"..../.\\..".to_string(),
+            r".-.-/..|..".to_string(),
+            r".|....-|.\".to_string(),
+            r"..//.|....".to_string(),
+        ]);
+        assert_eq!(46, example.energized_count());
+
+        assert_eq!(((3, 0, Direction::Down), 51), example.optimize_energizing());
+    }
 }

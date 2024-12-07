@@ -1,21 +1,15 @@
-use aoc_utils as utils;
 use std::collections::HashMap;
 
-#[test]
-fn test_mine() {
-    execute()
-}
-
-pub fn execute() {
-    let mut mine = Platform::from_lines(utils::read_lines("input/day14.txt"));
-    assert_eq!(100, mine.rows.len());
-
+pub fn execute() -> String {
+    let mut mine = Platform::from_lines(aoc_utils::read_lines("input/day14.txt"));
     mine.slide_north();
-    assert_eq!(107430, mine.load_north());
+    let part1 = mine.load_north();
 
-    let mut mine_cycled = Platform::from_lines(utils::read_lines("input/day14.txt"));
+    let mut mine_cycled = Platform::from_lines(aoc_utils::read_lines("input/day14.txt"));
     mine_cycled.cycle_much(1000000000);
-    assert_eq!(96317, mine_cycled.load_north()); // 96314 < n < 96344
+    let part2 = mine_cycled.load_north();
+
+    format!("{} {}", part1, part2)
 }
 
 #[derive(Clone, Debug)]
@@ -23,12 +17,12 @@ enum Shape {
     Sphere,
     Cube,
 }
+
 #[derive(Clone, Debug)]
 struct Platform {
     rows: Vec<Vec<Option<Shape>>>,
     width: usize,
 }
-
 impl Platform {
     fn to_lines(&self) -> Vec<String> {
         self.rows
@@ -205,17 +199,6 @@ impl Platform {
     }
 }
 
-#[test]
-fn test_from_lines() {
-    let empty = Platform::from_lines(vec!["".to_string()]);
-    assert_eq!(1, empty.rows.len());
-    assert_eq!(0, empty.rows[0].len());
-
-    let example = _example();
-    assert_eq!(10, example.rows.len());
-    assert_eq!(10, example.rows[0].len());
-}
-
 fn _example() -> Platform {
     Platform::from_lines(vec![
         "O....#....".to_string(),
@@ -230,84 +213,104 @@ fn _example() -> Platform {
         "#OO..#....".to_string(),
     ])
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_slide_north() {
-    let mut example = _example();
-    example.slide_north();
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "107430 96317");
+    }
 
-    assert!(matches!(example.rows[0][0], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[1][0], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[2][0], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[3][0], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[4][0], None));
-    assert!(matches!(example.rows[5][0], None));
-    assert!(matches!(example.rows[6][0], None));
-    assert!(matches!(example.rows[7][0], None));
-    assert!(matches!(example.rows[8][0], Some(Shape::Cube)));
-    assert!(matches!(example.rows[9][0], Some(Shape::Cube)));
+    #[test]
+    fn test_from_lines() {
+        let empty = Platform::from_lines(vec!["".to_string()]);
+        assert_eq!(1, empty.rows.len());
+        assert_eq!(0, empty.rows[0].len());
 
-    assert!(matches!(example.rows[0][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[1][5], None));
-    assert!(matches!(example.rows[2][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[3][5], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[4][5], None));
-    assert!(matches!(example.rows[5][5], None));
-    assert!(matches!(example.rows[6][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[7][5], None));
-    assert!(matches!(example.rows[8][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[9][5], Some(Shape::Cube)));
-}
+        let example = _example();
+        assert_eq!(10, example.rows.len());
+        assert_eq!(10, example.rows[0].len());
+    }
 
-#[test]
-fn test_load_north() {
-    let mut example = _example();
-    example.slide_north();
-    assert_eq!(136, example.load_north());
-}
+    #[test]
+    fn test_slide_north() {
+        let mut example = _example();
+        example.slide_north();
 
-#[test]
-fn test_cycle() {
-    let mut example = _example();
-    example.cycle();
+        assert!(matches!(example.rows[0][0], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[1][0], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[2][0], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[3][0], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[4][0], None));
+        assert!(matches!(example.rows[5][0], None));
+        assert!(matches!(example.rows[6][0], None));
+        assert!(matches!(example.rows[7][0], None));
+        assert!(matches!(example.rows[8][0], Some(Shape::Cube)));
+        assert!(matches!(example.rows[9][0], Some(Shape::Cube)));
 
-    assert!(matches!(example.rows[0][0], None));
-    assert!(matches!(example.rows[1][0], None));
-    assert!(matches!(example.rows[2][0], None));
-    assert!(matches!(example.rows[3][0], None));
-    assert!(matches!(example.rows[4][0], None));
-    assert!(matches!(example.rows[5][0], None));
-    assert!(matches!(example.rows[6][0], None));
-    assert!(matches!(example.rows[7][0], None));
-    assert!(matches!(example.rows[8][0], Some(Shape::Cube)));
-    assert!(matches!(example.rows[9][0], Some(Shape::Cube)));
+        assert!(matches!(example.rows[0][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[1][5], None));
+        assert!(matches!(example.rows[2][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[3][5], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[4][5], None));
+        assert!(matches!(example.rows[5][5], None));
+        assert!(matches!(example.rows[6][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[7][5], None));
+        assert!(matches!(example.rows[8][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[9][5], Some(Shape::Cube)));
+    }
 
-    assert!(matches!(example.rows[0][1], None));
-    assert!(matches!(example.rows[1][1], None));
-    assert!(matches!(example.rows[2][1], None));
-    assert!(matches!(example.rows[3][1], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[4][1], None));
-    assert!(matches!(example.rows[5][1], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[6][1], None));
-    assert!(matches!(example.rows[7][1], None));
-    assert!(matches!(example.rows[8][1], None));
-    assert!(matches!(example.rows[9][1], None));
+    #[test]
+    fn test_load_north() {
+        let mut example = _example();
+        example.slide_north();
+        assert_eq!(136, example.load_north());
+    }
 
-    assert!(matches!(example.rows[0][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[1][5], None));
-    assert!(matches!(example.rows[2][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[3][5], None));
-    assert!(matches!(example.rows[4][5], Some(Shape::Sphere)));
-    assert!(matches!(example.rows[5][5], None));
-    assert!(matches!(example.rows[6][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[7][5], None));
-    assert!(matches!(example.rows[8][5], Some(Shape::Cube)));
-    assert!(matches!(example.rows[9][5], Some(Shape::Cube)));
-}
+    #[test]
+    fn test_cycle() {
+        let mut example = _example();
+        example.cycle();
 
-#[test]
-fn test_cycle_much() {
-    let mut example = _example();
-    example.cycle_much(1000000000);
-    assert_eq!(64, example.load_north());
+        assert!(matches!(example.rows[0][0], None));
+        assert!(matches!(example.rows[1][0], None));
+        assert!(matches!(example.rows[2][0], None));
+        assert!(matches!(example.rows[3][0], None));
+        assert!(matches!(example.rows[4][0], None));
+        assert!(matches!(example.rows[5][0], None));
+        assert!(matches!(example.rows[6][0], None));
+        assert!(matches!(example.rows[7][0], None));
+        assert!(matches!(example.rows[8][0], Some(Shape::Cube)));
+        assert!(matches!(example.rows[9][0], Some(Shape::Cube)));
+
+        assert!(matches!(example.rows[0][1], None));
+        assert!(matches!(example.rows[1][1], None));
+        assert!(matches!(example.rows[2][1], None));
+        assert!(matches!(example.rows[3][1], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[4][1], None));
+        assert!(matches!(example.rows[5][1], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[6][1], None));
+        assert!(matches!(example.rows[7][1], None));
+        assert!(matches!(example.rows[8][1], None));
+        assert!(matches!(example.rows[9][1], None));
+
+        assert!(matches!(example.rows[0][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[1][5], None));
+        assert!(matches!(example.rows[2][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[3][5], None));
+        assert!(matches!(example.rows[4][5], Some(Shape::Sphere)));
+        assert!(matches!(example.rows[5][5], None));
+        assert!(matches!(example.rows[6][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[7][5], None));
+        assert!(matches!(example.rows[8][5], Some(Shape::Cube)));
+        assert!(matches!(example.rows[9][5], Some(Shape::Cube)));
+    }
+
+    #[test]
+    fn test_cycle_much() {
+        let mut example = _example();
+        example.cycle_much(1000000000);
+        assert_eq!(64, example.load_north());
+    }
 }

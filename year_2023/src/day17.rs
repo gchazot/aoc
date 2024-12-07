@@ -1,20 +1,16 @@
-use aoc_utils as utils;
 use std::cmp::min;
 use std::collections::HashMap;
 
-#[test]
-fn test_mine() {
-    execute();
-}
-
-pub fn execute() {
-    let example_city = City::from_lines(utils::read_lines("input/day17.txt"));
+pub fn execute() -> String {
+    let example_city = City::from_lines(aoc_utils::read_lines("input/day17.txt"));
 
     let mut nav1 = Navigator::new(1, 3);
-    assert_eq!(698, nav1.solve(&example_city));
+    let part1 = nav1.solve(&example_city);
 
     let mut nav2 = Navigator::new(4, 10);
-    assert_eq!(825, nav2.solve(&example_city))
+    let part2 = nav2.solve(&example_city);
+
+    format!("{} {}", part1, part2)
 }
 
 #[derive(Hash, Eq, PartialEq, Clone, Debug)]
@@ -71,20 +67,6 @@ impl City {
     }
 }
 
-#[test]
-fn test_from_lines() {
-    let example = City::from_lines(_example());
-    assert_eq!(example.heat_loss[&Coord { x: 0, y: 0 }], 2);
-    assert_eq!(example.heat_loss[&Coord { x: 1, y: 0 }], 4);
-    assert_eq!(example.heat_loss[&Coord { x: 2, y: 0 }], 1);
-    assert_eq!(example.heat_loss[&Coord { x: 0, y: 1 }], 3);
-    assert_eq!(example.heat_loss[&Coord { x: 0, y: 2 }], 3);
-
-    assert_eq!(example.heat_loss[&Coord { x: 12, y: 0 }], 3);
-    assert_eq!(example.heat_loss[&Coord { x: 0, y: 12 }], 4);
-    assert_eq!(example.heat_loss[&Coord { x: 12, y: 12 }], 3);
-}
-
 fn _example() -> Vec<String> {
     vec![
         "2413432311323".to_string(),
@@ -102,7 +84,6 @@ fn _example() -> Vec<String> {
         "4322674655533".to_string(),
     ]
 }
-
 #[derive(Hash, Eq, PartialEq, Clone)]
 enum Direction {
     Vertical,
@@ -248,83 +229,107 @@ impl Navigator {
     }
 }
 
-#[test]
-fn test_progress() {
-    use Direction::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let example_city = City::from_lines(_example());
-    let nav = Navigator::new(1, 3);
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "698 825");
+    }
 
-    let p1 = NavPoint {
-        coord: Coord { x: 0, y: 0 },
-        direction: Horizontal,
-    };
-    let p1_next = nav.progress(&example_city, &p1);
-    assert_eq!(p1_next.len(), 3);
-    assert_eq!(
-        HashMap::from([
-            (Coord { x: 0, y: 1 }, 3),
-            (Coord { x: 0, y: 2 }, 6),
-            (Coord { x: 0, y: 3 }, 9),
-        ]),
-        p1_next
-            .iter()
-            .map(|(point, cost)| (point.coord.clone(), *cost))
-            .collect::<HashMap<_, _>>(),
-    );
+    #[test]
+    fn test_from_lines() {
+        let example = City::from_lines(_example());
+        assert_eq!(example.heat_loss[&Coord { x: 0, y: 0 }], 2);
+        assert_eq!(example.heat_loss[&Coord { x: 1, y: 0 }], 4);
+        assert_eq!(example.heat_loss[&Coord { x: 2, y: 0 }], 1);
+        assert_eq!(example.heat_loss[&Coord { x: 0, y: 1 }], 3);
+        assert_eq!(example.heat_loss[&Coord { x: 0, y: 2 }], 3);
 
-    let p2 = NavPoint {
-        coord: Coord { x: 0, y: 0 },
-        direction: Vertical,
-    };
-    let p2_next = nav.progress(&example_city, &p2);
-    assert_eq!(p2_next.len(), 3);
-    assert_eq!(
-        HashMap::from([
-            (Coord { x: 1, y: 0 }, 4),
-            (Coord { x: 2, y: 0 }, 5),
-            (Coord { x: 3, y: 0 }, 8),
-        ]),
-        p2_next
-            .iter()
-            .map(|(point, cost)| (point.coord.clone(), *cost))
-            .collect::<HashMap<_, _>>(),
-    );
-}
+        assert_eq!(example.heat_loss[&Coord { x: 12, y: 0 }], 3);
+        assert_eq!(example.heat_loss[&Coord { x: 0, y: 12 }], 4);
+        assert_eq!(example.heat_loss[&Coord { x: 12, y: 12 }], 3);
+    }
 
-#[test]
-fn test_progress_all() {
-    let example_city = City::from_lines(_example());
-    let mut nav = Navigator::new(1, 3);
+    #[test]
+    fn test_progress() {
+        use Direction::*;
 
-    nav.progress_all(&example_city);
+        let example_city = City::from_lines(_example());
+        let nav = Navigator::new(1, 3);
 
-    assert_eq!(nav.nav_points.len(), 6);
-    assert_eq!(
-        HashMap::from([
-            (Coord { x: 0, y: 1 }, 3),
-            (Coord { x: 0, y: 2 }, 6),
-            (Coord { x: 0, y: 3 }, 9),
-            (Coord { x: 1, y: 0 }, 4),
-            (Coord { x: 2, y: 0 }, 5),
-            (Coord { x: 3, y: 0 }, 8),
-        ]),
-        nav.nav_points
-            .iter()
-            .map(|point| (point.coord.clone(), *nav.costs.get(point).unwrap()))
-            .collect::<HashMap<_, _>>(),
-    );
+        let p1 = NavPoint {
+            coord: Coord { x: 0, y: 0 },
+            direction: Horizontal,
+        };
+        let p1_next = nav.progress(&example_city, &p1);
+        assert_eq!(p1_next.len(), 3);
+        assert_eq!(
+            HashMap::from([
+                (Coord { x: 0, y: 1 }, 3),
+                (Coord { x: 0, y: 2 }, 6),
+                (Coord { x: 0, y: 3 }, 9),
+            ]),
+            p1_next
+                .iter()
+                .map(|(point, cost)| (point.coord.clone(), *cost))
+                .collect::<HashMap<_, _>>(),
+        );
 
-    assert_eq!(nav.costs.len(), 8);
-}
+        let p2 = NavPoint {
+            coord: Coord { x: 0, y: 0 },
+            direction: Vertical,
+        };
+        let p2_next = nav.progress(&example_city, &p2);
+        assert_eq!(p2_next.len(), 3);
+        assert_eq!(
+            HashMap::from([
+                (Coord { x: 1, y: 0 }, 4),
+                (Coord { x: 2, y: 0 }, 5),
+                (Coord { x: 3, y: 0 }, 8),
+            ]),
+            p2_next
+                .iter()
+                .map(|(point, cost)| (point.coord.clone(), *cost))
+                .collect::<HashMap<_, _>>(),
+        );
+    }
 
-#[test]
-fn test_solve() {
-    let example_city = City::from_lines(_example());
+    #[test]
+    fn test_progress_all() {
+        let example_city = City::from_lines(_example());
+        let mut nav = Navigator::new(1, 3);
 
-    let mut nav1 = Navigator::new(1, 3);
-    assert_eq!(102, nav1.solve(&example_city));
+        nav.progress_all(&example_city);
 
-    let mut nav2 = Navigator::new(4, 10);
-    assert_eq!(94, nav2.solve(&example_city));
+        assert_eq!(nav.nav_points.len(), 6);
+        assert_eq!(
+            HashMap::from([
+                (Coord { x: 0, y: 1 }, 3),
+                (Coord { x: 0, y: 2 }, 6),
+                (Coord { x: 0, y: 3 }, 9),
+                (Coord { x: 1, y: 0 }, 4),
+                (Coord { x: 2, y: 0 }, 5),
+                (Coord { x: 3, y: 0 }, 8),
+            ]),
+            nav.nav_points
+                .iter()
+                .map(|point| (point.coord.clone(), *nav.costs.get(point).unwrap()))
+                .collect::<HashMap<_, _>>(),
+        );
+
+        assert_eq!(nav.costs.len(), 8);
+    }
+
+    #[test]
+    fn test_solve() {
+        let example_city = City::from_lines(_example());
+
+        let mut nav1 = Navigator::new(1, 3);
+        assert_eq!(102, nav1.solve(&example_city));
+
+        let mut nav2 = Navigator::new(4, 10);
+        assert_eq!(94, nav2.solve(&example_city));
+    }
 }

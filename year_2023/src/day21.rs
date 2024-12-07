@@ -1,17 +1,12 @@
-use aoc_utils as utils;
 use std::collections::{HashMap, HashSet};
 
-#[test]
-fn test_mine() {
-    execute();
-}
+pub fn execute() -> String {
+    let garden = GardenPatch::from_lines(aoc_utils::read_lines("input/day21.txt"));
 
-pub fn execute() {
-    let garden = GardenPatch::from_lines(utils::read_lines("input/day21.txt"));
+    let part1 = garden.count_part_1(64);
+    let part2 = garden.count_part_2(26501365);
 
-    assert_eq!(3847, garden.count_part_1(64));
-
-    assert_eq!(637537341306357, garden.count_part_2(26501365));
+    format!("{} {}", part1, part2)
 }
 
 struct GardenPatch {
@@ -176,46 +171,6 @@ fn _explore_direction(
     result
 }
 
-#[test]
-fn test_from_lines() {
-    let lines = _example();
-
-    let example = GardenPatch::from_lines(lines);
-
-    assert_eq!(81, example.plots.len());
-    assert_eq!(Coordinates(5, 5), example.start);
-}
-
-fn _example() -> Vec<String> {
-    vec![
-        "...........".to_string(),
-        ".....###.#.".to_string(),
-        ".###.##..#.".to_string(),
-        "..#.#...#..".to_string(),
-        "....#.#....".to_string(),
-        ".##..S####.".to_string(),
-        ".##..#...#.".to_string(),
-        ".......##..".to_string(),
-        ".##.#.####.".to_string(),
-        ".##..##.##.".to_string(),
-        "...........".to_string(),
-    ]
-}
-
-#[test]
-fn test_example() {
-    let garden = GardenPatch::from_lines(_example());
-
-    assert_eq!(16, garden.count_part_1(6));
-
-    assert_eq!(50, garden.count_part_2(10));
-    assert_eq!(1594, garden.count_part_2(50));
-    assert_eq!(6536, garden.count_part_2(100));
-    assert_eq!(167004, garden.count_part_2(500));
-    assert_eq!(668697, garden.count_part_2(1000));
-    assert_eq!(16733044, garden.count_part_2(5000));
-}
-
 #[derive(Clone)]
 struct PatchNavigator {
     distances: HashMap<Coordinates, i64>,
@@ -376,25 +331,77 @@ impl PatchNavigator {
     fn _distance(&self, position: &Coordinates) -> i64 {
         *self.distances.get(position).unwrap()
     }
+}
 
-    fn print(&self, garden: &GardenPatch, width: usize) {
-        for y in 0..garden.side {
-            let line = (0..garden.side)
-                .map(|x| {
-                    let coordinates = Coordinates(x, y);
-                    let distance = self.distances.get(&coordinates);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-                    if distance.is_some() {
-                        format!("{:^width$}", distance.unwrap())
-                    } else if garden.plots.contains(&coordinates) {
-                        format!("{:^width$}", ".")
-                    } else {
-                        format!("{:^width$}", "#")
-                    }
-                })
-                .collect::<Vec<String>>()
-                .join(" ");
-            println!("{}", line);
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "3847 637537341306357");
+    }
+
+    #[test]
+    fn test_from_lines() {
+        let lines = _example();
+
+        let example = GardenPatch::from_lines(lines);
+
+        assert_eq!(81, example.plots.len());
+        assert_eq!(Coordinates(5, 5), example.start);
+    }
+
+    fn _example() -> Vec<String> {
+        vec![
+            "...........".to_string(),
+            ".....###.#.".to_string(),
+            ".###.##..#.".to_string(),
+            "..#.#...#..".to_string(),
+            "....#.#....".to_string(),
+            ".##..S####.".to_string(),
+            ".##..#...#.".to_string(),
+            ".......##..".to_string(),
+            ".##.#.####.".to_string(),
+            ".##..##.##.".to_string(),
+            "...........".to_string(),
+        ]
+    }
+
+    #[test]
+    fn test_example() {
+        let garden = GardenPatch::from_lines(_example());
+
+        assert_eq!(16, garden.count_part_1(6));
+
+        assert_eq!(50, garden.count_part_2(10));
+        assert_eq!(1594, garden.count_part_2(50));
+        assert_eq!(6536, garden.count_part_2(100));
+        assert_eq!(167004, garden.count_part_2(500));
+        assert_eq!(668697, garden.count_part_2(1000));
+        assert_eq!(16733044, garden.count_part_2(5000));
+    }
+
+    impl PatchNavigator {
+        fn _print(&self, garden: &GardenPatch, width: usize) {
+            for y in 0..garden.side {
+                let line = (0..garden.side)
+                    .map(|x| {
+                        let coordinates = Coordinates(x, y);
+                        let distance = self.distances.get(&coordinates);
+
+                        if distance.is_some() {
+                            format!("{:^width$}", distance.unwrap())
+                        } else if garden.plots.contains(&coordinates) {
+                            format!("{:^width$}", ".")
+                        } else {
+                            format!("{:^width$}", "#")
+                        }
+                    })
+                    .collect::<Vec<String>>()
+                    .join(" ");
+                println!("{}", line);
+            }
         }
     }
 }

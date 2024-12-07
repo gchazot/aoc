@@ -1,71 +1,25 @@
-use aoc_utils as utils;
 use std::cmp::min;
 use std::collections::HashSet;
 use std::iter::zip;
 use std::ops::Index;
 
-#[test]
-fn test_mine() {
-    execute()
-}
-
-pub fn execute() {
+pub fn execute() -> String {
     let almanac = Almanac::from_text("day5.txt");
-    assert_eq!(313045984, almanac.lowest_location_1());
 
-    for mapping in &almanac.mappings {
-        assert!(mapping.is_bijection());
-    }
+    let part1 = almanac.lowest_location_1();
+    let part2 = almanac.lowest_location_2();
 
-    assert_eq!(20283860, almanac.lowest_location_2());
-}
-
-#[test]
-fn test_almanac_example() {
-    let example = Almanac::from_text("day5-example.txt");
-    assert_eq!(7, example.mappings.len());
-    assert_eq!(4, example.seeds.len());
-    assert_eq!(2, example.mappings[0].entries.len());
-    assert_eq!("seed", example.mappings[0].from);
-    assert_eq!("soil", example.mappings[0].to);
-    assert_eq!(3, example.mappings[1].entries.len());
-    assert_eq!("soil", example.mappings[1].from);
-    assert_eq!("fertilizer", example.mappings[1].to);
-
-    assert_eq!(82, example.get_location(79));
-    assert_eq!(43, example.get_location(14));
-    assert_eq!(86, example.get_location(55));
-    assert_eq!(35, example.get_location(13));
-
-    assert_eq!(35, example.lowest_location_1());
-    assert_eq!(46, example.lowest_location_2());
-
-    for mapping in &example.mappings {
-        assert!(mapping.is_bijection());
-    }
-
-    let mut sum_origin = 0;
-    let mut sum_forward = 0;
-    let mut sum_backward = 0;
-
-    for i in 0..100 {
-        sum_origin += i;
-        sum_forward += example.get_location(i);
-        sum_backward += example.get_seed(i);
-    }
-    assert_eq!(sum_origin, sum_forward);
-    assert_eq!(sum_origin, sum_backward);
+    format!("{} {}", part1, part2)
 }
 
 struct Almanac {
     seeds: Vec<usize>,
     mappings: Vec<Mapping>,
 }
-
 impl Almanac {
     fn from_text(filename: &str) -> Almanac {
         let path = format!("input/{}", &filename);
-        let data = utils::read_lines(&path);
+        let data = aoc_utils::read_lines(&path);
         let mut blocks = data.split(|line| line.trim().is_empty());
 
         let seeds_block = blocks.next().unwrap();
@@ -82,6 +36,7 @@ impl Almanac {
         let mut mappings = Vec::new();
         for block in blocks {
             let mapping = Mapping::from_text(block);
+            assert!(mapping.is_bijection());
             mappings.push(mapping);
         }
         return Almanac { seeds, mappings };
@@ -150,54 +105,21 @@ impl Almanac {
     }
 }
 
-#[test]
-fn test_mapping() {
-    let mut text = Vec::new();
-    text.push("seed-to-soil map:");
-    text.push("50 98 2");
-    text.push("52 50 48");
-
-    let mapping = Mapping::from_text(&text);
-    assert_eq!("seed", mapping.from);
-    assert_eq!("soil", mapping.to);
-    assert_eq!(2, mapping.entries.len());
-
-    for i in 0..50 - 1 {
-        assert_eq!(i, mapping.forward(i));
-    }
-    for i in 50..50 + 48 {
-        assert_eq!(i - 50 + 52, mapping.forward(i));
-    }
-    for i in 98..98 + 2 {
-        assert_eq!(i - 98 + 50, mapping.forward(i));
-    }
-    for i in 100..200 {
-        assert_eq!(i, mapping.forward(i));
-    }
-}
-
 struct Mapping {
-    from: String,
-    to: String,
     entries: Vec<MappingEntry>,
 }
-
 impl Mapping {
     fn from_text(text: &[impl AsRef<str>]) -> Mapping {
         let mut lines = text.into_iter();
 
-        let name_line = lines.next().unwrap();
-        let names = name_line.as_ref().split_once(" ").unwrap().0;
-        let (from_str, to_str) = names.split_once("-to-").unwrap();
-        let from = String::from(from_str);
-        let to = String::from(to_str);
+        let _name_line = lines.next().unwrap();
 
         let mut entries = Vec::new();
         for line in lines {
             entries.push(MappingEntry::from_text(line.as_ref()));
         }
 
-        return Mapping { from, to, entries };
+        return Mapping { entries };
     }
 
     fn src_edges(&self) -> HashSet<usize> {
@@ -245,34 +167,6 @@ impl Mapping {
     }
 }
 
-#[test]
-fn test_compress() {
-    type Range = Vec<(usize, usize)>;
-
-    assert_eq!(Range::from([]), compress(Range::from([])));
-    assert_eq!(Range::from([(0, 1)]), compress(Range::from([(0, 1)])));
-    assert_eq!(
-        Range::from([(0, 5)]),
-        compress(Range::from([(0, 2), (2, 3)]))
-    );
-    assert_eq!(
-        Range::from([(0, 2), (3, 3)]),
-        compress(Range::from([(0, 2), (3, 3)]))
-    );
-    assert_eq!(
-        Range::from([(0, 5)]),
-        compress(Range::from([(0, 2), (2, 1), (3, 2)]))
-    );
-    assert_eq!(
-        Range::from([(0, 5)]),
-        compress(Range::from([(0, 2), (3, 2), (2, 1)]))
-    );
-    assert_eq!(
-        Range::from([(0, 5)]),
-        compress(Range::from([(3, 2), (0, 2), (2, 1)]))
-    );
-}
-
 fn compress(entries: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
     if entries.len() < 2 {
         return entries;
@@ -300,45 +194,18 @@ fn compress(entries: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
 
     return result;
 }
-
-#[test]
-fn test_mapping_entry() {
-    let entry = MappingEntry::from_text("0 15 37");
-    assert_eq!(0usize, entry.dst);
-    assert_eq!(15usize, entry.src);
-    assert_eq!(37usize, entry.width);
-
-    for i in 0..15 - 1 {
-        assert_eq!(None, entry.forward(i));
-    }
-    for i in 15..15 + 37 {
-        assert_eq!(Some(i - 15 + 0), entry.forward(i));
-    }
-    for i in 15 + 37..100 {
-        assert_eq!(None, entry.forward(i));
-    }
-
-    for i in 0..37 - 1 {
-        assert_eq!(Some(i + 15 - 0), entry.backward(i));
-    }
-    for i in 37..100 {
-        assert_eq!(None, entry.backward(i));
-    }
-}
-
 struct MappingEntry {
     src: usize,
     dst: usize,
     width: usize,
 }
-
 impl MappingEntry {
     fn from_text(text: &str) -> MappingEntry {
         let mut parts = text.splitn(3, " ");
         let dst = parts.next().unwrap().parse::<usize>().unwrap();
         let src = parts.next().unwrap().parse::<usize>().unwrap();
         let width = parts.next().unwrap().parse::<usize>().unwrap();
-        return MappingEntry { src, dst, width };
+        MappingEntry { src, dst, width }
     }
 
     fn forward(&self, origin: usize) -> Option<usize> {
@@ -356,5 +223,125 @@ impl MappingEntry {
         }
 
         return None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "313045984 20283860");
+    }
+
+    #[test]
+    fn test_almanac_example() {
+        let example = Almanac::from_text("day5-example.txt");
+        assert_eq!(7, example.mappings.len());
+        assert_eq!(4, example.seeds.len());
+        assert_eq!(2, example.mappings[0].entries.len());
+        assert_eq!(3, example.mappings[1].entries.len());
+
+        assert_eq!(82, example.get_location(79));
+        assert_eq!(43, example.get_location(14));
+        assert_eq!(86, example.get_location(55));
+        assert_eq!(35, example.get_location(13));
+
+        assert_eq!(35, example.lowest_location_1());
+        assert_eq!(46, example.lowest_location_2());
+
+        for mapping in &example.mappings {
+            assert!(mapping.is_bijection());
+        }
+
+        let mut sum_origin = 0;
+        let mut sum_forward = 0;
+        let mut sum_backward = 0;
+
+        for i in 0..100 {
+            sum_origin += i;
+            sum_forward += example.get_location(i);
+            sum_backward += example.get_seed(i);
+        }
+        assert_eq!(sum_origin, sum_forward);
+        assert_eq!(sum_origin, sum_backward);
+    }
+
+    #[test]
+    fn test_mapping() {
+        let mut text = Vec::new();
+        text.push("seed-to-soil map:");
+        text.push("50 98 2");
+        text.push("52 50 48");
+
+        let mapping = Mapping::from_text(&text);
+        assert_eq!(2, mapping.entries.len());
+
+        for i in 0..50 - 1 {
+            assert_eq!(i, mapping.forward(i));
+        }
+        for i in 50..50 + 48 {
+            assert_eq!(i - 50 + 52, mapping.forward(i));
+        }
+        for i in 98..98 + 2 {
+            assert_eq!(i - 98 + 50, mapping.forward(i));
+        }
+        for i in 100..200 {
+            assert_eq!(i, mapping.forward(i));
+        }
+    }
+
+    #[test]
+    fn test_compress() {
+        type Range = Vec<(usize, usize)>;
+
+        assert_eq!(Range::from([]), compress(Range::from([])));
+        assert_eq!(Range::from([(0, 1)]), compress(Range::from([(0, 1)])));
+        assert_eq!(
+            Range::from([(0, 5)]),
+            compress(Range::from([(0, 2), (2, 3)]))
+        );
+        assert_eq!(
+            Range::from([(0, 2), (3, 3)]),
+            compress(Range::from([(0, 2), (3, 3)]))
+        );
+        assert_eq!(
+            Range::from([(0, 5)]),
+            compress(Range::from([(0, 2), (2, 1), (3, 2)]))
+        );
+        assert_eq!(
+            Range::from([(0, 5)]),
+            compress(Range::from([(0, 2), (3, 2), (2, 1)]))
+        );
+        assert_eq!(
+            Range::from([(0, 5)]),
+            compress(Range::from([(3, 2), (0, 2), (2, 1)]))
+        );
+    }
+
+    #[test]
+    fn test_mapping_entry() {
+        let entry = MappingEntry::from_text("0 15 37");
+        assert_eq!(0usize, entry.dst);
+        assert_eq!(15usize, entry.src);
+        assert_eq!(37usize, entry.width);
+
+        for i in 0..15 - 1 {
+            assert_eq!(None, entry.forward(i));
+        }
+        for i in 15..15 + 37 {
+            assert_eq!(Some(i - 15 + 0), entry.forward(i));
+        }
+        for i in 15 + 37..100 {
+            assert_eq!(None, entry.forward(i));
+        }
+
+        for i in 0..37 - 1 {
+            assert_eq!(Some(i + 15 - 0), entry.backward(i));
+        }
+        for i in 37..100 {
+            assert_eq!(None, entry.backward(i));
+        }
     }
 }

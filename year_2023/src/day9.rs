@@ -1,20 +1,11 @@
-use aoc_utils as utils;
 use std::collections::VecDeque;
 
-#[test]
-fn test_mine() {
-    execute();
-}
-
-pub fn execute() {
+pub fn execute() -> String {
     let readings = Reading::from_file("day9.txt");
-    assert_eq!((1772145754, 867), extrapolate_all(readings));
-}
 
-#[test]
-fn test_extrapolate_all() {
-    let readings = Reading::from_file("day9-example.txt");
-    assert_eq!((114, 2), extrapolate_all(readings));
+    let (part1, part2) = extrapolate_all(readings);
+
+    format!("{} {}", part1, part2)
 }
 
 fn extrapolate_all(mut readings: Vec<Reading>) -> (Value, Value) {
@@ -30,80 +21,8 @@ fn extrapolate_all(mut readings: Vec<Reading>) -> (Value, Value) {
     (total_right, total_left)
 }
 
-#[test]
-fn test_extrapolate() {
-    let mut reading1 = Reading::from_line("0 3 6 9 12 15");
-    reading1.extrapolate();
-
-    assert_eq!(8, reading1.values.len());
-    assert_eq!(18, reading1.values[7]);
-    assert_eq!(-3, reading1.values[0]);
-
-    let mut reading2 = Reading::from_line("10 13 16 21 30 45");
-    reading2.extrapolate();
-
-    assert_eq!(8, reading2.values.len());
-    assert_eq!(68, reading2.values[7]);
-    assert_eq!(5, reading2.values[0]);
-}
-
-#[test]
-fn test_derive_fully() {
-    let reading1 = Reading::from_line("0 3 6 9 12 15");
-    assert_eq!(2, reading1.derive_fully().len());
-
-    let reading2 = Reading::from_line("1 3 6 10 15 21");
-    assert_eq!(3, reading2.derive_fully().len());
-
-    let reading3 = Reading::from_line("10 13 16 21 30 45");
-    assert_eq!(4, reading3.derive_fully().len());
-}
-
-#[test]
-fn test_is_zeros() {
-    let reading1 = Reading::from_line("0 3 6 9 12 15");
-    assert_eq!(false, reading1.is_zeros());
-    let reading2 = Reading::from_line("0 0 0");
-    assert_eq!(true, reading2.is_zeros());
-    let reading2 = Reading::from_line("");
-    assert_eq!(true, reading2.is_zeros());
-}
-
-#[test]
-fn test_derive_reading() {
-    let reading1 = Reading::from_line("0 3 6 9 12 15");
-    let derivative1_1 = reading1.derive();
-    assert_eq!(Values::from([3; 5]), derivative1_1.values);
-    let derivative1_2 = derivative1_1.derive();
-    assert_eq!(Values::from([0; 4]), derivative1_2.values);
-
-    let reading2 = Reading::from_line("1 3 6 10 15 21");
-    let derivative2_1 = reading2.derive();
-    assert_eq!(Values::from([2, 3, 4, 5, 6]), derivative2_1.values);
-    let derivative2_2 = derivative2_1.derive();
-    assert_eq!(Values::from([1; 4]), derivative2_2.values);
-    let derivative2_3 = derivative2_2.derive();
-    assert_eq!(Values::from([0; 3]), derivative2_3.values);
-}
-
-#[test]
-fn test_parse_readings() {
-    let readings = Reading::from_file("day9-example.txt");
-    assert_eq!(3, readings.len());
-    assert_eq!(Values::from([0, 3, 6, 9, 12, 15]), readings[0].values);
-    assert_eq!(Values::from([1, 3, 6, 10, 15, 21]), readings[1].values);
-    assert_eq!(Values::from([10, 13, 16, 21, 30, 45]), readings[2].values);
-}
-
-#[test]
-fn test_parse_reading() {
-    let reading = Reading::from_line("0 3 6 9 -12 15");
-    assert_eq!(Values::from([0, 3, 6, 9, -12, 15]), reading.values);
-}
-
 type Value = i32;
 type Values = VecDeque<Value>;
-
 struct Reading {
     values: Values,
 }
@@ -111,7 +30,7 @@ struct Reading {
 impl Reading {
     fn from_file(filename: &str) -> Vec<Reading> {
         let path = format!("input/{}", &filename);
-        let lines = utils::read_lines(&path);
+        let lines = aoc_utils::read_lines(&path);
 
         lines
             .iter()
@@ -177,5 +96,92 @@ impl Reading {
 
     fn is_zeros(&self) -> bool {
         self.values.iter().all(|&v| v == 0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "1772145754 867");
+    }
+
+    #[test]
+    fn test_extrapolate_all() {
+        let readings = Reading::from_file("day9-example.txt");
+        assert_eq!((114, 2), extrapolate_all(readings));
+    }
+
+    #[test]
+    fn test_extrapolate() {
+        let mut reading1 = Reading::from_line("0 3 6 9 12 15");
+        reading1.extrapolate();
+
+        assert_eq!(8, reading1.values.len());
+        assert_eq!(18, reading1.values[7]);
+        assert_eq!(-3, reading1.values[0]);
+
+        let mut reading2 = Reading::from_line("10 13 16 21 30 45");
+        reading2.extrapolate();
+
+        assert_eq!(8, reading2.values.len());
+        assert_eq!(68, reading2.values[7]);
+        assert_eq!(5, reading2.values[0]);
+    }
+
+    #[test]
+    fn test_derive_fully() {
+        let reading1 = Reading::from_line("0 3 6 9 12 15");
+        assert_eq!(2, reading1.derive_fully().len());
+
+        let reading2 = Reading::from_line("1 3 6 10 15 21");
+        assert_eq!(3, reading2.derive_fully().len());
+
+        let reading3 = Reading::from_line("10 13 16 21 30 45");
+        assert_eq!(4, reading3.derive_fully().len());
+    }
+
+    #[test]
+    fn test_is_zeros() {
+        let reading1 = Reading::from_line("0 3 6 9 12 15");
+        assert_eq!(false, reading1.is_zeros());
+        let reading2 = Reading::from_line("0 0 0");
+        assert_eq!(true, reading2.is_zeros());
+        let reading2 = Reading::from_line("");
+        assert_eq!(true, reading2.is_zeros());
+    }
+
+    #[test]
+    fn test_derive_reading() {
+        let reading1 = Reading::from_line("0 3 6 9 12 15");
+        let derivative1_1 = reading1.derive();
+        assert_eq!(Values::from([3; 5]), derivative1_1.values);
+        let derivative1_2 = derivative1_1.derive();
+        assert_eq!(Values::from([0; 4]), derivative1_2.values);
+
+        let reading2 = Reading::from_line("1 3 6 10 15 21");
+        let derivative2_1 = reading2.derive();
+        assert_eq!(Values::from([2, 3, 4, 5, 6]), derivative2_1.values);
+        let derivative2_2 = derivative2_1.derive();
+        assert_eq!(Values::from([1; 4]), derivative2_2.values);
+        let derivative2_3 = derivative2_2.derive();
+        assert_eq!(Values::from([0; 3]), derivative2_3.values);
+    }
+
+    #[test]
+    fn test_parse_readings() {
+        let readings = Reading::from_file("day9-example.txt");
+        assert_eq!(3, readings.len());
+        assert_eq!(Values::from([0, 3, 6, 9, 12, 15]), readings[0].values);
+        assert_eq!(Values::from([1, 3, 6, 10, 15, 21]), readings[1].values);
+        assert_eq!(Values::from([10, 13, 16, 21, 30, 45]), readings[2].values);
+    }
+
+    #[test]
+    fn test_parse_reading() {
+        let reading = Reading::from_line("0 3 6 9 -12 15");
+        assert_eq!(Values::from([0, 3, 6, 9, -12, 15]), reading.values);
     }
 }

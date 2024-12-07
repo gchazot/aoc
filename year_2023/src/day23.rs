@@ -1,25 +1,21 @@
-use aoc_utils as utils;
 use std::collections::{HashSet, VecDeque};
 
-#[test]
-fn test_mine() {
-    execute();
-}
-
-pub fn execute() {
-    let mine_slippery = Map::from_lines(utils::read_lines("input/day23.txt"), true);
+pub fn execute() -> String {
+    let mine_slippery = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), true);
     let slippery_paths = find_paths(&mine_slippery);
-    assert_eq!(
-        2394,
-        slippery_paths.iter().map(|p| p.len() - 1).max().unwrap()
-    );
+    let part1 = slippery_paths.iter().map(|p| p.len() - 1).max().unwrap();
 
-    // let mine_sticky = Map::from_lines(utils::read_lines("input/day23.txt"), false);
+    // TODO: Find something fast enough for part 2
+    // let mine_sticky = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), false);
     // let sticky_paths = find_paths(&mine_sticky);
     // assert_eq!(
     //     2394,
     //     sticky_paths.iter().map(|p| p.len() - 1).max().unwrap()
     // );
+    // let part2 = sticky_paths.iter().map(|p| p.len() - 1).max().unwrap();
+    let part2 = 0;
+
+    format!("{} {}", part1, part2)
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -118,26 +114,6 @@ impl Map {
     fn get(&self, position: &Coordinates) -> &Tile {
         &self.tiles[position.y][position.x]
     }
-}
-
-#[test]
-fn test_from_lines() {
-    let example = Map::from_lines(_example(), true);
-    assert_eq!(example.tiles.len(), 23);
-    assert_eq!(example.tiles[0].len(), 23);
-    assert_eq!(example.start, Coordinates { x: 1, y: 0 });
-    assert_eq!(example.end, Coordinates { x: 21, y: 22 });
-
-    assert_eq!(example.get(&Coordinates { x: 0, y: 0 }), &Tile::Forest);
-    assert_eq!(example.get(&Coordinates { x: 1, y: 1 }), &Tile::Path);
-    assert_eq!(
-        example.get(&Coordinates { x: 10, y: 3 }),
-        &Tile::Slope(Direction::Right)
-    );
-    assert_eq!(
-        example.get(&Coordinates { x: 3, y: 4 }),
-        &Tile::Slope(Direction::Down)
-    );
 }
 
 fn _example() -> Vec<String> {
@@ -283,32 +259,6 @@ impl Walker {
         }
         result
     }
-
-    fn print(&self, map: &Map) {
-        map.tiles.iter().enumerate().for_each(|(y, row)| {
-            let line = row
-                .iter()
-                .enumerate()
-                .map(|(x, tile)| {
-                    let coords = Coordinates { x, y };
-                    if self.positions.contains(&coords) {
-                        "O"
-                    } else {
-                        match tile {
-                            Tile::Forest => "#",
-                            Tile::Path => ".",
-                            Tile::Slope(Direction::Left) => "<",
-                            Tile::Slope(Direction::Right) => ">",
-                            Tile::Slope(Direction::Up) => "^",
-                            Tile::Slope(Direction::Down) => "v",
-                        }
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join("");
-            println!("{}", line);
-        })
-    }
 }
 
 fn find_paths(map: &Map) -> Vec<HashSet<Coordinates>> {
@@ -329,24 +279,81 @@ fn find_paths(map: &Map) -> Vec<HashSet<Coordinates>> {
     result
 }
 
-#[test]
-fn test_find_paths() {
-    let example_slippery = Map::from_lines(_example(), true);
-    let slippery_paths = find_paths(&example_slippery);
-    let slippery_paths_lengths = slippery_paths
-        .iter()
-        .map(|p| p.len() - 1)
-        .collect::<HashSet<_>>();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    assert_eq!(6, slippery_paths.len());
-    assert_eq!(94, *slippery_paths_lengths.iter().max().unwrap());
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "2394 0");
+    }
 
-    let example_sticky = Map::from_lines(_example(), false);
-    let sticky_paths = find_paths(&example_sticky);
-    let sticky_paths_lengths = sticky_paths
-        .iter()
-        .map(|p| p.len() - 1)
-        .collect::<HashSet<_>>();
+    #[test]
+    fn test_from_lines() {
+        let example = Map::from_lines(_example(), true);
+        assert_eq!(example.tiles.len(), 23);
+        assert_eq!(example.tiles[0].len(), 23);
+        assert_eq!(example.start, Coordinates { x: 1, y: 0 });
+        assert_eq!(example.end, Coordinates { x: 21, y: 22 });
 
-    assert_eq!(154, *sticky_paths_lengths.iter().max().unwrap());
+        assert_eq!(example.get(&Coordinates { x: 0, y: 0 }), &Tile::Forest);
+        assert_eq!(example.get(&Coordinates { x: 1, y: 1 }), &Tile::Path);
+        assert_eq!(
+            example.get(&Coordinates { x: 10, y: 3 }),
+            &Tile::Slope(Direction::Right)
+        );
+        assert_eq!(
+            example.get(&Coordinates { x: 3, y: 4 }),
+            &Tile::Slope(Direction::Down)
+        );
+    }
+
+    #[test]
+    fn test_find_paths() {
+        let example_slippery = Map::from_lines(_example(), true);
+        let slippery_paths = find_paths(&example_slippery);
+        let slippery_paths_lengths = slippery_paths
+            .iter()
+            .map(|p| p.len() - 1)
+            .collect::<HashSet<_>>();
+
+        assert_eq!(6, slippery_paths.len());
+        assert_eq!(94, *slippery_paths_lengths.iter().max().unwrap());
+
+        let example_sticky = Map::from_lines(_example(), false);
+        let sticky_paths = find_paths(&example_sticky);
+        let sticky_paths_lengths = sticky_paths
+            .iter()
+            .map(|p| p.len() - 1)
+            .collect::<HashSet<_>>();
+
+        assert_eq!(154, *sticky_paths_lengths.iter().max().unwrap());
+    }
+    impl Walker {
+        fn _print(&self, map: &Map) {
+            map.tiles.iter().enumerate().for_each(|(y, row)| {
+                let line = row
+                    .iter()
+                    .enumerate()
+                    .map(|(x, tile)| {
+                        let coords = Coordinates { x, y };
+                        if self.positions.contains(&coords) {
+                            "O"
+                        } else {
+                            match tile {
+                                Tile::Forest => "#",
+                                Tile::Path => ".",
+                                Tile::Slope(Direction::Left) => "<",
+                                Tile::Slope(Direction::Right) => ">",
+                                Tile::Slope(Direction::Up) => "^",
+                                Tile::Slope(Direction::Down) => "v",
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join("");
+                println!("{}", line);
+            })
+        }
+    }
 }

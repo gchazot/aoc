@@ -1,33 +1,19 @@
-use aoc_utils as utils;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops::Index;
 use std::slice::Iter;
 
-#[test]
-fn test_mine() {
-    execute();
-}
-
-pub fn execute() {
+pub fn execute() -> String {
     let hands = Hand::from_file("day7.txt", false);
-    assert_eq!(253910319, score(hands));
+    let part1 = score(hands);
 
     let hands_with_jokers = Hand::from_file("day7.txt", true);
-    assert_eq!(254083736, score(hands_with_jokers));
-}
+    let part2 = score(hands_with_jokers);
 
-#[test]
-fn test_score() {
-    let hands = Hand::from_file("day7-example.txt", false);
-    assert_eq!(6440, score(hands));
-
-    let hands_with_jokers = Hand::from_file("day7-example.txt", true);
-    assert_eq!(5905, score(hands_with_jokers));
+    format!("{} {}", part1, part2)
 }
 
 type Score = u64;
-
 fn score(mut hands: Vec<Hand>) -> Score {
     hands.sort();
 
@@ -38,138 +24,16 @@ fn score(mut hands: Vec<Hand>) -> Score {
         .sum()
 }
 
-#[test]
-fn test_hands() {
-    let mut hands = Hand::from_file("day7-example.txt", false);
-    assert_eq!(5, hands.len());
-
-    hands.sort();
-    assert_eq!(5, hands.len());
-
-    for (i, hand) in hands.iter().enumerate() {
-        let hand_text = match i {
-            0 => "32T3K",
-            1 => "KTJJT",
-            2 => "KK677 ",
-            3 => "T55J5",
-            4 => "QQQJA",
-            _ => "Fail",
-        };
-        assert_eq!(hand, &Hand::from_text(hand_text, false));
-    }
-}
-
-#[test]
-fn test_hand() {
-    let hand1 = Hand::from_text("32T3K", false);
-    assert_eq!(5, hand1.cards.len());
-    assert_eq!(hand1[0], 3);
-    assert_eq!(hand1[1], 2);
-    assert_eq!(hand1[2], 10);
-    assert_eq!(hand1[3], 3);
-    assert_eq!(hand1[4], 13);
-
-    assert_eq!(hand1.bid, 0);
-
-    assert!(matches!(hand1.get_type(), HandType::OnePair));
-
-    let hand2 = Hand::from_text("T55J5", false);
-    assert!(matches!(hand2.get_type(), HandType::ThreeOfAKind));
-
-    let hand3 = Hand::from_text("KK677", false);
-    assert!(matches!(hand3.get_type(), HandType::TwoPairs));
-
-    let hand4 = Hand::from_text("KTJJT 220", false);
-    assert!(matches!(hand4.get_type(), HandType::TwoPairs));
-    assert_eq!(220, hand4.bid);
-
-    let hand5 = Hand::from_text("QQQJA 48", false);
-    assert!(matches!(hand5.get_type(), HandType::ThreeOfAKind));
-    assert_eq!(48, hand5.bid);
-
-    assert!(hand1 < hand2);
-    assert!(hand1 < hand3);
-    assert!(hand1 < hand4);
-    assert!(hand1 < hand5);
-    assert!(hand4 < hand2);
-    assert!(hand4 < hand3);
-    assert!(hand4 < hand5);
-    assert!(hand3 < hand2);
-    assert!(hand3 < hand5);
-    assert!(hand2 < hand5);
-
-    let mut hands = vec![&hand1, &hand2, &hand3, &hand4, &hand5];
-    hands.sort();
-    let expected = vec![&hand1, &hand4, &hand3, &hand2, &hand5];
-    assert_eq!(expected, hands)
-}
-
-#[test]
-fn test_hand_with_jokers() {
-    let hand1 = Hand::from_text("32T3K", true);
-    assert!(matches!(hand1.get_type(), HandType::OnePair));
-
-    let hand2 = Hand::from_text("T55J5", true);
-    assert!(matches!(hand2.get_type(), HandType::FourOfAKind));
-
-    let hand3 = Hand::from_text("KK677", true);
-    assert!(matches!(hand3.get_type(), HandType::TwoPairs));
-
-    let hand4 = Hand::from_text("KTJJT", true);
-    assert!(matches!(hand4.get_type(), HandType::FourOfAKind));
-
-    let hand5 = Hand::from_text("QQQJA", true);
-    assert!(matches!(hand5.get_type(), HandType::FourOfAKind));
-
-    let hand6a = Hand::from_text("J2AAA", true);
-    assert!(matches!(hand6a.get_type(), HandType::FourOfAKind));
-
-    let hand6b = Hand::from_text("2JAAA", true);
-    assert!(matches!(hand6b.get_type(), HandType::FourOfAKind));
-
-    assert!(hand6a < hand6b);
-
-    fn hand_type(hand_text: &str) -> HandType {
-        let hand = Hand::from_text(hand_text, true);
-        hand.get_type()
-    }
-
-    assert!(matches!(hand_type("32T3K"), HandType::OnePair));
-    assert!(matches!(hand_type("T55J5"), HandType::FourOfAKind));
-    assert!(matches!(hand_type("KK677"), HandType::TwoPairs));
-    assert!(matches!(hand_type("KTJJT"), HandType::FourOfAKind));
-    assert!(matches!(hand_type("QQQJA"), HandType::FourOfAKind));
-
-    assert!(matches!(hand_type("23456"), HandType::HighCard));
-
-    assert!(matches!(hand_type("J3456"), HandType::OnePair));
-    assert!(matches!(hand_type("J3356"), HandType::ThreeOfAKind));
-    assert!(matches!(hand_type("J3336"), HandType::FourOfAKind));
-    assert!(matches!(hand_type("J3333"), HandType::FiveOfAKind));
-
-    assert!(matches!(hand_type("JJ456"), HandType::ThreeOfAKind));
-    assert!(matches!(hand_type("JJ446"), HandType::FourOfAKind));
-    assert!(matches!(hand_type("JJ444"), HandType::FiveOfAKind));
-
-    assert!(matches!(hand_type("JJJ56"), HandType::FourOfAKind));
-    assert!(matches!(hand_type("JJJ55"), HandType::FiveOfAKind));
-
-    assert!(matches!(hand_type("JJJJ6"), HandType::FiveOfAKind));
-
-    assert!(matches!(hand_type("JJJJJ"), HandType::FiveOfAKind));
-}
-
 #[derive(Debug, Eq)]
 struct Hand {
     cards: Vec<Card>,
     bid: Score,
     jokers: bool,
 }
-
 impl Hand {
     fn from_file(filename: &str, jokers: bool) -> Vec<Self> {
         let path = format!("input/{}", &filename);
-        utils::read_lines(&path)
+        aoc_utils::read_lines(&path)
             .iter()
             .map(|line| Hand::from_text(line, jokers))
             .collect()
@@ -335,5 +199,145 @@ fn card_from_text(card: char, jokers: bool) -> Card {
         _ => {
             panic!("Not a card: {card}")
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "253910319 254083736");
+    }
+
+    #[test]
+    fn test_score() {
+        let hands = Hand::from_file("day7-example.txt", false);
+        assert_eq!(6440, score(hands));
+
+        let hands_with_jokers = Hand::from_file("day7-example.txt", true);
+        assert_eq!(5905, score(hands_with_jokers));
+    }
+
+    #[test]
+    fn test_hands() {
+        let mut hands = Hand::from_file("day7-example.txt", false);
+        assert_eq!(5, hands.len());
+
+        hands.sort();
+        assert_eq!(5, hands.len());
+
+        for (i, hand) in hands.iter().enumerate() {
+            let hand_text = match i {
+                0 => "32T3K",
+                1 => "KTJJT",
+                2 => "KK677 ",
+                3 => "T55J5",
+                4 => "QQQJA",
+                _ => "Fail",
+            };
+            assert_eq!(hand, &Hand::from_text(hand_text, false));
+        }
+    }
+
+    #[test]
+    fn test_hand() {
+        let hand1 = Hand::from_text("32T3K", false);
+        assert_eq!(5, hand1.cards.len());
+        assert_eq!(hand1[0], 3);
+        assert_eq!(hand1[1], 2);
+        assert_eq!(hand1[2], 10);
+        assert_eq!(hand1[3], 3);
+        assert_eq!(hand1[4], 13);
+
+        assert_eq!(hand1.bid, 0);
+
+        assert!(matches!(hand1.get_type(), HandType::OnePair));
+
+        let hand2 = Hand::from_text("T55J5", false);
+        assert!(matches!(hand2.get_type(), HandType::ThreeOfAKind));
+
+        let hand3 = Hand::from_text("KK677", false);
+        assert!(matches!(hand3.get_type(), HandType::TwoPairs));
+
+        let hand4 = Hand::from_text("KTJJT 220", false);
+        assert!(matches!(hand4.get_type(), HandType::TwoPairs));
+        assert_eq!(220, hand4.bid);
+
+        let hand5 = Hand::from_text("QQQJA 48", false);
+        assert!(matches!(hand5.get_type(), HandType::ThreeOfAKind));
+        assert_eq!(48, hand5.bid);
+
+        assert!(hand1 < hand2);
+        assert!(hand1 < hand3);
+        assert!(hand1 < hand4);
+        assert!(hand1 < hand5);
+        assert!(hand4 < hand2);
+        assert!(hand4 < hand3);
+        assert!(hand4 < hand5);
+        assert!(hand3 < hand2);
+        assert!(hand3 < hand5);
+        assert!(hand2 < hand5);
+
+        let mut hands = vec![&hand1, &hand2, &hand3, &hand4, &hand5];
+        hands.sort();
+        let expected = vec![&hand1, &hand4, &hand3, &hand2, &hand5];
+        assert_eq!(expected, hands)
+    }
+
+    #[test]
+    fn test_hand_with_jokers() {
+        let hand1 = Hand::from_text("32T3K", true);
+        assert!(matches!(hand1.get_type(), HandType::OnePair));
+
+        let hand2 = Hand::from_text("T55J5", true);
+        assert!(matches!(hand2.get_type(), HandType::FourOfAKind));
+
+        let hand3 = Hand::from_text("KK677", true);
+        assert!(matches!(hand3.get_type(), HandType::TwoPairs));
+
+        let hand4 = Hand::from_text("KTJJT", true);
+        assert!(matches!(hand4.get_type(), HandType::FourOfAKind));
+
+        let hand5 = Hand::from_text("QQQJA", true);
+        assert!(matches!(hand5.get_type(), HandType::FourOfAKind));
+
+        let hand6a = Hand::from_text("J2AAA", true);
+        assert!(matches!(hand6a.get_type(), HandType::FourOfAKind));
+
+        let hand6b = Hand::from_text("2JAAA", true);
+        assert!(matches!(hand6b.get_type(), HandType::FourOfAKind));
+
+        assert!(hand6a < hand6b);
+
+        fn hand_type(hand_text: &str) -> HandType {
+            let hand = Hand::from_text(hand_text, true);
+            hand.get_type()
+        }
+
+        assert!(matches!(hand_type("32T3K"), HandType::OnePair));
+        assert!(matches!(hand_type("T55J5"), HandType::FourOfAKind));
+        assert!(matches!(hand_type("KK677"), HandType::TwoPairs));
+        assert!(matches!(hand_type("KTJJT"), HandType::FourOfAKind));
+        assert!(matches!(hand_type("QQQJA"), HandType::FourOfAKind));
+
+        assert!(matches!(hand_type("23456"), HandType::HighCard));
+
+        assert!(matches!(hand_type("J3456"), HandType::OnePair));
+        assert!(matches!(hand_type("J3356"), HandType::ThreeOfAKind));
+        assert!(matches!(hand_type("J3336"), HandType::FourOfAKind));
+        assert!(matches!(hand_type("J3333"), HandType::FiveOfAKind));
+
+        assert!(matches!(hand_type("JJ456"), HandType::ThreeOfAKind));
+        assert!(matches!(hand_type("JJ446"), HandType::FourOfAKind));
+        assert!(matches!(hand_type("JJ444"), HandType::FiveOfAKind));
+
+        assert!(matches!(hand_type("JJJ56"), HandType::FourOfAKind));
+        assert!(matches!(hand_type("JJJ55"), HandType::FiveOfAKind));
+
+        assert!(matches!(hand_type("JJJJ6"), HandType::FiveOfAKind));
+
+        assert!(matches!(hand_type("JJJJJ"), HandType::FiveOfAKind));
     }
 }

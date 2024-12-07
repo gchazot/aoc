@@ -1,32 +1,14 @@
-use aoc_utils as utils;
 use std::iter::zip;
 
-#[test]
-fn test_mine() {
-    execute();
-}
-
-pub fn execute() {
+pub fn execute() -> String {
     let races = parse_races("day6.txt");
-    assert_eq!(633080, optimize_races(&races));
+    let part1 = optimize_races(&races);
 
     let race = Race::from_file("day6.txt");
     let (min, max) = race.optimize();
-    assert_eq!(7430123, min);
-    assert_eq!(27478863, max);
-    assert_eq!(20048741, max - min + 1);
-}
+    let part2 = max - min + 1;
 
-#[test]
-fn test_optimize_races() {
-    let races = parse_races("day6-example.txt");
-    assert_eq!(288, optimize_races(&races));
-
-    let race = Race::from_file("day6-example.txt");
-    let (min, max) = race.optimize();
-    assert_eq!(14, min);
-    assert_eq!(71516, max);
-    assert_eq!(71503, max - min + 1);
+    format!("{} {}", part1, part2)
 }
 
 fn optimize_races(races: &Vec<Race>) -> u64 {
@@ -36,23 +18,9 @@ fn optimize_races(races: &Vec<Race>) -> u64 {
         .map(|(min, max)| max - min + 1)
         .product();
 }
-
-#[test]
-fn test_parse_races() {
-    let races = parse_races("day6-example.txt");
-    assert_eq!(3, races.len());
-
-    assert_eq!(7, races[0].time);
-    assert_eq!(9, races[0].dist);
-    assert_eq!(15, races[1].time);
-    assert_eq!(40, races[1].dist);
-    assert_eq!(30, races[2].time);
-    assert_eq!(200, races[2].dist);
-}
-
 fn parse_races(filename: &str) -> Vec<Race> {
     let path = format!("input/{}", &filename);
-    let lines = utils::read_lines(&path);
+    let lines = aoc_utils::read_lines(&path);
 
     let times_line = lines[0].clone();
     let dists_line = lines[1].clone();
@@ -74,30 +42,9 @@ fn parse_races(filename: &str) -> Vec<Race> {
     return Vec::from_iter(zip(times, dists).map(|(time, dist)| Race { time, dist }));
 }
 
-#[test]
-fn test_parse_race_v2() {
-    let race = Race::from_file("day6-example.txt");
-    assert_eq!(71530, race.time);
-    assert_eq!(940200, race.dist);
-}
-
 struct Race {
     time: u64,
     dist: u64,
-}
-
-#[test]
-fn test_optimize_race() {
-    assert_eq!((2, 5), Race { time: 7, dist: 9 }.optimize());
-    assert_eq!((4, 11), Race { time: 15, dist: 40 }.optimize());
-    assert_eq!(
-        (11, 19),
-        Race {
-            time: 30,
-            dist: 200
-        }
-        .optimize()
-    );
 }
 
 impl Race {
@@ -123,7 +70,7 @@ impl Race {
 
     fn from_file(filename: &str) -> Race {
         let path = format!("input/{}", &filename);
-        let lines = utils::read_lines(&path);
+        let lines = aoc_utils::read_lines(&path);
 
         let time_line = lines[0].clone();
         let dist_line = lines[1].clone();
@@ -142,4 +89,59 @@ fn race(charge_time: u64, race_time: u64) -> u64 {
     let race = race_time as u64;
     let charge = charge_time as u64;
     return race * charge - charge * charge;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "633080 20048741");
+    }
+
+    #[test]
+    fn test_optimize_races() {
+        let races = parse_races("day6-example.txt");
+        assert_eq!(288, optimize_races(&races));
+
+        let race = Race::from_file("day6-example.txt");
+        let (min, max) = race.optimize();
+        assert_eq!(14, min);
+        assert_eq!(71516, max);
+        assert_eq!(71503, max - min + 1);
+    }
+
+    #[test]
+    fn test_parse_races() {
+        let races = parse_races("day6-example.txt");
+        assert_eq!(3, races.len());
+
+        assert_eq!(7, races[0].time);
+        assert_eq!(9, races[0].dist);
+        assert_eq!(15, races[1].time);
+        assert_eq!(40, races[1].dist);
+        assert_eq!(30, races[2].time);
+        assert_eq!(200, races[2].dist);
+    }
+
+    #[test]
+    fn test_parse_race_v2() {
+        let race = Race::from_file("day6-example.txt");
+        assert_eq!(71530, race.time);
+        assert_eq!(940200, race.dist);
+    }
+
+    #[test]
+    fn test_optimize_race() {
+        assert_eq!((2, 5), Race { time: 7, dist: 9 }.optimize());
+        assert_eq!((4, 11), Race { time: 15, dist: 40 }.optimize());
+        assert_eq!(
+            (11, 19),
+            Race {
+                time: 30,
+                dist: 200
+            }
+            .optimize()
+        );
+    }
 }

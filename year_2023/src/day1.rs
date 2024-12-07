@@ -1,14 +1,9 @@
-use aoc_utils as utils;
+pub fn execute() -> String {
+    let input = aoc_utils::read_lines("input/day1.txt");
+    let part1 = sum_lines(&input, false).unwrap();
+    let part2 = sum_lines(&input, true).unwrap();
 
-#[test]
-fn test_mine() {
-    execute()
-}
-
-pub fn execute() {
-    let input = utils::read_lines("input/day1.txt");
-    assert_eq!(Some(54927), sum_lines(&input, false));
-    assert_eq!(Some(54581), sum_lines(&input, true));
+    format!("{} {}", part1, part2)
 }
 
 struct Digit<'a> {
@@ -70,15 +65,6 @@ const DIGITS: [Digit; 10] = [
     },
 ];
 
-#[test]
-fn test_sum_lines() {
-    let example1 = utils::read_lines("input/day1-example1.txt");
-    assert_eq!(Some(142), sum_lines(&example1, false));
-
-    let example2 = utils::read_lines("input/day1-example2.txt");
-    assert_eq!(Some(281), sum_lines(&example2, true));
-}
-
 fn sum_lines<T: AsRef<str>>(input: &[T], with_text: bool) -> Option<u32> {
     let mut total: Option<u32> = None;
     for line in input {
@@ -117,5 +103,24 @@ fn calculate_line(line: &str, with_text: bool) -> Option<u32> {
         return Some(result);
     } else {
         return None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "54927 54581");
+    }
+
+    #[test]
+    fn test_sum_lines() {
+        let example1 = aoc_utils::read_lines("input/day1-example1.txt");
+        assert_eq!(Some(142), sum_lines(&example1, false));
+
+        let example2 = aoc_utils::read_lines("input/day1-example2.txt");
+        assert_eq!(Some(281), sum_lines(&example2, true));
     }
 }

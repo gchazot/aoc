@@ -1,22 +1,17 @@
-use aoc_utils as utils;
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::ops::Deref;
+use std::collections::{HashMap, VecDeque};
 
-#[test]
-fn test_mine() {
-    execute()
-}
-
-pub fn execute() {
-    let mut mine = Desert::from_lines(utils::read_lines("input/day20.txt"));
+pub fn execute() -> String {
+    let mut mine = Desert::from_lines(aoc_utils::read_lines("input/day20.txt"));
     let (mut seen_low, mut seen_high) = mine.button_press();
     for _ in 1..1000 {
         (seen_low, seen_high) = mine.button_press();
     }
-    assert_eq!(18150, seen_low);
-    assert_eq!(47479, seen_high);
 
-    assert_eq!(861743850, seen_low * seen_high);
+    let part1 = seen_low * seen_high;
+    // TODO: Find a solution for part 2
+    let part2 = 0;
+
+    format!("{} {}", part1, part2)
 }
 
 struct Desert {
@@ -117,83 +112,12 @@ impl Desert {
     }
 }
 
-#[test]
-fn test_from_lines() {
-    let mut example1 = Desert::from_lines(vec![
-        "broadcaster -> a, b, c".to_string(),
-        "%a -> b".to_string(),
-        "%b -> c".to_string(),
-        "%c -> inv".to_string(),
-        "&inv -> a".to_string(),
-    ]);
-
-    assert_eq!(5, example1.modules.len());
-    assert_eq!(
-        HashSet::from([
-            "broadcaster".to_string(),
-            "a".to_string(),
-            "b".to_string(),
-            "c".to_string(),
-            "inv".to_string()
-        ]),
-        example1
-            .modules
-            .iter()
-            .map(|m| m.name().clone())
-            .collect::<HashSet<_>>()
-    );
-    assert_eq!(
-        vec!["a".to_string(), "b".to_string(), "c".to_string(),],
-        *example1
-            .get_module("broadcaster".to_string())
-            .unwrap()
-            .deref()
-            .destinations()
-    );
-}
-
-#[test]
-fn test_button_press() {
-    let mut example1 = Desert::from_lines(vec![
-        "broadcaster -> a, b, c".to_string(),
-        "%a -> b".to_string(),
-        "%b -> c".to_string(),
-        "%c -> inv".to_string(),
-        "&inv -> a".to_string(),
-    ]);
-
-    let (mut seen_low, mut seen_high) = example1.button_press();
-    assert_eq!(8, seen_low);
-    assert_eq!(4, seen_high);
-
-    for _ in 1..1000 {
-        (seen_low, seen_high) = example1.button_press();
-    }
-    assert_eq!(8000, seen_low);
-    assert_eq!(4000, seen_high);
-
-    let mut example2 = Desert::from_lines(vec![
-        "broadcaster -> a".to_string(),
-        "%a -> inv, con".to_string(),
-        "&inv -> b".to_string(),
-        "%b -> con".to_string(),
-        "&con -> output".to_string(),
-    ]);
-    let (mut seen_low, mut seen_high) = example2.button_press();
-    for _ in 1..1000 {
-        (seen_low, seen_high) = example2.button_press();
-    }
-    assert_eq!(4250, seen_low);
-    assert_eq!(2750, seen_high);
-}
-
 trait Module {
     fn reset_inputs(&mut self, _inputs: Vec<String>) {}
     fn name(&self) -> &String;
     fn destinations(&self) -> &Vec<String>;
     fn pulse(&mut self, high: bool, from: String) -> Vec<Pulse>;
 }
-
 struct FlipFlop {
     name: String,
     is_on: bool,
@@ -235,41 +159,11 @@ impl Module for FlipFlop {
     }
 }
 
-#[test]
-fn test_pulse_flipflop() {
-    let mut module = FlipFlop::new("foo".to_string(), vec!["bar".to_string()]);
-    assert!(!module.is_on);
-    assert_eq!(module.destinations.len(), 1);
-
-    let pulses = module.pulse(true, "baz".to_string());
-    assert!(!module.is_on);
-    assert_eq!(pulses.len(), 0);
-
-    let pulses = module.pulse(false, "baz".to_string());
-    assert!(module.is_on);
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].from, "foo".to_string());
-    assert_eq!(pulses[0].to, "bar".to_string());
-    assert_eq!(pulses[0].high, true);
-
-    let pulses = module.pulse(true, "baz".to_string());
-    assert!(module.is_on);
-    assert_eq!(pulses.len(), 0);
-
-    let pulses = module.pulse(false, "baz".to_string());
-    assert!(!module.is_on);
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].from, "foo".to_string());
-    assert_eq!(pulses[0].to, "bar".to_string());
-    assert_eq!(pulses[0].high, false);
-}
-
 struct Conjunction {
     name: String,
     inputs: HashMap<String, bool>,
     destinations: Vec<String>,
 }
-
 impl Conjunction {
     fn new(name: String, destinations: Vec<String>) -> Conjunction {
         Conjunction {
@@ -308,87 +202,10 @@ impl Module for Conjunction {
     }
 }
 
-#[test]
-fn test_conjunction_pulse_one_input() {
-    let mut module = Conjunction::new("inv".to_string(), vec!["out".to_string()]);
-    module.reset_inputs(vec!["inp".to_string()]);
-
-    let pulses = module.pulse(false, "inp".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].from, "inv".to_string());
-    assert_eq!(pulses[0].to, "out".to_string());
-    assert_eq!(pulses[0].high, true);
-
-    let pulses = module.pulse(false, "inp".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, true);
-
-    let pulses = module.pulse(true, "inp".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, false);
-
-    let pulses = module.pulse(true, "inp".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, false);
-
-    let pulses = module.pulse(false, "inp".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, true);
-}
-
-#[test]
-fn test_conjunction_pulse_multiple_input() {
-    let mut module = Conjunction::new("conj".to_string(), vec!["out".to_string()]);
-    module.reset_inputs(vec![
-        "bim".to_string(),
-        "bam".to_string(),
-        "boom".to_string(),
-    ]);
-
-    let pulses = module.pulse(false, "bim".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].from, "conj".to_string());
-    assert_eq!(pulses[0].to, "out".to_string());
-    assert_eq!(pulses[0].high, true);
-
-    let pulses = module.pulse(true, "bim".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, true);
-
-    let pulses = module.pulse(true, "bam".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, true);
-
-    let pulses = module.pulse(true, "boom".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, false);
-
-    let pulses = module.pulse(false, "bam".to_string());
-    assert_eq!(pulses.len(), 1);
-    assert_eq!(pulses[0].high, true);
-}
-
-#[test]
-#[should_panic]
-fn test_conjunction_pulse_without_inputs() {
-    let mut module = Conjunction::new("foo".to_string(), vec!["bar".to_string()]);
-    module.reset_inputs(vec![]);
-    module.pulse(false, "baz".to_string());
-}
-
-#[test]
-#[should_panic]
-fn test_conjunction_pulse_with_unknown_input() {
-    let mut no_input = Conjunction::new("foo".to_string(), vec!["bar".to_string()]);
-    no_input.reset_inputs(vec!["baz".to_string()]);
-    no_input.pulse(false, "boo".to_string());
-}
-
 struct Broadcast {
     name: String,
     destinations: Vec<String>,
 }
-
 impl Broadcast {
     fn new(name: String, destinations: Vec<String>) -> Broadcast {
         Broadcast { name, destinations }
@@ -411,5 +228,192 @@ impl Module for Broadcast {
                 high,
             })
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+    use std::ops::Deref;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "861743850 0");
+    }
+
+    #[test]
+    fn test_from_lines() {
+        let mut example1 = Desert::from_lines(vec![
+            "broadcaster -> a, b, c".to_string(),
+            "%a -> b".to_string(),
+            "%b -> c".to_string(),
+            "%c -> inv".to_string(),
+            "&inv -> a".to_string(),
+        ]);
+
+        assert_eq!(5, example1.modules.len());
+        assert_eq!(
+            HashSet::from([
+                "broadcaster".to_string(),
+                "a".to_string(),
+                "b".to_string(),
+                "c".to_string(),
+                "inv".to_string()
+            ]),
+            example1
+                .modules
+                .iter()
+                .map(|m| m.name().clone())
+                .collect::<HashSet<_>>()
+        );
+        assert_eq!(
+            vec!["a".to_string(), "b".to_string(), "c".to_string(),],
+            *example1
+                .get_module("broadcaster".to_string())
+                .unwrap()
+                .deref()
+                .destinations()
+        );
+    }
+
+    #[test]
+    fn test_button_press() {
+        let mut example1 = Desert::from_lines(vec![
+            "broadcaster -> a, b, c".to_string(),
+            "%a -> b".to_string(),
+            "%b -> c".to_string(),
+            "%c -> inv".to_string(),
+            "&inv -> a".to_string(),
+        ]);
+
+        let (mut seen_low, mut seen_high) = example1.button_press();
+        assert_eq!(8, seen_low);
+        assert_eq!(4, seen_high);
+
+        for _ in 1..1000 {
+            (seen_low, seen_high) = example1.button_press();
+        }
+        assert_eq!(8000, seen_low);
+        assert_eq!(4000, seen_high);
+
+        let mut example2 = Desert::from_lines(vec![
+            "broadcaster -> a".to_string(),
+            "%a -> inv, con".to_string(),
+            "&inv -> b".to_string(),
+            "%b -> con".to_string(),
+            "&con -> output".to_string(),
+        ]);
+        let (mut seen_low, mut seen_high) = example2.button_press();
+        for _ in 1..1000 {
+            (seen_low, seen_high) = example2.button_press();
+        }
+        assert_eq!(4250, seen_low);
+        assert_eq!(2750, seen_high);
+    }
+
+    #[test]
+    fn test_pulse_flipflop() {
+        let mut module = FlipFlop::new("foo".to_string(), vec!["bar".to_string()]);
+        assert!(!module.is_on);
+        assert_eq!(module.destinations.len(), 1);
+
+        let pulses = module.pulse(true, "baz".to_string());
+        assert!(!module.is_on);
+        assert_eq!(pulses.len(), 0);
+
+        let pulses = module.pulse(false, "baz".to_string());
+        assert!(module.is_on);
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].from, "foo".to_string());
+        assert_eq!(pulses[0].to, "bar".to_string());
+        assert_eq!(pulses[0].high, true);
+
+        let pulses = module.pulse(true, "baz".to_string());
+        assert!(module.is_on);
+        assert_eq!(pulses.len(), 0);
+
+        let pulses = module.pulse(false, "baz".to_string());
+        assert!(!module.is_on);
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].from, "foo".to_string());
+        assert_eq!(pulses[0].to, "bar".to_string());
+        assert_eq!(pulses[0].high, false);
+    }
+
+    #[test]
+    fn test_conjunction_pulse_one_input() {
+        let mut module = Conjunction::new("inv".to_string(), vec!["out".to_string()]);
+        module.reset_inputs(vec!["inp".to_string()]);
+
+        let pulses = module.pulse(false, "inp".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].from, "inv".to_string());
+        assert_eq!(pulses[0].to, "out".to_string());
+        assert_eq!(pulses[0].high, true);
+
+        let pulses = module.pulse(false, "inp".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, true);
+
+        let pulses = module.pulse(true, "inp".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, false);
+
+        let pulses = module.pulse(true, "inp".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, false);
+
+        let pulses = module.pulse(false, "inp".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, true);
+    }
+
+    #[test]
+    fn test_conjunction_pulse_multiple_input() {
+        let mut module = Conjunction::new("conj".to_string(), vec!["out".to_string()]);
+        module.reset_inputs(vec![
+            "bim".to_string(),
+            "bam".to_string(),
+            "boom".to_string(),
+        ]);
+
+        let pulses = module.pulse(false, "bim".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].from, "conj".to_string());
+        assert_eq!(pulses[0].to, "out".to_string());
+        assert_eq!(pulses[0].high, true);
+
+        let pulses = module.pulse(true, "bim".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, true);
+
+        let pulses = module.pulse(true, "bam".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, true);
+
+        let pulses = module.pulse(true, "boom".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, false);
+
+        let pulses = module.pulse(false, "bam".to_string());
+        assert_eq!(pulses.len(), 1);
+        assert_eq!(pulses[0].high, true);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_conjunction_pulse_without_inputs() {
+        let mut module = Conjunction::new("foo".to_string(), vec!["bar".to_string()]);
+        module.reset_inputs(vec![]);
+        module.pulse(false, "baz".to_string());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_conjunction_pulse_with_unknown_input() {
+        let mut no_input = Conjunction::new("foo".to_string(), vec!["bar".to_string()]);
+        no_input.reset_inputs(vec!["baz".to_string()]);
+        no_input.pulse(false, "boo".to_string());
     }
 }

@@ -1,33 +1,17 @@
-use aoc_utils as utils;
 use std::cmp::max;
 
-#[test]
-fn test_mine() {
-    execute()
-}
-
-pub fn execute() {
+pub fn execute() -> String {
+    let input = aoc_utils::read_lines("input/day2.txt");
     let bag_content = CubeHand {
         red: 12,
         green: 13,
         blue: 14,
     };
 
-    let input = utils::read_lines("input/day2.txt");
-    assert_eq!(2317, sum_possibles(&bag_content, &input));
-    assert_eq!(74804, sum_powers(&input));
-}
+    let part1 = sum_possibles(&bag_content, &input);
+    let part2 = sum_powers(&input);
 
-#[test]
-fn test_sum_possibles() {
-    let bag_content = CubeHand {
-        red: 12,
-        green: 13,
-        blue: 14,
-    };
-
-    let example = utils::read_lines("input/day2-example.txt");
-    assert_eq!(8, sum_possibles(&bag_content, &example));
+    format!("{} {}", part1, part2)
 }
 
 fn sum_possibles(bag: &CubeHand, games: &Vec<String>) -> u32 {
@@ -39,12 +23,6 @@ fn sum_possibles(bag: &CubeHand, games: &Vec<String>) -> u32 {
         }
     }
     return total;
-}
-
-#[test]
-fn test_sum_powers() {
-    let example = utils::read_lines("input/day2-example.txt");
-    assert_eq!(2286, sum_powers(&example));
 }
 
 fn sum_powers(games: &Vec<String>) -> u32 {
@@ -128,5 +106,33 @@ impl CubeHand {
 
     fn power(&self) -> u32 {
         return self.red * self.green * self.blue;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "2317 74804");
+    }
+
+    #[test]
+    fn test_sum_possibles() {
+        let bag_content = CubeHand {
+            red: 12,
+            green: 13,
+            blue: 14,
+        };
+
+        let example = aoc_utils::read_lines("input/day2-example.txt");
+        assert_eq!(8, sum_possibles(&bag_content, &example));
+    }
+
+    #[test]
+    fn test_sum_powers() {
+        let example = aoc_utils::read_lines("input/day2-example.txt");
+        assert_eq!(2286, sum_powers(&example));
     }
 }

@@ -1,22 +1,16 @@
-use aoc_utils as utils;
 use std::collections::{HashMap, HashSet, VecDeque};
 
-#[test]
-fn test_mine() {
-    execute()
-}
-
-pub fn execute() {
-    let mut mine = BrickYard::from_lines(utils::read_lines("input/day22.txt"));
+pub fn execute() -> String {
+    let mut mine = BrickYard::from_lines(aoc_utils::read_lines("input/day22.txt"));
     mine.drop();
-    assert_eq!(1221, mine.bricks.len());
-    assert_eq!(3656, mine.blocks.len());
-
     let disintegratable = mine.disintegratable_bricks();
-    assert_eq!(389, disintegratable.len());
 
     let chain_reactions = mine.chain_reactions();
-    assert_eq!(70609, chain_reactions.values().sum::<usize>());
+
+    let part1 = disintegratable.len();
+    let part2 = chain_reactions.values().sum::<usize>();
+
+    format!("{} {}", part1, part2)
 }
 
 type Dimension = u16;
@@ -77,67 +71,10 @@ impl Brick {
     }
 }
 
-fn _example() -> Vec<String> {
-    vec![
-        "1,0,1~1,2,1".to_string(),
-        "0,0,2~2,0,2".to_string(),
-        "0,2,3~2,2,3".to_string(),
-        "0,0,4~0,2,4".to_string(),
-        "2,0,5~2,2,5".to_string(),
-        "0,1,6~2,1,6".to_string(),
-        "1,1,8~1,1,9".to_string(),
-    ]
-}
-
-#[test]
-fn test_brick_from_line() {
-    let example1 = Brick::from_line(0, &String::from("1,0,1~1,2,1"));
-    assert_eq!(0, example1.id);
-    assert_eq!(1, example1.start.x);
-    assert_eq!(0, example1.start.y);
-    assert_eq!(1, example1.start.z);
-    assert_eq!(1, example1.end.x);
-    assert_eq!(2, example1.end.y);
-    assert_eq!(1, example1.end.z);
-
-    assert_eq!(3, example1.blocks.len());
-    assert!(example1.blocks.contains(&example1.start));
-    assert!(example1.blocks.contains(&example1.end));
-    assert!(example1.blocks.contains(&Coordinates { x: 1, y: 1, z: 1 }));
-
-    let example2 = Brick::from_line(1, &String::from("0,0,2~2,0,2"));
-    assert_eq!(1, example2.id);
-    assert_eq!(0, example2.start.x);
-    assert_eq!(0, example2.start.y);
-    assert_eq!(2, example2.start.z);
-    assert_eq!(2, example2.end.x);
-    assert_eq!(0, example2.end.y);
-    assert_eq!(2, example2.end.z);
-
-    assert_eq!(3, example2.blocks.len());
-    assert!(example2.blocks.contains(&example2.start));
-    assert!(example2.blocks.contains(&example2.end));
-    assert!(example2.blocks.contains(&Coordinates { x: 1, y: 0, z: 2 }));
-
-    let example2 = Brick::from_line(2, &String::from("1,1,8~1,1,9"));
-    assert_eq!(2, example2.id);
-    assert_eq!(1, example2.start.x);
-    assert_eq!(1, example2.start.y);
-    assert_eq!(8, example2.start.z);
-    assert_eq!(1, example2.end.x);
-    assert_eq!(1, example2.end.y);
-    assert_eq!(9, example2.end.z);
-
-    assert_eq!(2, example2.blocks.len());
-    assert!(example2.blocks.contains(&example2.start));
-    assert!(example2.blocks.contains(&example2.end));
-}
-
 struct BrickYard {
     bricks: Vec<Brick>,
     blocks: HashSet<Coordinates>,
 }
-
 impl BrickYard {
     fn from_lines(lines: Vec<String>) -> BrickYard {
         let mut bricks = lines
@@ -291,80 +228,147 @@ impl BrickYard {
         reactions
     }
 }
-#[test]
-fn test_from_lines() {
-    let example = BrickYard::from_lines(_example());
-    assert_eq!(7, example.bricks.len());
-    assert_eq!(20, example.blocks.len());
-    assert_eq!(Coordinates { x: 1, y: 0, z: 1 }, example.bricks[0].start);
 
-    let unordered = BrickYard::from_lines(vec![
-        "0,0,2~2,0,2".to_string(),
-        "0,2,3~2,2,3".to_string(),
-        "1,0,1~1,2,1".to_string(),
-    ]);
-    assert_eq!(2, unordered.bricks[0].id);
-    assert_eq!(0, unordered.bricks[1].id);
-    assert_eq!(1, unordered.bricks[2].id);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_drop() {
-    let mut example = BrickYard::from_lines(_example());
-    example.drop();
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "389 70609");
+    }
 
-    assert!(example
-        .bricks
-        .iter()
-        .enumerate()
-        .all(|(index, brick)| index as BrickID == brick.id));
+    fn _example() -> Vec<String> {
+        vec![
+            "1,0,1~1,2,1".to_string(),
+            "0,0,2~2,0,2".to_string(),
+            "0,2,3~2,2,3".to_string(),
+            "0,0,4~0,2,4".to_string(),
+            "2,0,5~2,2,5".to_string(),
+            "0,1,6~2,1,6".to_string(),
+            "1,1,8~1,1,9".to_string(),
+        ]
+    }
 
-    assert_eq!(Coordinates { x: 1, y: 0, z: 1 }, example.bricks[0].start);
-    assert_eq!(Coordinates { x: 1, y: 2, z: 1 }, example.bricks[0].end);
+    #[test]
+    fn test_brick_from_line() {
+        let example1 = Brick::from_line(0, &String::from("1,0,1~1,2,1"));
+        assert_eq!(0, example1.id);
+        assert_eq!(1, example1.start.x);
+        assert_eq!(0, example1.start.y);
+        assert_eq!(1, example1.start.z);
+        assert_eq!(1, example1.end.x);
+        assert_eq!(2, example1.end.y);
+        assert_eq!(1, example1.end.z);
 
-    assert_eq!(Coordinates { x: 0, y: 0, z: 2 }, example.bricks[1].start);
-    assert_eq!(Coordinates { x: 2, y: 0, z: 2 }, example.bricks[1].end);
+        assert_eq!(3, example1.blocks.len());
+        assert!(example1.blocks.contains(&example1.start));
+        assert!(example1.blocks.contains(&example1.end));
+        assert!(example1.blocks.contains(&Coordinates { x: 1, y: 1, z: 1 }));
 
-    assert_eq!(Coordinates { x: 0, y: 2, z: 2 }, example.bricks[2].start);
-    assert_eq!(Coordinates { x: 2, y: 2, z: 2 }, example.bricks[2].end);
+        let example2 = Brick::from_line(1, &String::from("0,0,2~2,0,2"));
+        assert_eq!(1, example2.id);
+        assert_eq!(0, example2.start.x);
+        assert_eq!(0, example2.start.y);
+        assert_eq!(2, example2.start.z);
+        assert_eq!(2, example2.end.x);
+        assert_eq!(0, example2.end.y);
+        assert_eq!(2, example2.end.z);
 
-    assert_eq!(Coordinates { x: 0, y: 0, z: 3 }, example.bricks[3].start);
-    assert_eq!(Coordinates { x: 0, y: 2, z: 3 }, example.bricks[3].end);
+        assert_eq!(3, example2.blocks.len());
+        assert!(example2.blocks.contains(&example2.start));
+        assert!(example2.blocks.contains(&example2.end));
+        assert!(example2.blocks.contains(&Coordinates { x: 1, y: 0, z: 2 }));
 
-    assert_eq!(Coordinates { x: 2, y: 0, z: 3 }, example.bricks[4].start);
-    assert_eq!(Coordinates { x: 2, y: 2, z: 3 }, example.bricks[4].end);
+        let example2 = Brick::from_line(2, &String::from("1,1,8~1,1,9"));
+        assert_eq!(2, example2.id);
+        assert_eq!(1, example2.start.x);
+        assert_eq!(1, example2.start.y);
+        assert_eq!(8, example2.start.z);
+        assert_eq!(1, example2.end.x);
+        assert_eq!(1, example2.end.y);
+        assert_eq!(9, example2.end.z);
 
-    assert_eq!(Coordinates { x: 0, y: 1, z: 4 }, example.bricks[5].start);
-    assert_eq!(Coordinates { x: 2, y: 1, z: 4 }, example.bricks[5].end);
+        assert_eq!(2, example2.blocks.len());
+        assert!(example2.blocks.contains(&example2.start));
+        assert!(example2.blocks.contains(&example2.end));
+    }
 
-    assert_eq!(Coordinates { x: 1, y: 1, z: 5 }, example.bricks[6].start);
-    assert_eq!(Coordinates { x: 1, y: 1, z: 6 }, example.bricks[6].end);
-}
+    #[test]
+    fn test_from_lines() {
+        let example = BrickYard::from_lines(_example());
+        assert_eq!(7, example.bricks.len());
+        assert_eq!(20, example.blocks.len());
+        assert_eq!(Coordinates { x: 1, y: 0, z: 1 }, example.bricks[0].start);
 
-#[test]
-fn test_destroy_one() {
-    let mut example = BrickYard::from_lines(_example());
-    example.drop();
-    let destroyables = example.disintegratable_bricks();
+        let unordered = BrickYard::from_lines(vec![
+            "0,0,2~2,0,2".to_string(),
+            "0,2,3~2,2,3".to_string(),
+            "1,0,1~1,2,1".to_string(),
+        ]);
+        assert_eq!(2, unordered.bricks[0].id);
+        assert_eq!(0, unordered.bricks[1].id);
+        assert_eq!(1, unordered.bricks[2].id);
+    }
 
-    assert_eq!(5, destroyables.len());
-}
+    #[test]
+    fn test_drop() {
+        let mut example = BrickYard::from_lines(_example());
+        example.drop();
 
-#[test]
-fn test_chain_reactions() {
-    let mut example = BrickYard::from_lines(_example());
-    example.drop();
+        assert!(example
+            .bricks
+            .iter()
+            .enumerate()
+            .all(|(index, brick)| index as BrickID == brick.id));
 
-    let chain_reactions = example.chain_reactions();
+        assert_eq!(Coordinates { x: 1, y: 0, z: 1 }, example.bricks[0].start);
+        assert_eq!(Coordinates { x: 1, y: 2, z: 1 }, example.bricks[0].end);
 
-    assert_eq!(7, chain_reactions.len());
-    assert_eq!(7, chain_reactions.values().sum::<usize>());
+        assert_eq!(Coordinates { x: 0, y: 0, z: 2 }, example.bricks[1].start);
+        assert_eq!(Coordinates { x: 2, y: 0, z: 2 }, example.bricks[1].end);
 
-    assert_eq!(6, chain_reactions[&0]);
-    assert_eq!(0, chain_reactions[&1]);
-    assert_eq!(0, chain_reactions[&2]);
-    assert_eq!(0, chain_reactions[&3]);
-    assert_eq!(0, chain_reactions[&4]);
-    assert_eq!(1, chain_reactions[&5]);
-    assert_eq!(0, chain_reactions[&6]);
+        assert_eq!(Coordinates { x: 0, y: 2, z: 2 }, example.bricks[2].start);
+        assert_eq!(Coordinates { x: 2, y: 2, z: 2 }, example.bricks[2].end);
+
+        assert_eq!(Coordinates { x: 0, y: 0, z: 3 }, example.bricks[3].start);
+        assert_eq!(Coordinates { x: 0, y: 2, z: 3 }, example.bricks[3].end);
+
+        assert_eq!(Coordinates { x: 2, y: 0, z: 3 }, example.bricks[4].start);
+        assert_eq!(Coordinates { x: 2, y: 2, z: 3 }, example.bricks[4].end);
+
+        assert_eq!(Coordinates { x: 0, y: 1, z: 4 }, example.bricks[5].start);
+        assert_eq!(Coordinates { x: 2, y: 1, z: 4 }, example.bricks[5].end);
+
+        assert_eq!(Coordinates { x: 1, y: 1, z: 5 }, example.bricks[6].start);
+        assert_eq!(Coordinates { x: 1, y: 1, z: 6 }, example.bricks[6].end);
+    }
+
+    #[test]
+    fn test_destroy_one() {
+        let mut example = BrickYard::from_lines(_example());
+        example.drop();
+        let destroyables = example.disintegratable_bricks();
+
+        assert_eq!(5, destroyables.len());
+    }
+
+    #[test]
+    fn test_chain_reactions() {
+        let mut example = BrickYard::from_lines(_example());
+        example.drop();
+
+        let chain_reactions = example.chain_reactions();
+
+        assert_eq!(7, chain_reactions.len());
+        assert_eq!(7, chain_reactions.values().sum::<usize>());
+
+        assert_eq!(6, chain_reactions[&0]);
+        assert_eq!(0, chain_reactions[&1]);
+        assert_eq!(0, chain_reactions[&2]);
+        assert_eq!(0, chain_reactions[&3]);
+        assert_eq!(0, chain_reactions[&4]);
+        assert_eq!(1, chain_reactions[&5]);
+        assert_eq!(0, chain_reactions[&6]);
+    }
 }

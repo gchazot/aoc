@@ -1,34 +1,16 @@
-use aoc_utils as utils;
 use std::collections::HashSet;
 
-#[test]
-fn test_mine() {
-    execute()
-}
-
-pub fn execute() {
+pub fn execute() -> String {
     let cards = Card::from_file("day4.txt");
 
-    assert_eq!(21959, simple_wins(&cards));
-    assert_eq!(5132675, correct_wins(&cards));
-}
+    let part1 = simple_wins(&cards);
+    let part2 = correct_wins(&cards);
 
-#[test]
-fn test_simple_wins() {
-    let example_cards = Card::from_file("day4-example.txt");
-
-    assert_eq!(13, simple_wins(&example_cards));
-    assert_eq!(30, correct_wins(&example_cards));
+    format!("{} {}", part1, part2)
 }
 
 fn simple_wins(cards: &Vec<Card>) -> u32 {
     return cards.iter().map(Card::simple_score).sum::<u32>();
-}
-
-#[test]
-fn test_correct_wins() {
-    let example_cards = Card::from_file("day4-example.txt");
-    assert_eq!(30, correct_wins(&example_cards));
 }
 
 fn correct_wins(cards: &Vec<Card>) -> u32 {
@@ -56,7 +38,7 @@ struct Card {
 impl Card {
     fn from_file(filename: &str) -> Vec<Card> {
         let path = format!("input/{}", &filename);
-        let lines = utils::read_lines(&path);
+        let lines = aoc_utils::read_lines(&path);
         return Vec::from_iter(lines.iter().map(|line| Card::from_text(&line)));
     }
 
@@ -93,5 +75,28 @@ impl Card {
     fn correct_score(&self) -> usize {
         let matches = self.winners.intersection(&self.numbers);
         return matches.count();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "21959 5132675");
+    }
+    #[test]
+    fn test_simple_wins() {
+        let example_cards = Card::from_file("day4-example.txt");
+
+        assert_eq!(13, simple_wins(&example_cards));
+        assert_eq!(30, correct_wins(&example_cards));
+    }
+
+    #[test]
+    fn test_correct_wins() {
+        let example_cards = Card::from_file("day4-example.txt");
+        assert_eq!(30, correct_wins(&example_cards));
     }
 }

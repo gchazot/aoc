@@ -1,112 +1,15 @@
-use aoc_utils as utils;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 
-#[test]
-fn test_mine() {
-    execute();
-}
-
-pub fn execute() {
+pub fn execute() -> String {
     let map = PipeMap::from_file("day10.txt");
     let net = map.to_network();
     let length = net.pipe_length(map.start().unwrap());
 
-    assert_eq!(13884, length);
-    assert_eq!(6942, length / 2);
+    let part1 = length / 2;
+    let part2 = map.inner_size();
 
-    let inner = map.inner_size();
-    assert_eq!(297, inner);
-}
-
-#[test]
-fn test_inner_size() {
-    let map2 = PipeMap::from_file("day10-example2.txt");
-    assert_eq!(map2.inner_size(), 1);
-    let map3 = PipeMap::from_file("day10-example3.txt");
-    assert_eq!(map3.inner_size(), 1);
-    let map4 = PipeMap::from_file("day10-example4.txt");
-    assert_eq!(map4.inner_size(), 4);
-    let map5 = PipeMap::from_file("day10-example5.txt");
-    assert_eq!(map5.inner_size(), 4);
-    let map6 = PipeMap::from_file("day10-example6.txt");
-    assert_eq!(map6.inner_size(), 8);
-    let map7 = PipeMap::from_file("day10-example7.txt");
-    assert_eq!(map7.inner_size(), 10);
-}
-
-#[test]
-fn test_inner_region() {
-    let map2 = PipeMap::from_file("day10-example2.txt");
-    let net2 = map2.to_network();
-
-    let inner = net2.inner_region(map2.start().unwrap());
-
-    assert_eq!(inner.len(), 1);
-    assert!(inner.contains(&Position(3, 3)));
-}
-
-#[test]
-fn test_expand_network() {
-    let map3 = PipeMap::from_file("day10-example3.txt");
-    let net3 = map3.to_network().clean(map3.start().unwrap());
-    assert_eq!(8, net3.len());
-    let exp3 = net3.expand();
-    assert_eq!(8, net3.len());
-    assert_eq!(16, exp3.len());
-}
-
-#[test]
-fn test_pipe_length() {
-    let map3 = PipeMap::from_file("day10-example3.txt");
-    let net3 = map3.to_network();
-    let length = net3.pipe_length(map3.start().unwrap());
-    assert_eq!(8, length);
-
-    // This is the furthest point away
-    assert_eq!(4, length / 2);
-}
-
-#[test]
-fn test_clean() {
-    let map2 = PipeMap::from_file("day10-example2.txt");
-    let net2 = map2.to_network();
-    let map3 = PipeMap::from_file("day10-example3.txt");
-    let net3 = map3.to_network();
-    let clean3 = net3.clean(map3.start().unwrap());
-
-    assert_eq!(net2.connections, clean3.connections);
-}
-
-#[test]
-fn test_map_to_network() {
-    let net1 = PipeMap::from_file("day10-example1.txt").to_network();
-
-    assert_eq!(8, net1.len());
-
-    assert_eq!(
-        HashSet::from([Position(2, 3), Position(3, 2)]),
-        net1.get(&Position(2, 2)),
-    );
-    assert_eq!(
-        HashSet::from([Position(4, 2), Position(4, 4)]),
-        net1.get(&Position(4, 3)),
-    );
-    assert_eq!(
-        HashSet::from([Position(2, 3), Position(3, 4)]),
-        net1.get(&Position(2, 4)),
-    );
-
-    let net2 = PipeMap::from_file("day10-example2.txt").to_network();
-    assert_eq!(net1.len(), net2.len());
-    assert_eq!(net1.connections, net2.connections);
-
-    let net3 = PipeMap::from_file("day10-example3.txt").to_network();
-
-    assert!(net3.len() >= net1.len());
-    for (pos, neighbours) in net1.connections.iter() {
-        assert_eq!(&net3.get(pos), neighbours);
-    }
+    format!("{} {}", part1, part2)
 }
 
 struct Network {
@@ -134,10 +37,6 @@ impl Network {
         } else {
             HashSet::new()
         }
-    }
-
-    fn len(&self) -> usize {
-        self.connections.len()
     }
 
     fn clean(&self, start: &Position) -> Self {
@@ -254,27 +153,6 @@ impl Network {
     }
 }
 
-#[test]
-fn test_get_direction() {
-    use Direction::*;
-
-    fn check(expected: Result<Direction, &'static str>, a: Position, b: Position) {
-        assert_eq!(expected, get_direction(&a, &b));
-    }
-
-    check(Ok(North), Position(1, 2), Position(1, 1));
-    check(Ok(South), Position(1, 1), Position(1, 2));
-    check(Ok(East), Position(1, 1), Position(2, 1));
-    check(Ok(West), Position(2, 1), Position(1, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(1, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(1, 3));
-    check(Err("Not a valid step"), Position(1, 3), Position(1, 1));
-    check(Err("Not a valid step"), Position(3, 1), Position(1, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(3, 1));
-    check(Err("Not a valid step"), Position(1, 1), Position(3, 3));
-    check(Err("Not a valid step"), Position(3, 3), Position(1, 1));
-}
-
 fn get_direction(a: &Position, b: &Position) -> Result<Direction, &'static str> {
     let delta = (b.0 as i64 - a.0 as i64, b.1 as i64 - a.1 as i64);
     match delta {
@@ -286,41 +164,6 @@ fn get_direction(a: &Position, b: &Position) -> Result<Direction, &'static str> 
     }
 }
 
-#[test]
-fn test_parse_pipe_map() {
-    let map1 = PipeMap::from_file("day10-example1.txt");
-    assert_eq!(5 * 5, map1.nodes.len());
-    assert!(matches!(map1.start(), None));
-    assert!(matches!(map1.nodes[&Position(1, 1)], Pipe::None));
-    assert!(matches!(map1.nodes[&Position(2, 2)], Pipe::SouthEast));
-    assert!(matches!(map1.nodes[&Position(3, 2)], Pipe::EastWest));
-    assert!(matches!(map1.nodes[&Position(4, 2)], Pipe::SouthWest));
-    assert!(matches!(map1.nodes[&Position(2, 3)], Pipe::NorthSouth));
-    assert!(matches!(map1.nodes[&Position(4, 3)], Pipe::NorthSouth));
-    assert!(matches!(map1.nodes[&Position(2, 4)], Pipe::NorthEast));
-    assert!(matches!(map1.nodes[&Position(3, 4)], Pipe::EastWest));
-    assert!(matches!(map1.nodes[&Position(4, 4)], Pipe::NorthWest));
-    assert!(matches!(map1.nodes[&Position(1, 5)], Pipe::None));
-    assert!(matches!(map1.nodes[&Position(5, 5)], Pipe::None));
-
-    let map2 = PipeMap::from_file("day10-example2.txt");
-    assert_eq!(5 * 5, map2.nodes.len());
-    assert!(matches!(map2.start(), Some(Position(2, 2))));
-    assert!(matches!(map2.nodes[&Position(1, 1)], Pipe::None));
-    assert!(matches!(map2.nodes[&Position(2, 2)], Pipe::Start));
-    assert!(matches!(map2.nodes[&Position(4, 2)], Pipe::SouthWest));
-    assert!(matches!(map2.nodes[&Position(2, 4)], Pipe::NorthEast));
-
-    let map3 = PipeMap::from_file("day10-example3.txt");
-    assert_eq!(5 * 5, map3.nodes.len());
-    assert!(matches!(map3.start(), Some(Position(2, 2))));
-    assert!(matches!(map3.nodes[&Position(1, 1)], Pipe::EastWest));
-    assert!(matches!(map3.nodes[&Position(2, 2)], Pipe::Start));
-    assert!(matches!(map3.nodes[&Position(5, 1)], Pipe::SouthWest));
-    assert!(matches!(map3.nodes[&Position(1, 5)], Pipe::NorthEast));
-    assert!(matches!(map3.nodes[&Position(5, 5)], Pipe::SouthEast));
-}
-
 struct PipeMap {
     nodes: HashMap<Position, Pipe>,
 }
@@ -328,7 +171,7 @@ struct PipeMap {
 impl PipeMap {
     fn from_file(filename: &str) -> PipeMap {
         let path = format!("input/{}", &filename);
-        let lines = utils::read_lines(&path);
+        let lines = aoc_utils::read_lines(&path);
 
         let mut nodes = HashMap::<Position, Pipe>::new();
         for (i, line) in lines.iter().enumerate() {
@@ -381,77 +224,6 @@ impl PipeMap {
     }
 }
 
-#[test]
-fn test_position_to() {
-    use Direction::*;
-
-    let origin = Position(0, 0);
-    assert_eq!(Position(0, 0), origin);
-    let east = origin.to(&East).unwrap();
-    assert_eq!(Position(1, 0), east);
-    let southeast = east.to(&South).unwrap();
-    assert_eq!(Position(1, 1), southeast);
-    let south = southeast.to(&West).unwrap();
-    assert_eq!(Position(0, 1), south);
-    let origin_again = south.to(&North).unwrap();
-    assert_eq!(Position(0, 0), origin_again);
-}
-#[test]
-fn test_position_step() {
-    use Direction::*;
-
-    let mut pos = Position(0, 0);
-    assert_eq!(Position(0, 0), pos);
-    pos.step(&East);
-    assert_eq!(Position(1, 0), pos);
-    pos.step(&South);
-    assert_eq!(Position(1, 1), pos);
-    pos.step(&West);
-    assert_eq!(Position(0, 1), pos);
-    pos.step(&North);
-    assert_eq!(Position(0, 0), pos);
-
-    pos.step(&East);
-    pos.step(&East);
-    pos.step(&East);
-    assert_eq!(Position(3, 0), pos);
-    pos.step(&South);
-    pos.step(&South);
-    pos.step(&South);
-    pos.step(&South);
-    pos.step(&South);
-    assert_eq!(Position(3, 5), pos);
-    pos.step(&West);
-    pos.step(&West);
-    assert_eq!(Position(1, 5), pos);
-    pos.step(&North);
-    assert_eq!(Position(1, 4), pos);
-}
-
-#[test]
-fn test_position_can_step() {
-    use Direction::*;
-    assert!(!Position(0, 0).can_step(&North));
-    assert!(Position(0, 0).can_step(&South));
-    assert!(Position(0, 0).can_step(&East));
-    assert!(!Position(0, 0).can_step(&West));
-
-    assert!(!Position(1, 0).can_step(&North));
-    assert!(Position(1, 0).can_step(&South));
-    assert!(Position(1, 0).can_step(&East));
-    assert!(Position(1, 0).can_step(&West));
-
-    assert!(Position(0, 1).can_step(&North));
-    assert!(Position(0, 1).can_step(&South));
-    assert!(Position(0, 1).can_step(&East));
-    assert!(!Position(0, 1).can_step(&West));
-
-    assert!(Position(1, 1).can_step(&North));
-    assert!(Position(1, 1).can_step(&South));
-    assert!(Position(1, 1).can_step(&East));
-    assert!(Position(1, 1).can_step(&West));
-}
-
 #[derive(Debug, PartialEq, Eq, Hash)]
 enum Direction {
     North,
@@ -490,36 +262,6 @@ impl Position {
             North => self.1 > 0,
             West => self.0 > 0,
             _ => true,
-        }
-    }
-}
-
-#[test]
-fn test_parse_pipe() {
-    assert!(matches!(pipe_from_char('|'), Pipe::NorthSouth));
-    assert!(matches!(pipe_from_char('L'), Pipe::NorthEast));
-    assert!(matches!(pipe_from_char('J'), Pipe::NorthWest));
-    assert!(matches!(pipe_from_char('F'), Pipe::SouthEast));
-    assert!(matches!(pipe_from_char('7'), Pipe::SouthWest));
-    assert!(matches!(pipe_from_char('-'), Pipe::EastWest));
-    assert!(matches!(pipe_from_char('S'), Pipe::Start));
-
-    for i in 0..255u8 {
-        let pipe = pipe_from_char(i as char);
-        if "|LJF7-S".contains(i as char) {
-            assert!(matches!(
-                &pipe,
-                Pipe::Start
-                    | Pipe::NorthEast
-                    | Pipe::NorthWest
-                    | Pipe::SouthEast
-                    | Pipe::SouthWest
-                    | Pipe::EastWest
-                    | Pipe::NorthSouth
-            ));
-            assert!(!matches!(pipe, Pipe::None));
-        } else {
-            assert!(matches!(pipe, Pipe::None));
         }
     }
 }
@@ -575,5 +317,261 @@ fn pipe_to_directions(pipe: &Pipe) -> HashSet<Direction> {
         Pipe::EastWest => HashSet::from([East, West]),
         Pipe::Start => HashSet::from([North, South, East, West]),
         Pipe::None => HashSet::new(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "6942 297");
+    }
+
+    #[test]
+    fn test_inner_size() {
+        let map2 = PipeMap::from_file("day10-example2.txt");
+        assert_eq!(map2.inner_size(), 1);
+        let map3 = PipeMap::from_file("day10-example3.txt");
+        assert_eq!(map3.inner_size(), 1);
+        let map4 = PipeMap::from_file("day10-example4.txt");
+        assert_eq!(map4.inner_size(), 4);
+        let map5 = PipeMap::from_file("day10-example5.txt");
+        assert_eq!(map5.inner_size(), 4);
+        let map6 = PipeMap::from_file("day10-example6.txt");
+        assert_eq!(map6.inner_size(), 8);
+        let map7 = PipeMap::from_file("day10-example7.txt");
+        assert_eq!(map7.inner_size(), 10);
+    }
+
+    #[test]
+    fn test_inner_region() {
+        let map2 = PipeMap::from_file("day10-example2.txt");
+        let net2 = map2.to_network();
+
+        let inner = net2.inner_region(map2.start().unwrap());
+
+        assert_eq!(inner.len(), 1);
+        assert!(inner.contains(&Position(3, 3)));
+    }
+
+    #[test]
+    fn test_expand_network() {
+        let map3 = PipeMap::from_file("day10-example3.txt");
+        let net3 = map3.to_network().clean(map3.start().unwrap());
+        assert_eq!(8, net3.connections.len());
+        let exp3 = net3.expand();
+        assert_eq!(8, net3.connections.len());
+        assert_eq!(16, exp3.connections.len());
+    }
+
+    #[test]
+    fn test_pipe_length() {
+        let map3 = PipeMap::from_file("day10-example3.txt");
+        let net3 = map3.to_network();
+        let length = net3.pipe_length(map3.start().unwrap());
+        assert_eq!(8, length);
+
+        // This is the furthest point away
+        assert_eq!(4, length / 2);
+    }
+
+    #[test]
+    fn test_clean() {
+        let map2 = PipeMap::from_file("day10-example2.txt");
+        let net2 = map2.to_network();
+        let map3 = PipeMap::from_file("day10-example3.txt");
+        let net3 = map3.to_network();
+        let clean3 = net3.clean(map3.start().unwrap());
+
+        assert_eq!(net2.connections, clean3.connections);
+    }
+
+    #[test]
+    fn test_map_to_network() {
+        let net1 = PipeMap::from_file("day10-example1.txt").to_network();
+
+        assert_eq!(8, net1.connections.len());
+
+        assert_eq!(
+            HashSet::from([Position(2, 3), Position(3, 2)]),
+            net1.get(&Position(2, 2)),
+        );
+        assert_eq!(
+            HashSet::from([Position(4, 2), Position(4, 4)]),
+            net1.get(&Position(4, 3)),
+        );
+        assert_eq!(
+            HashSet::from([Position(2, 3), Position(3, 4)]),
+            net1.get(&Position(2, 4)),
+        );
+
+        let net2 = PipeMap::from_file("day10-example2.txt").to_network();
+        assert_eq!(net1.connections.len(), net2.connections.len());
+        assert_eq!(net1.connections, net2.connections);
+
+        let net3 = PipeMap::from_file("day10-example3.txt").to_network();
+
+        assert!(net3.connections.len() >= net1.connections.len());
+        for (pos, neighbours) in net1.connections.iter() {
+            assert_eq!(&net3.get(pos), neighbours);
+        }
+    }
+    #[test]
+    fn test_get_direction() {
+        use Direction::*;
+
+        fn check(expected: Result<Direction, &'static str>, a: Position, b: Position) {
+            assert_eq!(expected, get_direction(&a, &b));
+        }
+
+        check(Ok(North), Position(1, 2), Position(1, 1));
+        check(Ok(South), Position(1, 1), Position(1, 2));
+        check(Ok(East), Position(1, 1), Position(2, 1));
+        check(Ok(West), Position(2, 1), Position(1, 1));
+        check(Err("Not a valid step"), Position(1, 1), Position(1, 1));
+        check(Err("Not a valid step"), Position(1, 1), Position(1, 3));
+        check(Err("Not a valid step"), Position(1, 3), Position(1, 1));
+        check(Err("Not a valid step"), Position(3, 1), Position(1, 1));
+        check(Err("Not a valid step"), Position(1, 1), Position(3, 1));
+        check(Err("Not a valid step"), Position(1, 1), Position(3, 3));
+        check(Err("Not a valid step"), Position(3, 3), Position(1, 1));
+    }
+
+    #[test]
+    fn test_parse_pipe_map() {
+        let map1 = PipeMap::from_file("day10-example1.txt");
+        assert_eq!(5 * 5, map1.nodes.len());
+        assert!(matches!(map1.start(), None));
+        assert!(matches!(map1.nodes[&Position(1, 1)], Pipe::None));
+        assert!(matches!(map1.nodes[&Position(2, 2)], Pipe::SouthEast));
+        assert!(matches!(map1.nodes[&Position(3, 2)], Pipe::EastWest));
+        assert!(matches!(map1.nodes[&Position(4, 2)], Pipe::SouthWest));
+        assert!(matches!(map1.nodes[&Position(2, 3)], Pipe::NorthSouth));
+        assert!(matches!(map1.nodes[&Position(4, 3)], Pipe::NorthSouth));
+        assert!(matches!(map1.nodes[&Position(2, 4)], Pipe::NorthEast));
+        assert!(matches!(map1.nodes[&Position(3, 4)], Pipe::EastWest));
+        assert!(matches!(map1.nodes[&Position(4, 4)], Pipe::NorthWest));
+        assert!(matches!(map1.nodes[&Position(1, 5)], Pipe::None));
+        assert!(matches!(map1.nodes[&Position(5, 5)], Pipe::None));
+
+        let map2 = PipeMap::from_file("day10-example2.txt");
+        assert_eq!(5 * 5, map2.nodes.len());
+        assert!(matches!(map2.start(), Some(Position(2, 2))));
+        assert!(matches!(map2.nodes[&Position(1, 1)], Pipe::None));
+        assert!(matches!(map2.nodes[&Position(2, 2)], Pipe::Start));
+        assert!(matches!(map2.nodes[&Position(4, 2)], Pipe::SouthWest));
+        assert!(matches!(map2.nodes[&Position(2, 4)], Pipe::NorthEast));
+
+        let map3 = PipeMap::from_file("day10-example3.txt");
+        assert_eq!(5 * 5, map3.nodes.len());
+        assert!(matches!(map3.start(), Some(Position(2, 2))));
+        assert!(matches!(map3.nodes[&Position(1, 1)], Pipe::EastWest));
+        assert!(matches!(map3.nodes[&Position(2, 2)], Pipe::Start));
+        assert!(matches!(map3.nodes[&Position(5, 1)], Pipe::SouthWest));
+        assert!(matches!(map3.nodes[&Position(1, 5)], Pipe::NorthEast));
+        assert!(matches!(map3.nodes[&Position(5, 5)], Pipe::SouthEast));
+    }
+
+    #[test]
+    fn test_position_to() {
+        use Direction::*;
+
+        let origin = Position(0, 0);
+        assert_eq!(Position(0, 0), origin);
+        let east = origin.to(&East).unwrap();
+        assert_eq!(Position(1, 0), east);
+        let southeast = east.to(&South).unwrap();
+        assert_eq!(Position(1, 1), southeast);
+        let south = southeast.to(&West).unwrap();
+        assert_eq!(Position(0, 1), south);
+        let origin_again = south.to(&North).unwrap();
+        assert_eq!(Position(0, 0), origin_again);
+    }
+    #[test]
+    fn test_position_step() {
+        use Direction::*;
+
+        let mut pos = Position(0, 0);
+        assert_eq!(Position(0, 0), pos);
+        pos.step(&East);
+        assert_eq!(Position(1, 0), pos);
+        pos.step(&South);
+        assert_eq!(Position(1, 1), pos);
+        pos.step(&West);
+        assert_eq!(Position(0, 1), pos);
+        pos.step(&North);
+        assert_eq!(Position(0, 0), pos);
+
+        pos.step(&East);
+        pos.step(&East);
+        pos.step(&East);
+        assert_eq!(Position(3, 0), pos);
+        pos.step(&South);
+        pos.step(&South);
+        pos.step(&South);
+        pos.step(&South);
+        pos.step(&South);
+        assert_eq!(Position(3, 5), pos);
+        pos.step(&West);
+        pos.step(&West);
+        assert_eq!(Position(1, 5), pos);
+        pos.step(&North);
+        assert_eq!(Position(1, 4), pos);
+    }
+
+    #[test]
+    fn test_position_can_step() {
+        use Direction::*;
+        assert!(!Position(0, 0).can_step(&North));
+        assert!(Position(0, 0).can_step(&South));
+        assert!(Position(0, 0).can_step(&East));
+        assert!(!Position(0, 0).can_step(&West));
+
+        assert!(!Position(1, 0).can_step(&North));
+        assert!(Position(1, 0).can_step(&South));
+        assert!(Position(1, 0).can_step(&East));
+        assert!(Position(1, 0).can_step(&West));
+
+        assert!(Position(0, 1).can_step(&North));
+        assert!(Position(0, 1).can_step(&South));
+        assert!(Position(0, 1).can_step(&East));
+        assert!(!Position(0, 1).can_step(&West));
+
+        assert!(Position(1, 1).can_step(&North));
+        assert!(Position(1, 1).can_step(&South));
+        assert!(Position(1, 1).can_step(&East));
+        assert!(Position(1, 1).can_step(&West));
+    }
+
+    #[test]
+    fn test_parse_pipe() {
+        assert!(matches!(pipe_from_char('|'), Pipe::NorthSouth));
+        assert!(matches!(pipe_from_char('L'), Pipe::NorthEast));
+        assert!(matches!(pipe_from_char('J'), Pipe::NorthWest));
+        assert!(matches!(pipe_from_char('F'), Pipe::SouthEast));
+        assert!(matches!(pipe_from_char('7'), Pipe::SouthWest));
+        assert!(matches!(pipe_from_char('-'), Pipe::EastWest));
+        assert!(matches!(pipe_from_char('S'), Pipe::Start));
+
+        for i in 0..255u8 {
+            let pipe = pipe_from_char(i as char);
+            if "|LJF7-S".contains(i as char) {
+                assert!(matches!(
+                    &pipe,
+                    Pipe::Start
+                        | Pipe::NorthEast
+                        | Pipe::NorthWest
+                        | Pipe::SouthEast
+                        | Pipe::SouthWest
+                        | Pipe::EastWest
+                        | Pipe::NorthSouth
+                ));
+                assert!(!matches!(pipe, Pipe::None));
+            } else {
+                assert!(matches!(pipe, Pipe::None));
+            }
+        }
     }
 }

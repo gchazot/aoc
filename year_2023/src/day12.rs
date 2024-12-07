@@ -1,28 +1,20 @@
-use aoc_utils as utils;
 use std::collections::HashMap;
 
-#[test]
-fn test_mine() {
-    crate::day12::execute()
-}
+pub fn execute() -> String {
+    let mine = aoc_utils::read_lines("input/day12.txt");
 
-pub fn execute() {
-    let mine = utils::read_lines("input/day12.txt");
-    assert_eq!(
-        7204,
-        mine.iter()
-            .map(|line| SpringRow::from_line(line.clone()))
-            .map(|row| row.count_valid_arrangements())
-            .sum::<usize>()
-    );
-    // Too slow for now
-    assert_eq!(
-        1672318386674,
-        mine.iter()
-            .map(|line| SpringRow::from_line(line.clone()).unfold(5))
-            .map(|row| row.count_valid_arrangements())
-            .sum::<usize>()
-    );
+    let part1 = mine
+        .iter()
+        .map(|line| SpringRow::from_line(line.clone()))
+        .map(|row| row.count_valid_arrangements())
+        .sum::<usize>();
+    let part2 = mine
+        .iter()
+        .map(|line| SpringRow::from_line(line.clone()).unfold(5))
+        .map(|row| row.count_valid_arrangements())
+        .sum::<usize>();
+
+    format!("{} {}", part1, part2)
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -58,10 +50,6 @@ impl SpringRow {
             condition,
             checksum,
         }
-    }
-
-    fn is_consistent(&self) -> bool {
-        self.count_valid_arrangements() > 0
     }
 
     fn count_valid_arrangements(&self) -> usize {
@@ -183,137 +171,150 @@ impl SpringRow {
     }
 }
 
-#[test]
-fn test_parse_row() {
-    let row1 = SpringRow::from_line("???.### 1,1,3".to_string());
-    assert_eq!(7, row1.condition.len());
-    assert!(matches!(row1.condition[0], None));
-    assert!(matches!(row1.condition[1], None));
-    assert!(matches!(row1.condition[2], None));
-    assert!(matches!(row1.condition[3], Some(Condition::Operational)));
-    assert!(matches!(row1.condition[4], Some(Condition::Damaged)));
-    assert!(matches!(row1.condition[5], Some(Condition::Damaged)));
-    assert!(matches!(row1.condition[6], Some(Condition::Damaged)));
-    assert_eq!(3, row1.checksum.len());
-    assert!(matches!(row1.checksum[0], 1));
-    assert!(matches!(row1.checksum[1], 1));
-    assert!(matches!(row1.checksum[2], 3));
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_is_consistent() {
-    check_consistent_line("# 1");
-    check_consistent_line("#. 1");
-    check_consistent_line("#.. 1");
-    check_consistent_line(".# 1");
-    check_consistent_line("..# 1");
-    check_consistent_line(".#. 1");
-    check_consistent_line("..#.. 1");
+    #[test]
+    fn test_mine() {
+        assert_eq!(execute(), "7204 1672318386674");
+    }
+    #[test]
+    fn test_parse_row() {
+        let row1 = SpringRow::from_line("???.### 1,1,3".to_string());
+        assert_eq!(7, row1.condition.len());
+        assert!(matches!(row1.condition[0], None));
+        assert!(matches!(row1.condition[1], None));
+        assert!(matches!(row1.condition[2], None));
+        assert!(matches!(row1.condition[3], Some(Condition::Operational)));
+        assert!(matches!(row1.condition[4], Some(Condition::Damaged)));
+        assert!(matches!(row1.condition[5], Some(Condition::Damaged)));
+        assert!(matches!(row1.condition[6], Some(Condition::Damaged)));
+        assert_eq!(3, row1.checksum.len());
+        assert!(matches!(row1.checksum[0], 1));
+        assert!(matches!(row1.checksum[1], 1));
+        assert!(matches!(row1.checksum[2], 3));
+    }
+    impl SpringRow {
+        fn is_consistent(&self) -> bool {
+            self.count_valid_arrangements() > 0
+        }
+    }
 
-    check_consistent_line("## 2");
-    check_consistent_line(".##. 2");
+    fn check_consistent_line(line: &str) {
+        assert!(SpringRow::from_line(line.to_string()).is_consistent());
+    }
+    fn check_inconsistent_line(line: &str) {
+        assert!(!SpringRow::from_line(line.to_string()).is_consistent());
+    }
 
-    check_consistent_line("#.# 1,1");
-    check_consistent_line("#..# 1,1");
-    check_consistent_line(".#..#. 1,1");
-    check_consistent_line(".#..##..### 1,2,3");
-    check_consistent_line("###.##..# 3,2,1");
+    #[test]
+    fn test_is_consistent() {
+        check_consistent_line("# 1");
+        check_consistent_line("#. 1");
+        check_consistent_line("#.. 1");
+        check_consistent_line(".# 1");
+        check_consistent_line("..# 1");
+        check_consistent_line(".#. 1");
+        check_consistent_line("..#.. 1");
 
-    check_consistent_line("? 1");
-    check_consistent_line(".? 1");
-    check_consistent_line("?. 1");
-    check_consistent_line("?# 1");
-    check_consistent_line("#? 1");
-    check_consistent_line(".?#. 1");
-    check_consistent_line(".#?. 1");
+        check_consistent_line("## 2");
+        check_consistent_line(".##. 2");
 
-    check_consistent_line("#?? 1");
-    check_consistent_line(".???????? 1");
-    check_consistent_line("????????? 1");
-    check_consistent_line("????????? 1,1,1,1,1");
-    check_consistent_line("????????? 9");
+        check_consistent_line("#.# 1,1");
+        check_consistent_line("#..# 1,1");
+        check_consistent_line(".#..#. 1,1");
+        check_consistent_line(".#..##..### 1,2,3");
+        check_consistent_line("###.##..# 3,2,1");
 
-    check_inconsistent_line("? 2");
-    check_inconsistent_line("#?# 2");
-    check_inconsistent_line("#?# 2");
-    check_inconsistent_line("#?# 2,1");
-    check_inconsistent_line("????????? 10");
-}
+        check_consistent_line("? 1");
+        check_consistent_line(".? 1");
+        check_consistent_line("?. 1");
+        check_consistent_line("?# 1");
+        check_consistent_line("#? 1");
+        check_consistent_line(".?#. 1");
+        check_consistent_line(".#?. 1");
 
-#[test]
-fn test_example_all_consistent() {
-    let example = utils::read_lines("input/day12-example.txt");
-    assert!(example
-        .iter()
-        .map(|line| SpringRow::from_line(line.to_string()))
-        .all(|row| row.is_consistent()));
-}
+        check_consistent_line("#?? 1");
+        check_consistent_line(".???????? 1");
+        check_consistent_line("????????? 1");
+        check_consistent_line("????????? 1,1,1,1,1");
+        check_consistent_line("????????? 9");
 
-#[test]
-fn test_mine_all_consistent() {
-    let mine = utils::read_lines("input/day12.txt");
-    assert!(mine
-        .iter()
-        .map(|line| SpringRow::from_line(line.to_string()))
-        .all(|row| row.is_consistent()));
-}
+        check_inconsistent_line("? 2");
+        check_inconsistent_line("#?# 2");
+        check_inconsistent_line("#?# 2");
+        check_inconsistent_line("#?# 2,1");
+        check_inconsistent_line("????????? 10");
+    }
 
-fn check_consistent_line(line: &str) {
-    assert!(SpringRow::from_line(line.to_string()).is_consistent());
-}
-
-fn check_inconsistent_line(line: &str) {
-    assert!(!SpringRow::from_line(line.to_string()).is_consistent());
-}
-
-#[test]
-fn test_count_valid_arrangements() {
-    assert_eq!(1, test_valid_arangements("# 1"));
-    assert_eq!(0, test_valid_arangements("## 1"));
-    assert_eq!(1, test_valid_arangements("?. 1"));
-    assert_eq!(1, test_valid_arangements("?# 1"));
-    assert_eq!(2, test_valid_arangements("?? 1"));
-    assert_eq!(3, test_valid_arangements("??? 1"));
-    assert_eq!(1, test_valid_arangements("??? 1,1"));
-}
-
-fn test_valid_arangements(line: &str) -> usize {
-    SpringRow::from_line(line.to_string()).count_valid_arrangements()
-}
-
-#[test]
-fn test_example_valid_arrangements() {
-    let example = utils::read_lines("input/day12-example.txt");
-    assert_eq!(
-        21,
-        example
+    #[test]
+    fn test_example_all_consistent() {
+        let example = aoc_utils::read_lines("input/day12-example.txt");
+        assert!(example
             .iter()
-            .map(|line| SpringRow::from_line(line.clone()))
-            .map(|row| row.count_valid_arrangements())
-            .sum::<usize>()
-    );
-}
+            .map(|line| SpringRow::from_line(line.to_string()))
+            .all(|row| row.is_consistent()));
+    }
 
-#[test]
-fn test_unfold() {
-    let row1 = SpringRow::from_line("# 1".to_string()).unfold(5);
-    assert_eq!(9, row1.condition.len());
-    assert_eq!(5, row1.checksum.len());
-
-    let row2 = SpringRow::from_line("#?# 1,1".to_string()).unfold(5);
-    assert_eq!(19, row2.condition.len());
-    assert_eq!(10, row2.checksum.len());
-}
-
-#[test]
-fn test_example_unfolded_valid_arrangements() {
-    let example = utils::read_lines("input/day12-example.txt");
-    assert_eq!(
-        525152,
-        example
+    #[test]
+    fn test_mine_all_consistent() {
+        let mine = aoc_utils::read_lines("input/day12.txt");
+        assert!(mine
             .iter()
-            .map(|line| SpringRow::from_line(line.clone()).unfold(5))
-            .map(|row| row.count_valid_arrangements())
-            .sum::<usize>()
-    );
+            .map(|line| SpringRow::from_line(line.to_string()))
+            .all(|row| row.is_consistent()));
+    }
+
+    fn test_valid_arangements(line: &str) -> usize {
+        SpringRow::from_line(line.to_string()).count_valid_arrangements()
+    }
+
+    #[test]
+    fn test_count_valid_arrangements() {
+        assert_eq!(1, test_valid_arangements("# 1"));
+        assert_eq!(0, test_valid_arangements("## 1"));
+        assert_eq!(1, test_valid_arangements("?. 1"));
+        assert_eq!(1, test_valid_arangements("?# 1"));
+        assert_eq!(2, test_valid_arangements("?? 1"));
+        assert_eq!(3, test_valid_arangements("??? 1"));
+        assert_eq!(1, test_valid_arangements("??? 1,1"));
+    }
+
+    #[test]
+    fn test_example_valid_arrangements() {
+        let example = aoc_utils::read_lines("input/day12-example.txt");
+        assert_eq!(
+            21,
+            example
+                .iter()
+                .map(|line| SpringRow::from_line(line.clone()))
+                .map(|row| row.count_valid_arrangements())
+                .sum::<usize>()
+        );
+    }
+
+    #[test]
+    fn test_unfold() {
+        let row1 = SpringRow::from_line("# 1".to_string()).unfold(5);
+        assert_eq!(9, row1.condition.len());
+        assert_eq!(5, row1.checksum.len());
+
+        let row2 = SpringRow::from_line("#?# 1,1".to_string()).unfold(5);
+        assert_eq!(19, row2.condition.len());
+        assert_eq!(10, row2.checksum.len());
+    }
+
+    #[test]
+    fn test_example_unfolded_valid_arrangements() {
+        let example = aoc_utils::read_lines("input/day12-example.txt");
+        assert_eq!(
+            525152,
+            example
+                .iter()
+                .map(|line| SpringRow::from_line(line.clone()).unfold(5))
+                .map(|row| row.count_valid_arrangements())
+                .sum::<usize>()
+        );
+    }
 }
