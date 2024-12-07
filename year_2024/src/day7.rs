@@ -148,7 +148,7 @@ impl Operator for OperatorPart2 {
         match self.current {
             Operators::Add => lhs + rhs,
             Operators::Mul => lhs * rhs,
-            Operators::Cat => format!("{}{}", lhs, rhs).parse().unwrap(),
+            Operators::Cat => lhs * 10i64.pow(rhs.ilog10() + 1) + rhs,
         }
     }
 }
