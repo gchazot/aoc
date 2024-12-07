@@ -1,16 +1,19 @@
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day7.txt");
     let calculations = Calculation::from_lines(data);
-    let part1 = part1(calculations);
+    let part1 = part1(&calculations);
     let part2 = 456;
 
     format!("{} {}", part1, part2)
 }
 
-fn part1(calculations: Vec<Calculation>) -> i64 {
+fn part1(calculations: &Vec<Calculation>) -> i64 {
     calculations
         .iter()
-        .filter_map(|c| c.find_valid_operation().and_then(|_| Some(c.result)))
+        .filter_map(|c| {
+            c.find_valid_operation::<OperatorPart1>()
+                .and_then(|_| Some(c.result))
+        })
         .sum()
 }
 
@@ -39,7 +42,7 @@ impl Calculation {
         Calculation { result, operand }
     }
 
-    fn find_valid_operation(&self) -> Option<Operation> {
+    fn find_valid_operation<Op: Operator>(&self) -> Option<Operation<Op>> {
         let mut operation = Operation::new(self.operand.len());
 
         loop {
@@ -53,7 +56,7 @@ impl Calculation {
         None
     }
 
-    fn operate(&self, operation: &Operation) -> i64 {
+    fn operate<Op: Operator>(&self, operation: &Operation<Op>) -> i64 {
         let mut result = self.operand[0];
         for i in 1..self.operand.len() {
             let operator = operation.operators[i - 1];
@@ -64,20 +67,36 @@ impl Calculation {
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
-enum Operator {
+enum Operators {
     Add,
     Mul,
 }
 
-impl Operator {
-    fn new() -> Operator {
-        Operator::Add
+trait Operator: Sized + Clone + Copy + Eq + PartialEq {
+    fn new() -> Self;
+    fn next(&self) -> Option<Self>;
+    fn execute(&self, lhs: i64, rhs: i64) -> i64;
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+struct OperatorPart1 {
+    current: Operators,
+}
+
+impl Operator for OperatorPart1 {
+    fn new() -> Self {
+        Self {
+            current: Operators::Add,
+        }
     }
 
-    fn next(&self) -> Option<Operator> {
-        match self {
-            Operator::Add => Some(Operator::Mul),
-            Operator::Mul => None,
+    fn next(&self) -> Option<Self> {
+        match self.current {
+            Operators::Add => Some(Self {
+                current: Operators::Mul,
+            }),
+            Operators::Mul => None,
+            _ => unreachable!(),
         }
     }
 
@@ -90,14 +109,14 @@ impl Operator {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-struct Operation {
-    operators: Vec<Operator>,
+struct Operation<Op: Operator> {
+    operators: Vec<Op>,
 }
 
-impl Operation {
+impl<Op: Operator> Operation<Op> {
     fn new(num_operands: usize) -> Self {
         Operation {
-            operators: vec![Operator::new(); num_operands - 1],
+            operators: vec![Op::new(); num_operands - 1],
         }
     }
 
@@ -118,7 +137,7 @@ impl Operation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use Operator::*;
+    use Operators::*;
 
     #[test]
     fn test_mine() {
@@ -137,7 +156,7 @@ mod tests {
     #[macro_export]
     macro_rules! ope {
         ( $( $op:ident ),* ) => {
-            Operation { operators: vec![$( $op ),*] }
+            Operation::<OperatorPart1> { operators: vec![$( OperatorPart1{current: $op} ),*] }
         };
     }
 
@@ -169,7 +188,7 @@ mod tests {
     #[test]
     fn test_part1() {
         let example = Calculation::from_lines(_example());
-        assert_eq!(part1(example), 3749);
+        assert_eq!(part1(&example), 3749);
     }
     fn _example() -> Vec<String> {
         vec![
