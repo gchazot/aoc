@@ -2,7 +2,7 @@ pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day7.txt");
     let calculations = Calculation::from_lines(data);
     let part1 = part1(&calculations);
-    let part2 = 456;
+    let part2 = part2(&calculations);
 
     format!("{} {}", part1, part2)
 }
@@ -12,6 +12,16 @@ fn part1(calculations: &Vec<Calculation>) -> i64 {
         .iter()
         .filter_map(|c| {
             c.find_valid_operation::<OperatorPart1>()
+                .and_then(|_| Some(c.result))
+        })
+        .sum()
+}
+
+fn part2(calculations: &Vec<Calculation>) -> i64 {
+    calculations
+        .iter()
+        .filter_map(|c| {
+            c.find_valid_operation::<OperatorPart2>()
                 .and_then(|_| Some(c.result))
         })
         .sum()
@@ -70,6 +80,7 @@ impl Calculation {
 enum Operators {
     Add,
     Mul,
+    Cat,
 }
 
 trait Operator: Sized + Clone + Copy + Eq + PartialEq {
@@ -101,9 +112,43 @@ impl Operator for OperatorPart1 {
     }
 
     fn execute(&self, lhs: i64, rhs: i64) -> i64 {
-        match self {
-            Operator::Add => lhs + rhs,
-            Operator::Mul => lhs * rhs,
+        match self.current {
+            Operators::Add => lhs + rhs,
+            Operators::Mul => lhs * rhs,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+struct OperatorPart2 {
+    current: Operators,
+}
+
+impl Operator for OperatorPart2 {
+    fn new() -> Self {
+        Self {
+            current: Operators::Add,
+        }
+    }
+
+    fn next(&self) -> Option<Self> {
+        match self.current {
+            Operators::Add => Some(Self {
+                current: Operators::Mul,
+            }),
+            Operators::Mul => Some(Self {
+                current: Operators::Cat,
+            }),
+            Operators::Cat => None,
+        }
+    }
+
+    fn execute(&self, lhs: i64, rhs: i64) -> i64 {
+        match self.current {
+            Operators::Add => lhs + rhs,
+            Operators::Mul => lhs * rhs,
+            Operators::Cat => format!("{}{}", lhs, rhs).parse().unwrap(),
         }
     }
 }
@@ -141,7 +186,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "8401132154762 456");
+        assert_eq!(execute(), "8401132154762 95297119227552");
     }
 
     #[test]
@@ -190,6 +235,13 @@ mod tests {
         let example = Calculation::from_lines(_example());
         assert_eq!(part1(&example), 3749);
     }
+
+    #[test]
+    fn test_part2() {
+        let example = Calculation::from_lines(_example());
+        assert_eq!(part2(&example), 11387);
+    }
+
     fn _example() -> Vec<String> {
         vec![
             String::from("190: 10 19"),
