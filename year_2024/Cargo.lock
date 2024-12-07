@@ -7,7 +7,7 @@ name = "aoc_utils"
 version = "0.1.0"
 
 [[package]]
-name = "year_2023"
+name = "year_2024"
 version = "0.1.0"
 dependencies = [
  "aoc_utils",

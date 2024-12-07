@@ -5,10 +5,3 @@ version = 3
 [[package]]
 name = "aoc_utils"
 version = "0.1.0"
-
-[[package]]
-name = "year_2023"
-version = "0.1.0"
-dependencies = [
- "aoc_utils",
-]

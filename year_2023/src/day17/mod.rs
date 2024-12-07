@@ -1,4 +1,4 @@
-use crate::utils;
+use aoc_utils as utils;
 use std::cmp::min;
 use std::collections::HashMap;
 
