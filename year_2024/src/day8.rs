@@ -48,7 +48,7 @@ impl City {
 
                     let (start, step) = if part2 {
                         let dtemp = d.clone();
-                        let gcd = gcd(dtemp.0.abs(), dtemp.1.abs());
+                        let gcd = aoc_utils::gcd(dtemp.0.abs(), dtemp.1.abs());
                         (a, (d.0 / gcd, d.1 / gcd))
                     } else {
                         (b, d)
@@ -72,17 +72,6 @@ impl City {
         }
         result
     }
-}
-
-pub fn gcd(mut n: isize, mut m: isize) -> isize {
-    assert!(n != 0 && m != 0);
-    while m != 0 {
-        if m < n {
-            std::mem::swap(&mut m, &mut n);
-        }
-        m %= n;
-    }
-    n
 }
 
 #[cfg(test)]
