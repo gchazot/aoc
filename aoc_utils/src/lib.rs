@@ -1,5 +1,7 @@
+use num_traits::{zero, PrimInt};
 use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
+use std::ops::RemAssign;
 
 pub fn read_lines(filename: &str) -> Vec<String> {
     read_to_string(filename)
@@ -61,4 +63,17 @@ pub fn primes(number: &u32) -> impl Iterator<Item = u32> {
     }
 
     (2..n + 1).filter(move |&i| !&sieve.contains(&i))
+}
+
+pub fn gcd<T: PrimInt + RemAssign>(mut n: T, mut m: T) -> T {
+    let zero = T::zero();
+
+    assert!(n != zero && m != zero);
+    while m != zero {
+        if m < n {
+            std::mem::swap(&mut m, &mut n);
+        }
+        m %= n;
+    }
+    n
 }
