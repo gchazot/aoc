@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::ops::{Add, RemAssign};
 
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day8.txt");
