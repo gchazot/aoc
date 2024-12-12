@@ -1,4 +1,4 @@
-use num_traits::{zero, PrimInt};
+use num_traits::PrimInt;
 use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
 use std::ops::RemAssign;
