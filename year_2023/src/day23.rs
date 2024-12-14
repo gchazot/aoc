@@ -2,17 +2,20 @@ use std::collections::{HashSet, VecDeque};
 
 pub fn execute() -> String {
     let mine_slippery = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), true);
-    let slippery_paths = mine_slippery.find_paths();
-    let part1 = slippery_paths.iter().map(|p| p.len() - 1).max().unwrap();
+    let slippery_routes = mine_slippery.find_routes();
+    let part1: i32 = slippery_routes
+        .iter()
+        .map(|route| route.iter().map(|segment| segment.steps).sum())
+        .max()
+        .unwrap();
 
-    // TODO: Find something fast enough for part 2
     // let mine_sticky = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), false);
-    // let sticky_paths = find_paths(&mine_sticky);
-    // assert_eq!(
-    //     2394,
-    //     sticky_paths.iter().map(|p| p.len() - 1).max().unwrap()
-    // );
-    // let part2 = sticky_paths.iter().map(|p| p.len() - 1).max().unwrap();
+    // let sticky_routes = mine_sticky.find_routes();
+    // let part2: i32 = sticky_routes
+    //     .iter()
+    //     .map(|route| route.iter().map(|segment| segment.steps).sum())
+    //     .max()
+    //     .unwrap();
     let part2 = 0;
 
     format!("{} {}", part1, part2)
@@ -126,9 +129,15 @@ impl Map {
             if let Some(further) = next.towards(&next_direction) {
                 if further.x < self.tiles.len() && further.y < self.tiles.len() && from != further {
                     let further_tile = self.get(&further);
-                    if further_tile != &Tile::Forest {
-                        result.push(next_direction);
+                    if *further_tile == Tile::Forest {
+                        continue;
                     }
+                    if let Tile::Slope(slope) = further_tile {
+                        if *slope != next_direction {
+                            continue;
+                        }
+                    }
+                    result.push(next_direction);
                 }
             }
         }
@@ -136,22 +145,77 @@ impl Map {
         (next, result)
     }
 
-    fn find_paths(&self) -> Vec<HashSet<Coordinates>> {
+    fn find_routes(&self) -> Vec<Vec<Segment>> {
+        let segments = self.get_segments();
+        let start_segment = segments.iter().find(|&s| s.from == self.start).unwrap();
         let mut result = vec![];
 
-        let mut walkers = VecDeque::from([Walker::new(self.start.clone())]);
+        let mut walkers = VecDeque::from([(vec![start_segment.clone()], &start_segment.to)]);
         while !walkers.is_empty() {
-            let current = walkers.pop_front().unwrap();
-            if current.current == self.end {
-                result.push(current.positions);
+            let (current, current_end) = walkers.pop_front().unwrap();
+            if *current_end == self.end {
+                result.push(current);
             } else {
-                for new_walker in current.next(&self) {
-                    walkers.push_back(new_walker);
+                let next_options = segments.iter().filter(|&s| {
+                    (s.from == *current_end || (!s.one_way && s.to == *current_end))
+                        && !current.contains(s)
+                });
+                for option in next_options {
+                    let mut new_route = current.clone();
+                    new_route.push(option.clone());
+                    let new_end = if *current_end == option.from {
+                        &option.to
+                    } else {
+                        &option.from
+                    };
+                    walkers.push_back((new_route, new_end));
                 }
             }
         }
 
         result
+    }
+
+    fn get_segments(&self) -> Vec<Segment> {
+        let mut segments = vec![];
+        let mut junctions = HashSet::new();
+
+        let mut starts = VecDeque::from([(self.start.clone(), Direction::Down)]);
+
+        while !starts.is_empty() {
+            let (start, mut direction) = starts.pop_front().unwrap();
+            let mut walker = Walker::new(start.clone());
+            let mut steps = 0;
+            let mut seen_slope = false;
+            loop {
+                steps += 1;
+                let (new_pos, mut directions) = self.step(walker.current, &direction);
+                if let Tile::Slope(_) = self.get(&new_pos) {
+                    seen_slope = true;
+                }
+                walker.current = new_pos;
+
+                if directions.len() == 1 {
+                    direction = directions.pop().unwrap();
+                } else {
+                    if directions.len() != 0 || walker.current == self.end {
+                        segments.push(Segment {
+                            from: start.clone(),
+                            to: walker.current.clone(),
+                            steps,
+                            one_way: seen_slope,
+                        });
+                    }
+                    if junctions.insert(walker.current.clone()) {
+                        for direction in directions {
+                            starts.push_back((walker.current.clone(), direction));
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        segments
     }
 }
 
@@ -211,11 +275,19 @@ impl Coordinates {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Segment {
     from: Coordinates,
     to: Coordinates,
     steps: i32,
+    one_way: bool,
+}
+
+impl PartialEq for Segment {
+    fn eq(&self, other: &Self) -> bool {
+        (self.from == other.from && self.to == other.to)
+            || (!self.one_way && self.from == other.to && self.to == other.from)
+    }
 }
 
 #[derive(Clone)]
@@ -309,22 +381,22 @@ mod tests {
     }
 
     #[test]
-    fn test_find_paths() {
+    fn test_find_routes() {
         let example_slippery = Map::from_lines(example(), true);
-        let slippery_paths = example_slippery.find_paths();
+        let slippery_paths = example_slippery.find_routes();
         let slippery_paths_lengths = slippery_paths
             .iter()
-            .map(|p| p.len() - 1)
+            .map(|p| p.iter().map(|s| s.steps).sum())
             .collect::<HashSet<_>>();
 
         assert_eq!(6, slippery_paths.len());
         assert_eq!(94, *slippery_paths_lengths.iter().max().unwrap());
 
         let example_sticky = Map::from_lines(example(), false);
-        let sticky_paths = example_sticky.find_paths();
+        let sticky_paths = example_sticky.find_routes();
         let sticky_paths_lengths = sticky_paths
             .iter()
-            .map(|p| p.len() - 1)
+            .map(|p| p.iter().map(|s| s.steps).sum())
             .collect::<HashSet<_>>();
 
         assert_eq!(154, *sticky_paths_lengths.iter().max().unwrap());
