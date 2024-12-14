@@ -2,7 +2,7 @@ use std::collections::{HashSet, VecDeque};
 
 pub fn execute() -> String {
     let mine_slippery = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), true);
-    let slippery_paths = find_paths(&mine_slippery);
+    let slippery_paths = mine_slippery.find_paths();
     let part1 = slippery_paths.iter().map(|p| p.len() - 1).max().unwrap();
 
     // TODO: Find something fast enough for part 2
@@ -114,34 +114,45 @@ impl Map {
     fn get(&self, position: &Coordinates) -> &Tile {
         &self.tiles[position.y][position.x]
     }
-}
 
-fn _example() -> Vec<String> {
-    vec![
-        "#.#####################".to_string(),
-        "#.......#########...###".to_string(),
-        "#######.#########.#.###".to_string(),
-        "###.....#.>.>.###.#.###".to_string(),
-        "###v#####.#v#.###.#.###".to_string(),
-        "###.>...#.#.#.....#...#".to_string(),
-        "###v###.#.#.#########.#".to_string(),
-        "###...#.#.#.......#...#".to_string(),
-        "#####.#.#.#######.#.###".to_string(),
-        "#.....#.#.#.......#...#".to_string(),
-        "#.#####.#.#.#########v#".to_string(),
-        "#.#...#...#...###...>.#".to_string(),
-        "#.#.#v#######v###.###v#".to_string(),
-        "#...#.>.#...>.>.#.###.#".to_string(),
-        "#####v#.#.###v#.#.###.#".to_string(),
-        "#.....#...#...#.#.#...#".to_string(),
-        "#.#########.###.#.#.###".to_string(),
-        "#...###...#...#...#.###".to_string(),
-        "###.###.#.###v#####v###".to_string(),
-        "#...#...#.#.>.>.#.>.###".to_string(),
-        "#.###.###.#.###.#.#v###".to_string(),
-        "#.....###...###...#...#".to_string(),
-        "#####################.#".to_string(),
-    ]
+    fn step(&self, from: Coordinates, direction: &Direction) -> (Coordinates, Vec<Direction>) {
+        use Direction::*;
+
+        let mut result = vec![];
+
+        let next = from.towards(direction).unwrap();
+
+        for next_direction in [Left, Right, Up, Down] {
+            if let Some(further) = next.towards(&next_direction) {
+                if further.x < self.tiles.len() && further.y < self.tiles.len() && from != further {
+                    let further_tile = self.get(&further);
+                    if further_tile != &Tile::Forest {
+                        result.push(next_direction);
+                    }
+                }
+            }
+        }
+
+        (next, result)
+    }
+
+    fn find_paths(&self) -> Vec<HashSet<Coordinates>> {
+        let mut result = vec![];
+
+        let mut walkers = VecDeque::from([Walker::new(self.start.clone())]);
+        while !walkers.is_empty() {
+            let current = walkers.pop_front().unwrap();
+            if current.current == self.end {
+                result.push(current.positions);
+            } else {
+                for new_walker in current.next(&self) {
+                    walkers.push_back(new_walker);
+                }
+            }
+        }
+
+        result
+    }
 }
 
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
@@ -156,7 +167,7 @@ impl Coordinates {
         let mut result = vec![];
 
         for direction in [Left, Right, Up, Down] {
-            let maybe_next = self.towards(direction);
+            let maybe_next = self.towards(&direction);
             if maybe_next.is_some() {
                 result.push(maybe_next.unwrap());
             }
@@ -164,7 +175,7 @@ impl Coordinates {
         result
     }
 
-    fn towards(&self, direction: Direction) -> Option<Coordinates> {
+    fn towards(&self, direction: &Direction) -> Option<Coordinates> {
         use Direction::*;
 
         match direction {
@@ -198,6 +209,13 @@ impl Coordinates {
             }),
         }
     }
+}
+
+#[derive(Debug)]
+struct Segment {
+    from: Coordinates,
+    to: Coordinates,
+    steps: i32,
 }
 
 #[derive(Clone)]
@@ -243,7 +261,7 @@ impl Walker {
                     result[i].current = pos;
                 }
                 Tile::Slope(d) => {
-                    let bottom = pos.towards(d.clone()).unwrap();
+                    let bottom = pos.towards(d).unwrap();
                     if result[i].positions.insert(bottom.clone()) {
                         result[i].positions.insert(pos);
                         result[i].current = bottom;
@@ -261,24 +279,6 @@ impl Walker {
     }
 }
 
-fn find_paths(map: &Map) -> Vec<HashSet<Coordinates>> {
-    let mut result = vec![];
-
-    let mut walkers = VecDeque::from([Walker::new(map.start.clone())]);
-    while !walkers.is_empty() {
-        let current = walkers.pop_front().unwrap();
-        if current.current == map.end {
-            result.push(current.positions);
-        } else {
-            for new_walker in current.next(&map) {
-                walkers.push_back(new_walker);
-            }
-        }
-    }
-
-    result
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -290,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_from_lines() {
-        let example = Map::from_lines(_example(), true);
+        let example = Map::from_lines(example(), true);
         assert_eq!(example.tiles.len(), 23);
         assert_eq!(example.tiles[0].len(), 23);
         assert_eq!(example.start, Coordinates { x: 1, y: 0 });
@@ -310,8 +310,8 @@ mod tests {
 
     #[test]
     fn test_find_paths() {
-        let example_slippery = Map::from_lines(_example(), true);
-        let slippery_paths = find_paths(&example_slippery);
+        let example_slippery = Map::from_lines(example(), true);
+        let slippery_paths = example_slippery.find_paths();
         let slippery_paths_lengths = slippery_paths
             .iter()
             .map(|p| p.len() - 1)
@@ -320,8 +320,8 @@ mod tests {
         assert_eq!(6, slippery_paths.len());
         assert_eq!(94, *slippery_paths_lengths.iter().max().unwrap());
 
-        let example_sticky = Map::from_lines(_example(), false);
-        let sticky_paths = find_paths(&example_sticky);
+        let example_sticky = Map::from_lines(example(), false);
+        let sticky_paths = example_sticky.find_paths();
         let sticky_paths_lengths = sticky_paths
             .iter()
             .map(|p| p.len() - 1)
@@ -355,5 +355,33 @@ mod tests {
                 println!("{}", line);
             })
         }
+    }
+
+    fn example() -> Vec<String> {
+        vec![
+            "#.#####################".to_string(),
+            "#.......#########...###".to_string(),
+            "#######.#########.#.###".to_string(),
+            "###.....#.>.>.###.#.###".to_string(),
+            "###v#####.#v#.###.#.###".to_string(),
+            "###.>...#.#.#.....#...#".to_string(),
+            "###v###.#.#.#########.#".to_string(),
+            "###...#.#.#.......#...#".to_string(),
+            "#####.#.#.#######.#.###".to_string(),
+            "#.....#.#.#.......#...#".to_string(),
+            "#.#####.#.#.#########v#".to_string(),
+            "#.#...#...#...###...>.#".to_string(),
+            "#.#.#v#######v###.###v#".to_string(),
+            "#...#.>.#...>.>.#.###.#".to_string(),
+            "#####v#.#.###v#.#.###.#".to_string(),
+            "#.....#...#...#.#.#...#".to_string(),
+            "#.#########.###.#.#.###".to_string(),
+            "#...###...#...#...#.###".to_string(),
+            "###.###.#.###v#####v###".to_string(),
+            "#...#...#.#.>.>.#.>.###".to_string(),
+            "#.###.###.#.###.#.#v###".to_string(),
+            "#.....###...###...#...#".to_string(),
+            "#####################.#".to_string(),
+        ]
     }
 }
