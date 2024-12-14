@@ -1,22 +1,11 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 pub fn execute() -> String {
     let mine_slippery = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), true);
-    let slippery_routes = mine_slippery.find_routes();
-    let part1: i32 = slippery_routes
-        .iter()
-        .map(|route| route.iter().map(|segment| segment.steps).sum())
-        .max()
-        .unwrap();
+    let part1 = mine_slippery.find_longest_route();
 
-    // let mine_sticky = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), false);
-    // let sticky_routes = mine_sticky.find_routes();
-    // let part2: i32 = sticky_routes
-    //     .iter()
-    //     .map(|route| route.iter().map(|segment| segment.steps).sum())
-    //     .max()
-    //     .unwrap();
-    let part2 = 0;
+    let mine_sticky = Map::from_lines(aoc_utils::read_lines("input/day23.txt"), false);
+    let part2 = mine_sticky.find_longest_route();
 
     format!("{} {}", part1, part2)
 }
@@ -145,46 +134,73 @@ impl Map {
         (next, result)
     }
 
-    fn find_routes(&self) -> Vec<Vec<Segment>> {
-        let segments = self.get_segments();
-        let start_segment = segments.iter().find(|&s| s.from == self.start).unwrap();
-        let mut result = vec![];
+    fn find_longest_route(&self) -> i32 {
+        let (segments, junctions) = self.get_segments();
+        let junction_ids = junctions
+            .iter()
+            .enumerate()
+            .map(|(i, junction)| (junction, i))
+            .collect::<HashMap<_, _>>();
 
-        let mut walkers =
-            VecDeque::from([(vec![start_segment.clone()], vec![start_segment.to.clone()])]);
-        while !walkers.is_empty() {
-            let (current_edges, current_junctions) = walkers.pop_front().unwrap();
-            let current_end = current_junctions.last().unwrap();
-            if *current_end == self.end {
-                result.push(current_edges);
-            } else {
-                let next_options = segments.iter().filter(|&s| {
-                    (s.from == *current_end && !current_junctions.contains(&s.to))
-                        || (!s.one_way
-                            && s.to == *current_end
-                            && !current_junctions.contains(&s.from))
-                });
-                for option in next_options {
-                    let mut new_edges = current_edges.clone();
-                    new_edges.push(option.clone());
-                    let new_end = if *current_end == option.from {
-                        &option.to
-                    } else {
-                        &option.from
-                    };
-                    let mut new_junctions = current_junctions.clone();
-                    new_junctions.push(new_end.clone());
-                    walkers.push_back((new_edges, new_junctions));
-                }
-            }
+        let n_vertex = junctions.len();
+        let mut edges = vec![vec![0; n_vertex]; n_vertex];
+        for segment in segments {
+            let from = junction_ids[&segment.from];
+            let to = junction_ids[&segment.to];
+            edges[from][to] = segment.steps;
+            if !segment.one_way {
+                edges[to][from] = segment.steps
+            };
         }
 
-        result
+        fn dfs(
+            from: usize,
+            to: usize,
+            path: &mut Vec<usize>,
+            n_vertex: usize,
+            edges: &Vec<Vec<i32>>,
+            len: i32,
+        ) -> (i32, Vec<usize>) {
+            path.push(from);
+            let mut max_len = 0;
+            let mut max_edges = vec![];
+
+            let from_edges = &edges[from];
+            for next in 0..n_vertex {
+                if next != from && from_edges[next] > 0 && !path.contains(&next) {
+                    let option_len = len + from_edges[next];
+                    let (next_len, next_edges) = if next == to {
+                        let mut last_edges = path.clone();
+                        last_edges.push(next);
+                        (option_len, last_edges)
+                    } else {
+                        dfs(next, to, path, n_vertex, edges, option_len)
+                    };
+                    if next_len > max_len {
+                        max_len = next_len;
+                        max_edges = next_edges;
+                    }
+                }
+            }
+            path.pop();
+            (max_len, max_edges)
+        }
+
+        let (best_len, _best_edges) = dfs(
+            junction_ids[&self.start],
+            junction_ids[&self.end],
+            &mut vec![],
+            n_vertex,
+            &edges,
+            0,
+        );
+
+        best_len
     }
 
-    fn get_segments(&self) -> Vec<Segment> {
+    fn get_segments(&self) -> (Vec<Segment>, HashSet<Coordinates>) {
         let mut segments = vec![];
-        let mut junctions = HashSet::new();
+        let mut junctions = HashSet::from([self.start.clone()]);
 
         let mut starts = VecDeque::from([(self.start.clone(), Direction::Down)]);
 
@@ -201,7 +217,7 @@ impl Map {
                 }
                 walker = new_pos;
 
-                if directions.len() == 1 {
+                if !seen_slope && directions.len() == 1 {
                     direction = directions.pop().unwrap();
                 } else {
                     if directions.len() != 0 || walker == self.end {
@@ -221,7 +237,7 @@ impl Map {
                 }
             }
         }
-        segments
+        (segments, junctions)
     }
 }
 
@@ -282,7 +298,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "2394 0");
+        assert_eq!(execute(), "2394 6554");
     }
 
     #[test]
@@ -306,25 +322,12 @@ mod tests {
     }
 
     #[test]
-    fn test_find_routes() {
+    fn test_find_longest_route() {
         let example_slippery = Map::from_lines(example(), true);
-        let slippery_paths = example_slippery.find_routes();
-        let slippery_paths_lengths = slippery_paths
-            .iter()
-            .map(|p| p.iter().map(|s| s.steps).sum())
-            .collect::<HashSet<_>>();
-
-        assert_eq!(6, slippery_paths.len());
-        assert_eq!(94, *slippery_paths_lengths.iter().max().unwrap());
+        assert_eq!(94, example_slippery.find_longest_route());
 
         let example_sticky = Map::from_lines(example(), false);
-        let sticky_paths = example_sticky.find_routes();
-        let sticky_paths_lengths = sticky_paths
-            .iter()
-            .map(|p| p.iter().map(|s| s.steps).sum())
-            .collect::<HashSet<_>>();
-
-        assert_eq!(154, *sticky_paths_lengths.iter().max().unwrap());
+        assert_eq!(154, example_sticky.find_longest_route());
     }
 
     fn example() -> Vec<String> {
