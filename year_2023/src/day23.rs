@@ -150,25 +150,31 @@ impl Map {
         let start_segment = segments.iter().find(|&s| s.from == self.start).unwrap();
         let mut result = vec![];
 
-        let mut walkers = VecDeque::from([(vec![start_segment.clone()], &start_segment.to)]);
+        let mut walkers =
+            VecDeque::from([(vec![start_segment.clone()], vec![start_segment.to.clone()])]);
         while !walkers.is_empty() {
-            let (current, current_end) = walkers.pop_front().unwrap();
+            let (current_edges, current_junctions) = walkers.pop_front().unwrap();
+            let current_end = current_junctions.last().unwrap();
             if *current_end == self.end {
-                result.push(current);
+                result.push(current_edges);
             } else {
                 let next_options = segments.iter().filter(|&s| {
-                    (s.from == *current_end || (!s.one_way && s.to == *current_end))
-                        && !current.contains(s)
+                    (s.from == *current_end && !current_junctions.contains(&s.to))
+                        || (!s.one_way
+                            && s.to == *current_end
+                            && !current_junctions.contains(&s.from))
                 });
                 for option in next_options {
-                    let mut new_route = current.clone();
-                    new_route.push(option.clone());
+                    let mut new_edges = current_edges.clone();
+                    new_edges.push(option.clone());
                     let new_end = if *current_end == option.from {
                         &option.to
                     } else {
                         &option.from
                     };
-                    walkers.push_back((new_route, new_end));
+                    let mut new_junctions = current_junctions.clone();
+                    new_junctions.push(new_end.clone());
+                    walkers.push_back((new_edges, new_junctions));
                 }
             }
         }
@@ -184,31 +190,31 @@ impl Map {
 
         while !starts.is_empty() {
             let (start, mut direction) = starts.pop_front().unwrap();
-            let mut walker = Walker::new(start.clone());
+            let mut walker = start.clone();
             let mut steps = 0;
             let mut seen_slope = false;
             loop {
                 steps += 1;
-                let (new_pos, mut directions) = self.step(walker.current, &direction);
+                let (new_pos, mut directions) = self.step(walker, &direction);
                 if let Tile::Slope(_) = self.get(&new_pos) {
                     seen_slope = true;
                 }
-                walker.current = new_pos;
+                walker = new_pos;
 
                 if directions.len() == 1 {
                     direction = directions.pop().unwrap();
                 } else {
-                    if directions.len() != 0 || walker.current == self.end {
+                    if directions.len() != 0 || walker == self.end {
                         segments.push(Segment {
                             from: start.clone(),
-                            to: walker.current.clone(),
+                            to: walker.clone(),
                             steps,
                             one_way: seen_slope,
                         });
                     }
-                    if junctions.insert(walker.current.clone()) {
+                    if junctions.insert(walker.clone()) {
                         for direction in directions {
-                            starts.push_back((walker.current.clone(), direction));
+                            starts.push_back((walker.clone(), direction));
                         }
                     }
                     break;
@@ -226,19 +232,6 @@ struct Coordinates {
 }
 
 impl Coordinates {
-    fn next(&self) -> Vec<Coordinates> {
-        use Direction::*;
-        let mut result = vec![];
-
-        for direction in [Left, Right, Up, Down] {
-            let maybe_next = self.towards(&direction);
-            if maybe_next.is_some() {
-                result.push(maybe_next.unwrap());
-            }
-        }
-        result
-    }
-
     fn towards(&self, direction: &Direction) -> Option<Coordinates> {
         use Direction::*;
 
@@ -281,74 +274,6 @@ struct Segment {
     to: Coordinates,
     steps: i32,
     one_way: bool,
-}
-
-impl PartialEq for Segment {
-    fn eq(&self, other: &Self) -> bool {
-        (self.from == other.from && self.to == other.to)
-            || (!self.one_way && self.from == other.to && self.to == other.from)
-    }
-}
-
-#[derive(Clone)]
-struct Walker {
-    positions: HashSet<Coordinates>,
-    current: Coordinates,
-}
-
-impl Walker {
-    fn new(position: Coordinates) -> Walker {
-        Walker {
-            current: position.clone(),
-            positions: HashSet::from([position]),
-        }
-    }
-
-    fn next(self, map: &Map) -> Vec<Walker> {
-        let actual_next_iter = self
-            .current
-            .next()
-            .into_iter()
-            .filter(|pos| &Tile::Forest != map.get(pos) && !self.positions.contains(pos));
-
-        let mut result: Vec<Walker> = vec![];
-        let mut to_remove = vec![];
-        let mut actual_next = vec![];
-
-        for (i, pos) in actual_next_iter.enumerate() {
-            if i != 0 {
-                result.push(self.clone());
-            }
-            actual_next.push(pos);
-        }
-        if actual_next.len() > 0 {
-            result.push(self);
-        }
-
-        for i in 0..actual_next.len() {
-            let pos = actual_next.pop().unwrap();
-            match map.get(&pos) {
-                Tile::Path => {
-                    result[i].positions.insert(pos.clone());
-                    result[i].current = pos;
-                }
-                Tile::Slope(d) => {
-                    let bottom = pos.towards(d).unwrap();
-                    if result[i].positions.insert(bottom.clone()) {
-                        result[i].positions.insert(pos);
-                        result[i].current = bottom;
-                    } else {
-                        to_remove.push(i);
-                    }
-                }
-                _ => unreachable!(),
-            }
-        }
-        for i in to_remove.iter().rev() {
-            result.remove(*i);
-        }
-        result
-    }
 }
 
 #[cfg(test)]
@@ -400,33 +325,6 @@ mod tests {
             .collect::<HashSet<_>>();
 
         assert_eq!(154, *sticky_paths_lengths.iter().max().unwrap());
-    }
-    impl Walker {
-        fn _print(&self, map: &Map) {
-            map.tiles.iter().enumerate().for_each(|(y, row)| {
-                let line = row
-                    .iter()
-                    .enumerate()
-                    .map(|(x, tile)| {
-                        let coords = Coordinates { x, y };
-                        if self.positions.contains(&coords) {
-                            "O"
-                        } else {
-                            match tile {
-                                Tile::Forest => "#",
-                                Tile::Path => ".",
-                                Tile::Slope(Direction::Left) => "<",
-                                Tile::Slope(Direction::Right) => ">",
-                                Tile::Slope(Direction::Up) => "^",
-                                Tile::Slope(Direction::Down) => "v",
-                            }
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .join("");
-                println!("{}", line);
-            })
-        }
     }
 
     fn example() -> Vec<String> {
