@@ -2,14 +2,14 @@ use std::collections::{HashMap, VecDeque};
 
 pub fn execute() -> String {
     let mut mine = Desert::from_lines(aoc_utils::read_lines("input/day20.txt"));
-    let (mut seen_low, mut seen_high) = mine.button_press();
+    let (mut seen_low, mut seen_high) = mine.button_press(&mut HashMap::new());
     for _ in 1..1000 {
-        (seen_low, seen_high) = mine.button_press();
+        (seen_low, seen_high) = mine.button_press(&mut HashMap::new());
     }
-
     let part1 = seen_low * seen_high;
-    // TODO: Find a solution for part 2
-    let part2 = 0;
+
+    let mut desert = Desert::from_lines(aoc_utils::read_lines("input/day20.txt"));
+    let part2 = desert.find_min_button_presses_for_rx();
 
     format!("{} {}", part1, part2)
 }
@@ -75,10 +75,8 @@ impl Desert {
         }
     }
 
-    fn get_module(&mut self, name: String) -> Option<&mut Box<dyn Module>> {
-        self.modules
-            .iter_mut()
-            .find(|module| module.name() == &name)
+    fn get_module_mut(&mut self, name: &String) -> Option<&mut Box<dyn Module>> {
+        self.modules.iter_mut().find(|module| module.name() == name)
     }
 
     fn send_pulses(&mut self, pulses: Vec<Pulse>) {
@@ -92,7 +90,7 @@ impl Desert {
         self.pulses.extend(pulses.into_iter());
     }
 
-    fn button_press(&mut self) -> (u32, u32) {
+    fn button_press(&mut self, probes: &mut HashMap<String, Vec<bool>>) -> (u32, u32) {
         self.send_pulses(vec![Pulse {
             from: "button".to_string(),
             to: "broadcaster".to_string(),
@@ -101,14 +99,82 @@ impl Desert {
 
         while !self.pulses.is_empty() {
             let pulse = self.pulses.pop_front().unwrap();
-            let module = self.get_module(pulse.to);
-            if module.is_some() {
-                let pulses = module.unwrap().pulse(pulse.high, pulse.from);
+            if let Some(module) = self.get_module_mut(&pulse.to) {
+                probes
+                    .entry(pulse.from.clone())
+                    .and_modify(|v| v.push(pulse.high));
+
+                let pulses = module.pulse(pulse.high, pulse.from);
                 self.send_pulses(pulses);
             }
         }
 
         (self.pulses_seen_low, self.pulses_seen_high)
+    }
+
+    fn find_min_button_presses_for_rx(&mut self) -> usize {
+        let parent_name = self
+            .modules
+            .iter()
+            .find(|&module| module.destinations().contains(&"rx".to_string()))
+            .unwrap()
+            .name();
+        let grandparents = self
+            .modules
+            .iter()
+            .filter_map(|module| {
+                module
+                    .destinations()
+                    .contains(&parent_name)
+                    .then_some(module.name().clone())
+            })
+            .collect::<Vec<_>>();
+
+        let mut first_high_pulse = HashMap::<String, usize>::new();
+
+        let mut pulse_probes: HashMap<String, Vec<bool>> = HashMap::new();
+        for gparent in &grandparents {
+            pulse_probes.insert(gparent.clone(), vec![]);
+        }
+
+        for n in 1.. {
+            self.button_press(&mut pulse_probes);
+
+            for (module, pulses) in &pulse_probes {
+                if pulses.iter().any(|&pulse| pulse) {
+                    first_high_pulse.entry(module.clone()).or_insert(n);
+                }
+            }
+            pulse_probes.values_mut().for_each(|v| v.clear());
+
+            if first_high_pulse.len() == grandparents.len() {
+                break;
+            }
+        }
+
+        let prime_factors = first_high_pulse
+            .values()
+            .map(|v| aoc_utils::prime_factors(&(*v as u32)))
+            .collect::<Vec<_>>();
+        let mut common_factors = vec![];
+        for factor in prime_factors[0].keys() {
+            if let Some(min_common) = prime_factors
+                .iter()
+                .map(|factors| factors.get(factor).unwrap_or(&0))
+                .min()
+            {
+                common_factors.push((factor, *min_common));
+            }
+        }
+        let divider = common_factors
+            .iter()
+            .filter_map(|(&factor, repeats)| (*repeats > 0).then_some(factor * repeats))
+            .product::<u32>();
+        let cycles = first_high_pulse
+            .values()
+            .map(|cycle| cycle / (divider as usize));
+
+        cycles.product()
     }
 }
 
@@ -239,7 +305,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "861743850 0");
+        assert_eq!(execute(), "861743850 247023644760071");
     }
 
     #[test]
@@ -270,11 +336,17 @@ mod tests {
         assert_eq!(
             vec!["a".to_string(), "b".to_string(), "c".to_string(),],
             *example1
-                .get_module("broadcaster".to_string())
+                .get_module(&"broadcaster".to_string())
                 .unwrap()
                 .deref()
                 .destinations()
         );
+    }
+
+    impl Desert {
+        fn get_module(&mut self, name: &String) -> Option<&Box<dyn Module>> {
+            self.modules.iter().find(|module| module.name() == name)
+        }
     }
 
     #[test]
@@ -287,12 +359,12 @@ mod tests {
             "&inv -> a".to_string(),
         ]);
 
-        let (mut seen_low, mut seen_high) = example1.button_press();
+        let (mut seen_low, mut seen_high) = example1.button_press(&mut HashMap::new());
         assert_eq!(8, seen_low);
         assert_eq!(4, seen_high);
 
         for _ in 1..1000 {
-            (seen_low, seen_high) = example1.button_press();
+            (seen_low, seen_high) = example1.button_press(&mut HashMap::new());
         }
         assert_eq!(8000, seen_low);
         assert_eq!(4000, seen_high);
@@ -304,9 +376,9 @@ mod tests {
             "%b -> con".to_string(),
             "&con -> output".to_string(),
         ]);
-        let (mut seen_low, mut seen_high) = example2.button_press();
+        let (mut seen_low, mut seen_high) = example2.button_press(&mut HashMap::new());
         for _ in 1..1000 {
-            (seen_low, seen_high) = example2.button_press();
+            (seen_low, seen_high) = example2.button_press(&mut HashMap::new());
         }
         assert_eq!(4250, seen_low);
         assert_eq!(2750, seen_high);
