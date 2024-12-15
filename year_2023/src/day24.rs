@@ -1,10 +1,11 @@
 pub fn execute() -> String {
-    let mine = HailStorm::from_lines(aoc_utils::read_lines("input/day24.txt"));
-    let intersections = mine.valid_intersects_xy(200000000000000.0, 400000000000000.0);
+    let storm = HailStorm::from_lines(aoc_utils::read_lines("input/day24.txt"));
+    let intersections = storm.valid_intersects_xy(200000000000000.0, 400000000000000.0);
 
     let part1 = intersections.len();
-    // TODO: Find a working solution for part 2
-    let part2 = 0;
+
+    let throw_position = storm.find_throw_position();
+    let part2 = throw_position.x + throw_position.y + throw_position.z;
 
     format!("{} {}", part1, part2)
 }
@@ -94,6 +95,61 @@ impl HailStorm {
         }
         result
     }
+
+    fn find_throw_position(&self) -> Vector {
+        use z3::ast::Ast;
+        use z3::*;
+
+        let config = Config::new();
+        let context = Context::new(&config);
+        let solver = Solver::new(&context);
+
+        // Unknowns are:
+        // - position to throw from (x0, y0, z0)
+        // - velocity to throw with (u0, v0, w0)
+        // - time of colisions with stones t1, t2, t3
+        let x_0 = ast::Int::new_const(&context, "x0");
+        let y_0 = ast::Int::new_const(&context, "y0");
+        let z_0 = ast::Int::new_const(&context, "z0");
+        let u_0 = ast::Int::new_const(&context, "u0");
+        let v_0 = ast::Int::new_const(&context, "v0");
+        let w_0 = ast::Int::new_const(&context, "w0");
+
+        let zero = ast::Int::from_i64(&context, 0);
+
+        for i in 0..self.stones.len() {
+            let t_n = ast::Int::new_const(&context, format!("t{}", i + 1));
+
+            let stone = &self.stones[i];
+
+            let x_n = ast::Int::from_i64(&context, stone.position.x as i64);
+            let y_n = ast::Int::from_i64(&context, stone.position.y as i64);
+            let z_n = ast::Int::from_i64(&context, stone.position.z as i64);
+            let u_n = ast::Int::from_i64(&context, stone.velocity.x as i64);
+            let v_n = ast::Int::from_i64(&context, stone.velocity.y as i64);
+            let w_n = ast::Int::from_i64(&context, stone.velocity.z as i64);
+
+            let eq_x = &x_0 + &u_0 * &t_n - x_n - u_n * &t_n;
+            let eq_y = &y_0 + &v_0 * &t_n - y_n - v_n * &t_n;
+            let eq_z = &z_0 + &w_0 * &t_n - z_n - w_n * &t_n;
+
+            solver.assert(&eq_x._eq(&zero));
+            solver.assert(&eq_y._eq(&zero));
+            solver.assert(&eq_z._eq(&zero));
+        }
+
+        if matches!(solver.check(), SatResult::Sat) {
+            if let Some(model) = solver.get_model() {
+                return Vector {
+                    x: model.get_const_interp(&x_0).unwrap().as_i64().unwrap() as Coordinate,
+                    y: model.get_const_interp(&y_0).unwrap().as_i64().unwrap() as Coordinate,
+                    z: model.get_const_interp(&z_0).unwrap().as_i64().unwrap() as Coordinate,
+                };
+            }
+        }
+
+        panic!("No solution found.");
+    }
 }
 
 #[cfg(test)]
@@ -102,7 +158,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "15889 0");
+        assert_eq!(execute(), "15889 801386475216902");
     }
 
     #[test]
@@ -217,6 +273,15 @@ mod tests {
         let example = HailStorm::from_lines(_example());
         let intersections = example.valid_intersects_xy(7.0, 27.0);
         assert_eq!(intersections.len(), 2);
+    }
+
+    #[test]
+    fn test_find_throw_position() {
+        let example = HailStorm::from_lines(_example());
+        let position = example.find_throw_position();
+        assert_eq!(position.x, 24.0);
+        assert_eq!(position.y, 13.0);
+        assert_eq!(position.z, 10.0);
     }
 
     fn _example() -> Vec<String> {

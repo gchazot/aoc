@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 aoc_utils = { path = "../aoc_utils" }
+z3 = { version = "0.12", features = ["static-link-z3"] }
