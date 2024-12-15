@@ -38,10 +38,6 @@ fn _actual_process_part(input: &String) -> Vec<String> {
     result
 }
 
-fn process_arrangement(input: &Vec<String>) -> Vec<String> {
-    input.iter().flat_map(|s| process_part(s)).collect()
-}
-
 fn process_arrangement_deep(input: &Vec<String>, depth: u16, cache: &mut Cache) -> u128 {
     input.iter().map(|s| process_deep(s, depth, cache)).sum()
 }
@@ -95,23 +91,6 @@ mod tests {
         assert_eq!(
             process_part(&"1001".to_string()),
             vec!["10".to_string(), "1".to_string()]
-        );
-    }
-
-    #[test]
-    fn test_process_arrangement() {
-        assert_eq!(process_arrangement(&seq("125 17")), seq("253000 1 7"));
-        assert_eq!(
-            process_arrangement(&seq("253000 1 7")),
-            seq("253 0 2024 14168")
-        );
-        assert_eq!(
-            process_arrangement(&seq("253 0 2024 14168")),
-            seq("512072 1 20 24 28676032")
-        );
-        assert_eq!(
-            process_arrangement(&seq("512072 1 20 24 28676032")),
-            seq("512 72 2024 2 0 2 4 2867 6032")
         );
     }
 
