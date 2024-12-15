@@ -20,7 +20,7 @@ pub fn execute() -> String {
 struct Graph {
     v_index: HashMap<String, usize>,
     v_name: Vec<String>,
-    edge: HashMap<usize, HashMap<usize, i32>>,
+    edge: Vec<HashMap<usize, i32>>,
 }
 
 impl Graph {
@@ -40,12 +40,13 @@ impl Graph {
 
         let v_names = Vec::from_iter(components.into_iter());
         let vertices = HashMap::from_iter(v_names.iter().enumerate().map(|(i, c)| (c.clone(), i)));
-        let mut edges: HashMap<usize, HashMap<usize, i32>> = HashMap::new();
+
+        let mut edges = vec![HashMap::new(); vertices.len()];
         for (a, b) in pairs.iter() {
             let i_a = vertices[a];
             let i_b = vertices[b];
-            *edges.entry(i_a).or_default().entry(i_b).or_default() = 1;
-            *edges.entry(i_b).or_default().entry(i_a).or_default() = 1;
+            *edges[i_a].entry(i_b).or_default() = 1;
+            *edges[i_b].entry(i_a).or_default() = 1;
         }
 
         Graph {
@@ -62,7 +63,7 @@ impl Graph {
             return true;
         }
 
-        let next_edges = &self.edge[&start];
+        let next_edges = &self.edge[start];
         for (&next, &capacity) in next_edges.iter() {
             if capacity > 0
                 && !visited[next]
@@ -86,7 +87,7 @@ impl Graph {
 
         while !to_visit.is_empty() {
             let current = to_visit.pop_front().unwrap();
-            let edges = &self.edge[&current];
+            let edges = &self.edge[current];
             for (&next, &capacity) in edges {
                 if capacity > 0 && visited.insert(next) {
                     to_visit.push_back(next);
@@ -117,15 +118,11 @@ impl Graph {
     }
 
     fn inc_capacity(&mut self, from: usize, to: usize, value: i32) {
-        let current = self.edge.entry(from).or_default().entry(to).or_default();
+        let current = self.edge[from].entry(to).or_default();
         *current += value;
 
         if *current == 0 {
-            let edges = self.edge.get_mut(&from).unwrap();
-            edges.remove(&to);
-            if edges.is_empty() {
-                self.edge.remove(&from);
-            }
+            self.edge[from].remove(&to);
         }
     }
 }
@@ -138,7 +135,7 @@ mod tests {
     impl Graph {
         fn num_edges(&self) -> usize {
             self.edge
-                .values()
+                .iter()
                 .map(|v| v.values().filter(|&v| *v >= 1).count())
                 .sum::<usize>()
         }
@@ -157,8 +154,8 @@ mod tests {
         assert_eq!(network.v_index.len(), 15);
         assert_eq!(network.num_edges(), 66);
 
-        assert_ne!(network.edge[v("cmg")][v("bvb")], 0);
-        assert_ne!(network.edge[v("bvb")][v("cmg")], 0);
+        assert_ne!(network.edge[*v("cmg")][v("bvb")], 0);
+        assert_ne!(network.edge[*v("bvb")][v("cmg")], 0);
     }
 
     #[test]
