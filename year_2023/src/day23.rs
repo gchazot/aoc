@@ -143,13 +143,13 @@ impl Map {
             .collect::<HashMap<_, _>>();
 
         let n_vertex = junctions.len();
-        let mut edges = vec![vec![0; n_vertex]; n_vertex];
+        let mut edges = vec![HashMap::<usize, i32>::new(); n_vertex];
         for segment in segments {
             let from = junction_ids[&segment.from];
             let to = junction_ids[&segment.to];
-            edges[from][to] = segment.steps;
+            edges[from].insert(to, segment.steps);
             if !segment.one_way {
-                edges[to][from] = segment.steps
+                edges[to].insert(from, segment.steps);
             };
         }
 
@@ -157,42 +157,50 @@ impl Map {
             from: usize,
             to: usize,
             path: &mut Vec<usize>,
-            n_vertex: usize,
-            edges: &Vec<Vec<i32>>,
             len: i32,
+            n_vertex: usize,
+            edges: &[HashMap<usize, i32>],
+            seen: &mut [bool],
         ) -> (i32, Vec<usize>) {
             path.push(from);
             let mut max_len = 0;
             let mut max_edges = vec![];
 
             let from_edges = &edges[from];
-            for next in 0..n_vertex {
-                if next != from && from_edges[next] > 0 && !path.contains(&next) {
-                    let option_len = len + from_edges[next];
+            for (&next, &edge_len) in from_edges.iter() {
+                if next != from && !seen[next] {
+                    seen[next] = true;
+
+                    let option_len = len + edge_len;
                     let (next_len, next_edges) = if next == to {
                         let mut last_edges = path.clone();
                         last_edges.push(next);
                         (option_len, last_edges)
                     } else {
-                        dfs(next, to, path, n_vertex, edges, option_len)
+                        dfs(next, to, path, option_len, n_vertex, edges, seen)
                     };
+
                     if next_len > max_len {
                         max_len = next_len;
                         max_edges = next_edges;
                     }
+
+                    seen[next] = false;
                 }
             }
             path.pop();
             (max_len, max_edges)
         }
 
+        let mut seen = vec![false; n_vertex];
         let (best_len, _best_edges) = dfs(
             junction_ids[&self.start],
             junction_ids[&self.end],
             &mut vec![],
-            n_vertex,
-            &edges,
             0,
+            n_vertex,
+            edges.as_slice(),
+            seen.as_mut_slice(),
         );
 
         best_len
