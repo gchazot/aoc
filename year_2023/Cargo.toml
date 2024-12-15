@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 aoc_utils = { path = "../aoc_utils" }
+z3 = "0.12.1"

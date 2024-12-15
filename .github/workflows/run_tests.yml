@@ -54,11 +54,22 @@ jobs:
         if: ${{ matrix.language == 'python'}}
         run: python -m unittest discover -t . -s ${{ matrix.folder }} -p "*.py"
 
+      - name: Setup Z3
+        if: ${{ matrix.folder == 'year_2023' }}
+        id: z3
+        uses: cda-tum/setup-z3@v1
+        with:
+          add_to_library_path: true
+          version: 4.11.2
+
       - name: Setup Rust
         if: ${{ matrix.language == 'rust' }}
-        uses: moonrepo/setup-rust@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          channel: ${{ matrix.version }}
+          toolchain: ${{ matrix.version }}
+      - name: Setup Cache
+        if: ${{ matrix.language == 'rust' }}
+        uses: Swatinem/rust-cache@v2
       - name: Build
         if: ${{ matrix.language == 'rust' }}
         working-directory: ${{ matrix.folder }}
