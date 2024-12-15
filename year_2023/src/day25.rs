@@ -4,13 +4,7 @@ pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day25.txt");
     let network = Graph::from_lines(data);
 
-    let mut residual = network.clone();
-    residual.max_flow(50, 1002);
-
-    let g1 = residual.reachable(50).len();
-    let g2 = residual.v_name.len() - g1;
-
-    let part1 = g1 * g2;
+    let part1 = network.find_min_cut_solution();
     let part2 = 456;
 
     format!("{} {}", part1, part2)
@@ -115,6 +109,24 @@ impl Graph {
             count += 1;
         }
         count
+    }
+
+    fn find_min_cut_solution(&self) -> usize {
+        for i in 0..self.v_index.len() {
+            for j in i + 1..self.v_index.len() {
+                let mut residual = self.clone();
+                let max_flow = residual.max_flow(i, j);
+
+                if max_flow == 3 {
+                    let g1 = residual.reachable(i).len();
+                    let g2 = residual.v_name.len() - g1;
+
+                    return g1 * g2;
+                }
+            }
+        }
+
+        panic!("did not find a solution!");
     }
 
     fn inc_capacity(&mut self, from: usize, to: usize, value: i32) {
