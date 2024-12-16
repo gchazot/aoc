@@ -1,6 +1,5 @@
-use std::cmp::min;
-use std::collections::{HashMap, VecDeque};
-use std::ops::Add;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::ops::{Add, Sub};
 
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day16.txt");
@@ -8,7 +7,7 @@ pub fn execute() -> String {
     let labirynth = Labyrinth::from_lines(data);
 
     let part1 = labirynth.shortest_route();
-    let part2 = 456;
+    let part2 = labirynth.best_seats();
 
     format!("{} {}", part1, part2)
 }
@@ -65,15 +64,68 @@ impl Labyrinth {
     }
 
     fn shortest_route(&self) -> usize {
+        let scores = self.dijkstra();
+        scores
+            .iter()
+            .filter_map(|((pos, _direction), score)| (*pos == self.end).then_some(*score))
+            .min()
+            .expect("We should always reach the end")
+    }
+
+    fn best_seats(&self) -> usize {
+        let scores = self.dijkstra();
+
+        let best_score = scores
+            .iter()
+            .filter_map(|((pos, _direction), score)| (*pos == self.end).then_some(*score))
+            .min()
+            .expect("We should always reach the end");
+
+        let best_ends = scores
+            .iter()
+            .filter_map(|((pos, direction), score)| {
+                (*pos == self.end && *score == best_score).then_some((*pos, *direction, *score))
+            })
+            .collect::<Vec<(Position, Direction, usize)>>();
+
+        let mut best_seats = HashSet::from([self.end]);
+        let mut queue = VecDeque::from_iter(best_ends.iter().cloned());
+
+        while let Some((pos, direction, score)) = queue.pop_front() {
+            let next = pos - direction.delta();
+            if scores
+                .get(&(next, direction))
+                .is_some_and(|&next_score| next_score + 1 == score)
+            {
+                queue.push_back((next.clone(), direction, score - 1));
+                best_seats.insert(next);
+            }
+
+            if scores
+                .get(&(pos, direction.rotate_left()))
+                .is_some_and(|&next_score| next_score + 1000 == score)
+            {
+                queue.push_back((pos, direction.rotate_left(), score - 1000));
+            }
+            if scores
+                .get(&(pos, direction.rotate_right()))
+                .is_some_and(|&next_score| next_score + 1000 == score)
+            {
+                queue.push_back((pos, direction.rotate_right(), score - 1000));
+            }
+        }
+
+        best_seats.len()
+    }
+
+    fn dijkstra(&self) -> HashMap<(Position, Direction), usize> {
         use Direction::*;
 
         let mut scores = HashMap::<(Position, Direction), usize>::new();
         let mut queue = VecDeque::new();
         queue.push_back((self.start, East, 0usize));
 
-        while !queue.is_empty() {
-            let (current, direction, score) = queue.pop_front().unwrap();
-
+        while let Some((current, direction, score)) = queue.pop_front() {
             let existing_score = scores.get(&(current, direction));
             if existing_score.is_some_and(|prev| *prev <= score) {
                 continue;
@@ -92,10 +144,6 @@ impl Labyrinth {
             queue.push_back((current, direction.rotate_right(), score + 1000));
         }
         scores
-            .iter()
-            .filter_map(|((pos, _direction), score)| (*pos == self.end).then_some(*score))
-            .min()
-            .expect("We should always reach the end")
     }
 }
 
@@ -112,6 +160,13 @@ impl Add for Position {
     type Output = Position;
     fn add(self, rhs: Self) -> Self::Output {
         Position(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+impl Sub for Position {
+    type Output = Position;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Position(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
 
@@ -160,7 +215,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "102488 456");
+        assert_eq!(execute(), "102488 559");
     }
 
     #[test]
@@ -182,6 +237,12 @@ mod tests {
     fn test_shortest_route() {
         let lab = Labyrinth::from_lines(_example());
         assert_eq!(lab.shortest_route(), 7036);
+    }
+
+    #[test]
+    fn test_best_seats() {
+        let lab = Labyrinth::from_lines(_example());
+        assert_eq!(lab.best_seats(), 45);
     }
 
     fn _example() -> Vec<String> {
