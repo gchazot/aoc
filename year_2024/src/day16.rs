@@ -14,7 +14,6 @@ pub fn execute() -> String {
 
 struct Labyrinth {
     tiles: Vec<Vec<bool>>,
-    size: Position,
     start: Position,
     end: Position,
 }
@@ -49,14 +48,7 @@ impl Labyrinth {
             })
             .collect::<Vec<Vec<bool>>>();
 
-        let size = Position::from_usize(width, tiles.len());
-
-        Labyrinth {
-            tiles,
-            size,
-            start,
-            end,
-        }
+        Labyrinth { tiles, start, end }
     }
 
     fn tile(&self, pos: &Position) -> bool {
@@ -221,7 +213,6 @@ mod tests {
     #[test]
     fn test_from_lines() {
         let lab = Labyrinth::from_lines(_example());
-        assert_eq!(lab.size, Position(15, 15));
         assert_eq!(lab.tiles.len(), 15);
         assert_eq!(lab.start, Position(1, 13));
         assert_eq!(lab.end, Position(13, 1));
