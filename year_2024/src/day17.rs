@@ -2,9 +2,11 @@ pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day17.txt");
 
     let mut program = Program::from_lines(data.clone());
-    let part1 = program.execute();
+    program.execute();
+    let part1 = program.computer.format_outputs();
 
-    let part2 = 0;
+    let program = Program::from_lines(data);
+    let part2 = find_program_reproduction(&program);
 
     format!("{} {}", part1, part2)
 }
@@ -54,7 +56,7 @@ impl Program {
         }
     }
 
-    fn execute(&mut self) -> String {
+    fn execute(&mut self) {
         let mut instruction_pointer = 0;
 
         while instruction_pointer < self.instructions.len() - 1 {
@@ -67,8 +69,6 @@ impl Program {
                 instruction_pointer += 2;
             }
         }
-
-        self.computer.format_outputs()
     }
 }
 
@@ -145,13 +145,47 @@ impl Computer {
     }
 }
 
+fn find_program_reproduction(original: &Program) -> Register {
+    let mut attempt_program = original.clone();
+    let expected_output = original.instructions.as_slice();
+
+    let mut options = vec![0];
+
+    for current_entry in 0..expected_output.len() {
+        let mut next_options = vec![];
+        for option in options.iter() {
+            for i in 0..0b1000 {
+                let a = (option << 3) | i;
+
+                attempt_program.computer.reg_a = a;
+                attempt_program.computer.reg_b = original.computer.reg_b;
+                attempt_program.computer.reg_c = original.computer.reg_c;
+                attempt_program.computer.outputs.clear();
+
+                attempt_program.execute();
+                let outputs = &attempt_program.computer.outputs;
+
+                if outputs.len() <= current_entry
+                    || outputs[0]
+                        != expected_output[expected_output.len() - 1 - current_entry] as Register
+                {
+                    continue;
+                }
+                next_options.push(a);
+            }
+        }
+        options = next_options;
+    }
+    options[0]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "4,3,7,1,5,3,0,5,4 0");
+        assert_eq!(execute(), "4,3,7,1,5,3,0,5,4 190384615275535");
     }
 
     #[test]
@@ -166,12 +200,24 @@ mod tests {
     #[test]
     fn test_execute() {
         let mut program = Program::from_lines(example1());
-        let result = program.execute();
+        program.execute();
+        let result = program.computer.format_outputs();
 
         assert_eq!(result, "4,6,3,5,6,3,5,2,1,0");
     }
 
+    #[test]
+    fn test_find_self_reproduction() {
+        let program = Program::from_lines(example2());
+        let result = find_program_reproduction(&program);
+
+        assert_eq!(result, 117440);
+    }
+
     fn example1() -> Vec<String> {
         aoc_utils::read_lines("input/day17-example1.txt")
+    }
+    fn example2() -> Vec<String> {
+        aoc_utils::read_lines("input/day17-example2.txt")
     }
 }
