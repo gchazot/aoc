@@ -2,32 +2,55 @@ use std::collections::VecDeque;
 
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day18.txt");
-    let map = corruption_map_from_lines(data, 71, 1024);
-    let part1 = dijkstra(&map, 71, (0, 0), (70, 70));
-    let part2 = 456;
 
-    format!("{} {}", part1, part2)
+    let map = corruption_map_from_lines(data.clone(), 71, 1024);
+    let part1 = dijkstra(&map, 71, (0, 0), (70, 70)).unwrap();
+
+    let coords = coords_from_lines(data);
+    let part2 = find_first_blocking_byte(coords, 71);
+
+    format!("{} {},{}", part1, part2.0, part2.1)
 }
 
 fn corruption_map_from_lines(lines: Vec<String>, size: usize, limit: usize) -> Vec<Vec<bool>> {
+    let coords = coords_from_lines(lines);
+    corruption_map_from_coords(&coords, size, limit)
+}
+
+fn coords_from_lines(lines: Vec<String>) -> Vec<(usize, usize)> {
+    lines
+        .iter()
+        .map(|l| {
+            let (x_str, y_str) = l.split_once(",").unwrap();
+            (
+                x_str.parse::<usize>().unwrap(),
+                y_str.parse::<usize>().unwrap(),
+            )
+        })
+        .collect::<Vec<_>>()
+}
+
+fn corruption_map_from_coords(
+    coords: &Vec<(usize, usize)>,
+    size: usize,
+    limit: usize,
+) -> Vec<Vec<bool>> {
     let mut result = vec![vec![false; size]; size];
 
-    for (x, y) in lines.iter().take(limit).map(|l| {
-        let (x_str, y_str) = l.split_once(",").unwrap();
-        (
-            x_str.parse::<usize>().unwrap(),
-            y_str.parse::<usize>().unwrap(),
-        )
-    }) {
-        if x < size && y < size {
-            result[y][x] = true;
+    for (x, y) in coords.iter().take(limit) {
+        if *x < size && *y < size {
+            result[*y][*x] = true;
         }
     }
-
     result
 }
 
-fn dijkstra(map: &[Vec<bool>], size: usize, start: (usize, usize), end: (usize, usize)) -> usize {
+fn dijkstra(
+    map: &[Vec<bool>],
+    size: usize,
+    start: (usize, usize),
+    end: (usize, usize),
+) -> Option<usize> {
     let mut queue = VecDeque::from([(start, 0)]);
     let mut distance = vec![vec![usize::MAX; size]; size];
 
@@ -49,7 +72,7 @@ fn dijkstra(map: &[Vec<bool>], size: usize, start: (usize, usize), end: (usize, 
         }
     }
 
-    distance[end.1][end.0]
+    (distance[end.1][end.0] != usize::MAX).then_some(distance[end.1][end.0])
 }
 
 fn valid_steps(pos: (usize, usize), size: usize) -> Vec<(usize, usize)> {
@@ -69,18 +92,40 @@ fn valid_steps(pos: (usize, usize), size: usize) -> Vec<(usize, usize)> {
     next
 }
 
+fn find_first_blocking_byte(coords: Vec<(usize, usize)>, size: usize) -> (usize, usize) {
+    let mut min = 0usize;
+    let mut max = coords.len() - 1;
+
+    while max > min + 1 {
+        let mid = (max + min) / 2;
+        let map = corruption_map_from_coords(&coords, size, mid);
+        let result = dijkstra(&map, size, (0, 0), (size - 1, size - 1));
+        if result.is_some() {
+            min = mid;
+        } else {
+            max = mid;
+        }
+    }
+    coords[max - 1]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "296 456");
+        assert_eq!(execute(), "296 28,44");
     }
     #[test]
     fn test_dijkstra() {
         let map = corruption_map_from_lines(example(), 7, 12);
-        assert_eq!(dijkstra(&map, 7, (0, 0), (6, 6)), 22);
+        assert_eq!(dijkstra(&map, 7, (0, 0), (6, 6)), Some(22));
+    }
+    #[test]
+    fn test_find_first_blocking_byte() {
+        let coords = coords_from_lines(example());
+        assert_eq!(find_first_blocking_byte(coords.clone(), 7), (6, 1));
     }
     #[test]
     fn test_from_lines() {
