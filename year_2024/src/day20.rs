@@ -52,11 +52,13 @@ impl Race {
         Race { track, start, end }
     }
 
-    fn find_path(&self) -> Vec<(usize, usize)> {
-        let mut result = vec![self.start];
+    fn find_path(&self) -> Vec<Vec<usize>> {
+        let mut result = vec![vec![usize::MAX; self.track[0].len()]; self.track.len()];
+        result[self.start.1][self.start.0] = 0;
 
         let mut prev = (0, 0);
         let mut current = self.start;
+        let mut distance = 1;
         while current != self.end {
             for option in [
                 (current.0 - 1, current.1),
@@ -65,12 +67,13 @@ impl Race {
                 (current.0, current.1 + 1),
             ] {
                 if option != prev && self.track[option.1][option.0] {
-                    result.push(option);
+                    result[option.1][option.0] = distance;
                     prev = current;
                     current = option;
                     break;
                 }
             }
+            distance += 1;
         }
 
         result
@@ -78,19 +81,57 @@ impl Race {
 
     fn find_cheats(
         &self,
-        path: &Vec<(usize, usize)>,
+        path: &Vec<Vec<usize>>,
         max_duration: usize,
     ) -> Vec<((usize, usize), (usize, usize), usize)> {
         let mut result = vec![];
 
-        for (i, pos1) in path.iter().enumerate() {
-            for (j, pos2) in path.iter().enumerate().skip(i + 1) {
-                let normal_duration = j - i;
-                let cheat_duration = pos1.0.abs_diff(pos2.0) + pos1.1.abs_diff(pos2.1);
-                if cheat_duration > max_duration || cheat_duration >= normal_duration {
+        let height = path.len();
+        let width = path[0].len();
+
+        for i in 0..width {
+            for j in 0..height {
+                let a = (i, j);
+                let distance_a = path[j][i];
+
+                if distance_a == usize::MAX {
                     continue;
                 }
-                result.push((*pos1, *pos2, normal_duration - cheat_duration));
+
+                for cheat_duration in 2..max_duration + 1 {
+                    let mut points_to_check = vec![];
+                    for offset in 0..cheat_duration {
+                        let inv_offset = cheat_duration - offset;
+
+                        if i + inv_offset < width && j + offset < height {
+                            points_to_check.push((i + inv_offset, j + offset));
+                        }
+                        if i + offset < width && j >= inv_offset {
+                            points_to_check.push((i + offset, j - inv_offset));
+                        }
+                        if i >= inv_offset && j >= offset {
+                            points_to_check.push((i - inv_offset, j - offset));
+                        }
+                        if i >= offset && j + inv_offset < height {
+                            points_to_check.push((i - offset, j + inv_offset));
+                        }
+                    }
+
+                    for b in points_to_check {
+                        let distance_b = path[b.1][b.0];
+                        if distance_b == usize::MAX {
+                            continue;
+                        }
+
+                        if distance_a < distance_b {
+                            let normal_duration = distance_b - distance_a;
+
+                            if cheat_duration < normal_duration {
+                                result.push((a, b, normal_duration - cheat_duration));
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -138,21 +179,32 @@ mod tests {
     fn test_find_path() {
         let race = Race::from_lines(&example());
         let path = race.find_path();
-        assert_eq!(path.len(), 85);
-        assert_eq!(path[0], race.start);
-        assert_eq!(path[6], (3, 3));
-        assert_eq!(path[14], (7, 3));
-        assert_eq!(path[84], race.end);
+
+        assert_eq!(path[race.start.1][race.start.0], 0);
+        assert_eq!(path[3][3], 6);
+        assert_eq!(path[3][7], 14);
+        assert_eq!(path[7][4], 83);
+        assert_eq!(path[race.end.1][race.end.0], 84);
     }
 
     #[test]
     fn test_find_cheats() {
         let race = Race::from_lines(&example());
-
         let path = race.find_path();
-
         let cheats_part1 = race.find_cheats(&path, 2);
+
         assert_eq!(cheats_part1.len(), 44);
+        assert_eq!(count_cheats(&cheats_part1, 2, 2), 14);
+        assert_eq!(count_cheats(&cheats_part1, 4, 4), 14);
+        assert_eq!(count_cheats(&cheats_part1, 6, 6), 2);
+        assert_eq!(count_cheats(&cheats_part1, 8, 8), 4);
+        assert_eq!(count_cheats(&cheats_part1, 10, 10), 2);
+        assert_eq!(count_cheats(&cheats_part1, 12, 12), 3);
+        assert_eq!(count_cheats(&cheats_part1, 20, 20), 1);
+        assert_eq!(count_cheats(&cheats_part1, 36, 36), 1);
+        assert_eq!(count_cheats(&cheats_part1, 38, 38), 1);
+        assert_eq!(count_cheats(&cheats_part1, 40, 40), 1);
+        assert_eq!(count_cheats(&cheats_part1, 64, 64), 1);
 
         let cheats_part2 = race.find_cheats(&path, 20);
         assert_eq!(count_cheats(&cheats_part2, 50, 50), 32);
