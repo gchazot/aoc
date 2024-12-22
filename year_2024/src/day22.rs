@@ -1,5 +1,4 @@
 use std::collections::{HashMap, VecDeque};
-use std::result;
 
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day22.txt");

@@ -1,5 +1,3 @@
-use std::fmt::{Display, Formatter};
-
 use RemoteKey::*;
 
 pub fn execute() -> String {
@@ -43,10 +41,6 @@ impl RemoteKey {
 
 type NumpadKey = u8;
 const NUMPAD_A: NumpadKey = 10;
-
-fn codes_from_lines(lines: &Vec<String>) -> Vec<Vec<NumpadKey>> {
-    lines.iter().map(code_from_line).collect()
-}
 
 fn code_from_line(line: &String) -> Vec<NumpadKey> {
     line.chars()
@@ -151,6 +145,7 @@ fn score(line: &String) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fmt::{Display, Formatter};
 
     #[test]
     fn test_mine() {
@@ -223,7 +218,9 @@ mod tests {
 
     #[test]
     fn test_codes_from_lines() {
-        let codes = codes_from_lines(&example());
+        let lines = &example();
+        let codes = lines.iter().map(code_from_line).collect::<Vec<_>>();
+
         assert_eq!(codes.len(), 5);
 
         assert_eq!(codes[0], vec![0, 2, 9, NUMPAD_A]);
