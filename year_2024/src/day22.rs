@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day22.txt");
@@ -45,7 +45,7 @@ fn part1(secrets: &Vec<u32>) -> u64 {
         .sum::<u64>()
 }
 
-fn part2(secrets: &Vec<u32>) -> i16 {
+fn part2(secrets: &Vec<u32>) -> u16 {
     let mut total_prices = HashMap::new();
 
     for secret in secrets {
@@ -61,34 +61,29 @@ fn part2(secrets: &Vec<u32>) -> i16 {
     *total_prices.values().max().unwrap()
 }
 
-fn sequences_and_prices(secret: u32) -> HashMap<Vec<i8>, i16> {
+fn sequences_and_prices(secret: u32) -> HashMap<u32, u16> {
     let mut result = HashMap::new();
 
-    let mut prices_and_deltas = vec![];
     let mut current = secret;
-    let mut current_price = (current % 10) as i8;
-    for _ in 0..2000 {
-        let new = next(current);
-        let new_price = (new % 10) as i8;
+    let mut current_price = (current % 10) as u8;
 
-        prices_and_deltas.push((new_price, new_price - current_price));
+    let mut hash: u32 = 0;
+    for i in 0..2000 {
+        let new = next(current);
+        let new_price = (new % 10) as u8;
+
+        // Add 20 to make sure the delta is always_positive
+        let delta = 20 + new_price - current_price;
+        // the "hash" is actually 4 deltas shifted 8 bits, with the last one to the right.
+        hash = (hash << 8) | (delta as u32);
+
+        // We start to have a usable sequence at the 4th iteration
+        if i >= 3 {
+            result.entry(hash).or_insert(new_price.try_into().unwrap());
+        }
 
         current = new;
         current_price = new_price;
-    }
-
-    let mut queue = VecDeque::new();
-    for (price, delta) in prices_and_deltas {
-        queue.push_back(delta);
-        if queue.len() < 4 {
-            continue;
-        } else if queue.len() > 4 {
-            queue.pop_front();
-        }
-
-        let sequence = Vec::from_iter(queue.iter().cloned());
-
-        result.entry(sequence).or_insert(price as i16);
     }
 
     result
@@ -105,8 +100,17 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        let secrets = from_lines(example());
+        let secrets = from_lines(example1());
         assert_eq!(part1(&secrets), 37327623);
+    }
+
+    #[test]
+    fn test_part2() {
+        let secrets = from_lines(example2());
+        assert_eq!(part2(&secrets), 23);
+
+        assert_eq!(part2(&vec![2021, 5017, 19751]), 27);
+        assert_eq!(part2(&vec![5053, 10083, 11263]), 27);
     }
 
     #[test]
@@ -132,11 +136,20 @@ mod tests {
         assert_eq!(next(7753432), 5908254);
     }
 
-    fn example() -> Vec<String> {
+    fn example1() -> Vec<String> {
         vec![
             String::from("1"),
             String::from("10"),
             String::from("100"),
+            String::from("2024"),
+        ]
+    }
+
+    fn example2() -> Vec<String> {
+        vec![
+            String::from("1"),
+            String::from("2"),
+            String::from("3"),
             String::from("2024"),
         ]
     }
