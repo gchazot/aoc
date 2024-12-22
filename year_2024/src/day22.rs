@@ -1,11 +1,11 @@
+use std::collections::{HashMap, VecDeque};
+use std::result;
+
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day22.txt");
     let secrets = from_lines(data);
-    let part1 = secrets
-        .iter()
-        .map(|secret| repeat(*secret, 2000) as u64)
-        .sum::<u64>();
-    let part2 = 456;
+    let part1 = part1(&secrets);
+    let part2 = part2(&secrets);
 
     format!("{} {}", part1, part2)
 }
@@ -39,13 +39,75 @@ fn repeat(secret: u32, times: u32) -> u32 {
     result
 }
 
+fn part1(secrets: &Vec<u32>) -> u64 {
+    secrets
+        .iter()
+        .map(|secret| repeat(*secret, 2000) as u64)
+        .sum::<u64>()
+}
+
+fn part2(secrets: &Vec<u32>) -> i16 {
+    let mut total_prices = HashMap::new();
+
+    for secret in secrets {
+        let secret_prices = sequences_and_prices(*secret);
+        for (sequence, price) in secret_prices.into_iter() {
+            total_prices
+                .entry(sequence)
+                .and_modify(|total| *total += price)
+                .or_insert(price);
+        }
+    }
+
+    *total_prices.values().max().unwrap()
+}
+
+fn sequences_and_prices(secret: u32) -> HashMap<Vec<i8>, i16> {
+    let mut result = HashMap::new();
+
+    let mut prices_and_deltas = vec![];
+    let mut current = secret;
+    let mut current_price = (current % 10) as i8;
+    for _ in 0..2000 {
+        let new = next(current);
+        let new_price = (new % 10) as i8;
+
+        prices_and_deltas.push((new_price, new_price - current_price));
+
+        current = new;
+        current_price = new_price;
+    }
+
+    let mut queue = VecDeque::new();
+    for (price, delta) in prices_and_deltas {
+        queue.push_back(delta);
+        if queue.len() < 4 {
+            continue;
+        } else if queue.len() > 4 {
+            queue.pop_front();
+        }
+
+        let sequence = Vec::from_iter(queue.iter().cloned());
+
+        result.entry(sequence).or_insert(price as i16);
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "12979353889 456");
+        assert_eq!(execute(), "12979353889 1449");
+    }
+
+    #[test]
+    fn test_part1() {
+        let secrets = from_lines(example());
+        assert_eq!(part1(&secrets), 37327623);
     }
 
     #[test]
@@ -72,6 +134,11 @@ mod tests {
     }
 
     fn example() -> Vec<String> {
-        vec![String::from("123"), String::from("456")]
+        vec![
+            String::from("1"),
+            String::from("10"),
+            String::from("100"),
+            String::from("2024"),
+        ]
     }
 }
