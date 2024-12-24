@@ -7,7 +7,7 @@ pub fn execute() -> String {
     let triplets = network.triplets();
 
     let part1 = network.part1(&triplets);
-    let part2 = 456;
+    let part2 = network.part2();
 
     format!("{} {}", part1, part2)
 }
@@ -50,11 +50,15 @@ impl Network {
     fn triplets(&self) -> Vec<(usize, usize, usize)> {
         let mut result = vec![];
 
+        let edges = self.edges.as_slice();
         for i_a in 0..self.edges.len() - 2 {
+            let edges_a = edges[i_a].as_slice();
             for i_b in i_a + 1..self.edges.len() - 1 {
-                for i_c in i_b + 1..self.edges.len() {
-                    if self.edges[i_a][i_b] && self.edges[i_b][i_c] && self.edges[i_c][i_a] {
-                        result.push((i_a, i_b, i_c));
+                if edges_a[i_b] {
+                    for i_c in i_b + 1..self.edges.len() {
+                        if edges_a[i_c] && edges[i_b][i_c] {
+                            result.push((i_a, i_b, i_c));
+                        }
                     }
                 }
             }
@@ -73,6 +77,34 @@ impl Network {
             })
             .count()
     }
+
+    fn part2(&self) -> String {
+        let cliques = self.cliques();
+
+        let largest = cliques.iter().max_by_key(|clique| clique.len()).unwrap();
+
+        let mut names = largest
+            .iter()
+            .map(|node| self.node_name[*node].clone())
+            .collect::<Vec<_>>();
+        names.sort();
+
+        names.join(",")
+    }
+
+    fn cliques(&self) -> Vec<Vec<usize>> {
+        let mut cliques = vec![];
+        for start in 0..self.node_name.len() {
+            let mut clique = vec![start];
+            for next in 0..self.node_name.len() {
+                if clique.iter().all(|other| self.edges[next][*other]) {
+                    clique.push(next);
+                }
+            }
+            cliques.push(clique);
+        }
+        cliques
+    }
 }
 
 #[cfg(test)]
@@ -81,7 +113,7 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "1238 456");
+        assert_eq!(execute(), "1238 bg,bl,ch,fn,fv,gd,jn,kk,lk,pv,rr,tb,vw");
     }
 
     #[test]
@@ -98,9 +130,21 @@ mod tests {
         let network = Network::from_lines(example());
         let triplets = network.triplets();
         assert_eq!(triplets.len(), 12);
+    }
 
+    #[test]
+    fn test_part1() {
+        let network = Network::from_lines(example());
+        let triplets = network.triplets();
         assert_eq!(network.part1(&triplets), 7);
     }
+
+    #[test]
+    fn test_part2() {
+        let network = Network::from_lines(example());
+        assert_eq!(network.part2(), "co,de,ka,ta");
+    }
+
     fn example() -> Vec<String> {
         aoc_utils::read_lines("input/day23-example.txt")
     }
