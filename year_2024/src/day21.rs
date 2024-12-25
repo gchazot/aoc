@@ -1,10 +1,11 @@
+use std::collections::HashMap;
 use RemoteKey::*;
 
 pub fn execute() -> String {
     let data = aoc_utils::read_lines("input/day21.txt");
 
-    let part1: usize = data.iter().map(score).sum();
-    let part2 = 456;
+    let part1: usize = data.iter().map(|code| score(code, 2)).sum();
+    let part2: usize = data.iter().map(|code| score(code, 25)).sum();
 
     format!("{} {}", part1, part2)
 }
@@ -83,63 +84,64 @@ fn numpad_sequences(code: &Vec<NumpadKey>) -> Vec<Vec<RemoteKey>> {
     }
     result
 }
-fn remote_transitions(a: RemoteKey, b: RemoteKey) -> Vec<Vec<RemoteKey>> {
-    let a = a.index();
-    let b = b.index();
-    if a <= b {
-        let options = REMOTE_PATHS[a][b - a];
-        options.iter().map(|&option| option.to_vec()).collect()
-    } else {
-        let options = REMOTE_PATHS[b][a - b];
-        options
-            .iter()
-            .map(|&option| option.iter().map(|key| key.invert()).rev().collect())
-            .collect()
-    }
-}
 
-fn remote_sequences(code: Vec<RemoteKey>) -> Vec<Vec<RemoteKey>> {
-    let transitions_options = code.iter().enumerate().map(|(i, next)| {
-        let key = if i > 0 { code[i - 1] } else { A };
-        remote_transitions(key, *next)
-    });
-
-    let mut result = vec![vec![]];
-    for transition_options in transitions_options.into_iter() {
-        result = result
-            .iter()
-            .flat_map(|sequence| {
-                transition_options.iter().map(|subsequence| {
-                    let mut new_sequence = sequence.clone();
-                    new_sequence.extend(subsequence);
-                    new_sequence.push(A);
-                    new_sequence
-                })
-            })
-            .collect();
-    }
-    result
-}
-
-fn sequence_options(code: &Vec<NumpadKey>) -> Vec<Vec<RemoteKey>> {
-    numpad_sequences(code)
-        .into_iter()
-        .flat_map(remote_sequences)
-        .flat_map(remote_sequences)
-        .collect()
-}
-
-fn score(line: &String) -> usize {
+fn score(line: &String, depth: u8) -> usize {
     let code = code_from_line(line);
 
-    let best = sequence_options(&code)
-        .into_iter()
-        .min_by_key(|option| option.len())
+    let sequences = numpad_sequences(&code);
+    let shortest = sequences
+        .iter()
+        .map(|sequence| shortest_sequence(sequence, depth))
+        .min()
         .unwrap();
 
     let code_num: usize = line[..line.len() - 1].parse().unwrap();
 
-    code_num * best.len()
+    code_num * shortest
+}
+
+fn shortest_sequence(sequence: &Vec<RemoteKey>, depth: u8) -> usize {
+    let mut seen_transition_lengths = HashMap::new();
+
+    shortest_sequence_cached(sequence, depth, &mut seen_transition_lengths)
+}
+
+fn shortest_sequence_cached(
+    sequence: &[RemoteKey],
+    depth: u8,
+    seen_transition_length: &mut HashMap<(RemoteKey, RemoteKey, u8), usize>,
+) -> usize {
+    if depth == 0 {
+        return sequence.len();
+    }
+
+    let mut total = 0;
+    let mut key = A;
+    for next in sequence {
+        let seen_key = (key.clone(), next.clone(), depth);
+        if !seen_transition_length.contains_key(&seen_key) {
+            let from_index = key.index();
+            let to_index = next.index();
+            let shortest = REMOTE_PATHS[from_index][to_index]
+                .iter()
+                .map(|&transition| {
+                    let mut transition = transition.to_vec();
+                    transition.push(A);
+                    shortest_sequence_cached(
+                        transition.as_slice(),
+                        depth - 1,
+                        seen_transition_length,
+                    )
+                })
+                .min()
+                .unwrap();
+            seen_transition_length.insert(seen_key, shortest);
+        }
+        total += seen_transition_length.get(&seen_key).unwrap();
+        key = *next;
+    }
+
+    total
 }
 
 #[cfg(test)]
@@ -149,22 +151,20 @@ mod tests {
 
     #[test]
     fn test_mine() {
-        assert_eq!(execute(), "163086 456");
+        assert_eq!(execute(), "163086 198466286401228");
     }
 
     #[test]
     fn test_score() {
-        let scores = example().iter().map(score).collect::<Vec<_>>();
-        assert_eq!(scores.iter().sum::<usize>(), 126384);
-    }
+        assert_eq!(
+            example().iter().map(|code| score(code, 2)).sum::<usize>(),
+            126384
+        );
 
-    #[test]
-    fn test_sequence_options() {
-        let mini = sequence_options(&code_from_line(&"029A".to_string()))
-            .into_iter()
-            .min_by_key(|option| option.len())
-            .unwrap();
-        assert_eq!(mini.len(), 68, "{:?}", format_seq(&mini));
+        assert_eq!(
+            example().iter().map(|code| score(code, 25)).sum::<usize>(),
+            154115708116294
+        );
     }
 
     #[test]
@@ -244,10 +244,6 @@ mod tests {
         a.iter().len() == b.iter().len() && a.iter().all(|x| b.iter().any(|y| *x == *y))
     }
 
-    fn format_seq(sequence: &Vec<RemoteKey>) -> String {
-        sequence.iter().map(|key| key.to_char()).collect::<String>()
-    }
-
     impl RemoteKey {
         fn to_char(&self) -> char {
             match self {
@@ -294,6 +290,10 @@ static REMOTE_PATHS: &'static [&[&[&[RemoteKey]]]] = &[
     &[
         // Down
         &[
+            // Down-Left
+            &[Left],
+        ],
+        &[
             // Down-Down
             &[],
         ],
@@ -314,6 +314,14 @@ static REMOTE_PATHS: &'static [&[&[&[RemoteKey]]]] = &[
     &[
         // Right
         &[
+            // Right-Left
+            &[Left, Left],
+        ],
+        &[
+            // Right-Down
+            &[Left],
+        ],
+        &[
             // Right-Right
             &[],
         ],
@@ -330,6 +338,19 @@ static REMOTE_PATHS: &'static [&[&[&[RemoteKey]]]] = &[
     &[
         // Up
         &[
+            // Up-Left
+            &[Down, Left],
+        ],
+        &[
+            // Up-Down
+            &[Down],
+        ],
+        &[
+            // Up-Right
+            &[Down, Right],
+            &[Right, Down],
+        ],
+        &[
             // Up-Up
             &[],
         ],
@@ -340,6 +361,24 @@ static REMOTE_PATHS: &'static [&[&[&[RemoteKey]]]] = &[
     ],
     &[
         // A
+        &[
+            // A-Left
+            &[Down, Left, Left],
+            &[Left, Down, Left],
+        ],
+        &[
+            // A-Down
+            &[Down, Left],
+            &[Left, Down],
+        ],
+        &[
+            // A-Right
+            &[Down],
+        ],
+        &[
+            // A-Up
+            &[Left],
+        ],
         &[
             // A-A
             &[],
