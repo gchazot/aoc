@@ -245,7 +245,6 @@ impl Program {
         max_errors: usize,
     ) -> Option<Vec<(usize, usize)>> {
         let mut swaps_iter = SwapIterator::from_set(candidates.clone());
-        let mut i = 0;
         while let Some(swap) = swaps_iter.next() {
             let mut next_swaps = swaps.clone();
             next_swaps.push(swap.clone());
@@ -261,7 +260,6 @@ impl Program {
                     }
                 }
             }
-            i += 1;
         }
         None
     }
