@@ -118,16 +118,6 @@ impl Lobby {
         counts
     }
 
-    fn print(&self) {
-        let mut pixels = vec![vec![' '; self.size.0 as usize]; self.size.1 as usize];
-        for robot in self.robots.iter() {
-            pixels[robot.position.1 as usize][robot.position.0 as usize] = '#';
-        }
-        for row in pixels {
-            println!("{}", row.into_iter().collect::<String>());
-        }
-    }
-
     fn score(&self) -> usize {
         let mut presence = vec![vec![false; self.size.0 as usize]; self.size.1 as usize];
         for robot in self.robots.iter() {
@@ -227,5 +217,17 @@ mod tests {
             String::from("p=2,4 v=2,-3"),
             String::from("p=9,5 v=-3,-3"),
         ]
+    }
+
+    impl Lobby {
+        fn _print(&self) {
+            let mut pixels = vec![vec![' '; self.size.0 as usize]; self.size.1 as usize];
+            for robot in self.robots.iter() {
+                pixels[robot.position.1 as usize][robot.position.0 as usize] = '#';
+            }
+            for row in pixels {
+                println!("{}", row.into_iter().collect::<String>());
+            }
+        }
     }
 }
