@@ -27,6 +27,8 @@ jobs:
               - 'year_2023/**'
             year_2024:
               - 'year_2024/**'
+            year_2025:
+              - 'year_2025/**'
       - id: set-matrix
         run: echo "::set-output name=matrix::$(./list_test_combinations.sh ${{ join(fromJSON(steps.filter.outputs.changes), ' ') }})"
 
