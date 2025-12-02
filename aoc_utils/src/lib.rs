@@ -3,6 +3,10 @@ use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
 use std::ops::RemAssign;
 
+pub fn read_line(filename: &str) -> String {
+    read_to_string(filename).unwrap()
+}
+
 pub fn read_lines(filename: &str) -> Vec<String> {
     read_to_string(filename)
         .unwrap()
