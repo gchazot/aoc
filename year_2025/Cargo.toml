@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 aoc_utils = { path = "../aoc_utils" }
+good_lp = { version = "1.14.2", default-features = false, features = ["microlp"] }

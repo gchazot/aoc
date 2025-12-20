@@ -165,7 +165,7 @@ mod tests {
         assert_eq!(counts_map[8][8], Some(4));
 
         let counts_map = get_counts_map(&parsed);
-        let (removed, counts_map) = remove_all_accessible_spaces(counts_map);
+        let (removed, _counts_map) = remove_all_accessible_spaces(counts_map);
         assert_eq!(removed, 43);
     }
 
